@@ -45,7 +45,7 @@ public class SignupRequest {
       return this.roles;
     }
     
-    public void setRole(Set<String> roles) {
+    public void setRoles(Set<String> roles) {
       this.roles = roles;
     }
 }

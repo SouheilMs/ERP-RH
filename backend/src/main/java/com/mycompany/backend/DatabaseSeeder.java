@@ -32,8 +32,32 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private DocumentsRepository documentsRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
     @Override
     public void run(String... args) throws Exception {
+        // Seed roles
+        if (roleRepository.findByName(ERole.ROLE_EMPLOYEE).isEmpty()) {
+            Role employeeRole = new Role();
+            employeeRole.setName(ERole.ROLE_EMPLOYEE);
+            roleRepository.save(employeeRole);
+            System.out.println("Employee role created");
+        }
+
+        if (roleRepository.findByName(ERole.ROLE_HR).isEmpty()) {
+            Role hrRole = new Role();
+            hrRole.setName(ERole.ROLE_HR);
+            roleRepository.save(hrRole);
+            System.out.println("HR role created");
+        }
+
+        if (roleRepository.findByName(ERole.ROLE_HRMANAGER).isEmpty()) {
+            Role hrManagerRole = new Role();
+            hrManagerRole.setName(ERole.ROLE_HRMANAGER);
+            roleRepository.save(hrManagerRole);
+            System.out.println("HR Manager role created");
+        }
         Employee emp = new Employee();
         emp.setUsername("souheil moussa");
         emp.setEmail("moussa@gmail.com");
