@@ -8,6 +8,7 @@ import com.mycompany.backend.payload.request.LoginRequest;
 import com.mycompany.backend.payload.request.SignupRequest;
 import com.mycompany.backend.payload.response.JwtResponse;
 import com.mycompany.backend.payload.response.MessageResponse;
+import com.mycompany.backend.payload.response.SignupResponse;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.RoleRepository;
 import com.mycompany.backend.security.jwt.JwtUtils;
@@ -82,9 +83,10 @@ public class AuthController {
 		}
 
 		// Create new user's account
-		Employee employee = new Employee(signUpRequest.getUsername(),
-							 signUpRequest.getEmail(),
-							 encoder.encode(signUpRequest.getPassword()));
+		Employee employee = new Employee();
+		employee.setUsername(signUpRequest.getUsername());
+		employee.setEmail(signUpRequest.getEmail());
+		employee.setPassword(encoder.encode(signUpRequest.getPassword()));
 
 		Set<String> strRoles = signUpRequest.getRoles();
 		Set<Role> roles = new HashSet<>();
@@ -119,6 +121,16 @@ public class AuthController {
 		employee.setRoles(roles);
 		employeeRepository.save(employee);
 
-		return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+		Set<String> roleNames = roles.stream()
+				.map(role -> {
+					String name = role.getName().name().toLowerCase();
+					if (name.startsWith("role_")) {
+						name = name.substring(5);
+					}
+					return name;
+				})
+				.collect(Collectors.toSet());
+
+		return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
 	}
 }
