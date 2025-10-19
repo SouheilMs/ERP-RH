@@ -2,7 +2,7 @@ package com.mycompany.backend.security;
 
 import com.mycompany.backend.security.jwt.AuthEntryPointJwt;
 import com.mycompany.backend.security.jwt.AuthTokenFilter;
-import com.mycompany.backend.security.services.EmployeeDetailsServiceImpl;
+import com.mycompany.backend.services.EmployeeDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
