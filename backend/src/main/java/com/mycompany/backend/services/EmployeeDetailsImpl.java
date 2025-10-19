@@ -1,4 +1,4 @@
-package com.mycompany.backend.security.services;
+package com.mycompany.backend.services;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

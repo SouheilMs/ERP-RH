@@ -1,6 +1,6 @@
 package com.mycompany.backend.security.jwt;
 
-import com.mycompany.backend.security.services.EmployeeDetailsImpl;
+import com.mycompany.backend.services.EmployeeDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

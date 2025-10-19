@@ -12,7 +12,7 @@ import com.mycompany.backend.payload.response.SignupResponse;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.RoleRepository;
 import com.mycompany.backend.security.jwt.JwtUtils;
-import com.mycompany.backend.security.services.EmployeeDetailsImpl;
+import com.mycompany.backend.services.EmployeeDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

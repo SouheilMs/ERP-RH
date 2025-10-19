@@ -1,6 +1,6 @@
 package com.mycompany.backend.security.jwt;
 
-import com.mycompany.backend.security.services.EmployeeDetailsServiceImpl;
+import com.mycompany.backend.services.EmployeeDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
