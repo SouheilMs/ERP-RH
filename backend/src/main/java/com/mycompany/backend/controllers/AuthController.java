@@ -133,4 +133,14 @@ public class AuthController {
 
 		return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
 	}
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
+		Employee employee = employeeRepository.findByUsername(resetRequest.getUsername())
+				.orElseThrow(() -> new RuntimeException("Error: User not found."));
+
+		employee.setPassword(encoder.encode(resetRequest.getPassword()));
+		employeeRepository.save(employee);
+
+		return ResponseEntity.ok(new MessageResponse("Password reset successfully!"));
+	}
 }
