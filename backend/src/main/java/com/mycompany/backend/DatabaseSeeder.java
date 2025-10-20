@@ -5,6 +5,7 @@ import com.mycompany.backend.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import java.util.Set;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -35,6 +36,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) throws Exception {
         // Seed roles
@@ -61,8 +65,18 @@ public class DatabaseSeeder implements CommandLineRunner {
         Employee emp = new Employee();
         emp.setUsername("souheil moussa");
         emp.setEmail("moussa@gmail.com");
+        emp.setPassword(passwordEncoder.encode("password"));
         employeRepository.save(emp);
         System.out.println("Collection created");
+
+        // Add test user for signin
+        Employee testEmp = new Employee();
+        testEmp.setUsername("hela");
+        testEmp.setEmail("hela@gmail.com");
+        testEmp.setPassword(passwordEncoder.encode("123456"));
+        testEmp.setRoles(Set.of(roleRepository.findByName(ERole.ROLE_EMPLOYEE).get()));
+        employeRepository.save(testEmp);
+        System.out.println("Test user created");
         Notification n = new Notification();
         n.setMessage("Welcome to the system!");
         notificationRepository.save(n);

@@ -51,11 +51,11 @@ public class AuthController {
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+				new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateJwtToken(authentication);
-		
+
 		EmployeeDetailsImpl employeeDetails = (EmployeeDetailsImpl) authentication.getPrincipal();
 		List<String> roles = employeeDetails.getAuthorities().stream()
 				.map(item -> item.getAuthority())
@@ -98,22 +98,22 @@ public class AuthController {
 		} else {
 			strRoles.forEach(role -> {
 				switch (role) {
-				case "hrManager":
-					Role adminRole = roleRepository.findByName(ERole.ROLE_HRMANAGER)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(adminRole);
+					case "hrManager":
+						Role adminRole = roleRepository.findByName(ERole.ROLE_HRMANAGER)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(adminRole);
 
-					break;
-				case "hr":
-					Role hrRole = roleRepository.findByName(ERole.ROLE_HR)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(hrRole);
+						break;
+					case "hr":
+						Role hrRole = roleRepository.findByName(ERole.ROLE_HR)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(hrRole);
 
-					break;
-				default:
-					Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(employeeRole);
+						break;
+					default:
+						Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(employeeRole);
 				}
 			});
 		}
