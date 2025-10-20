@@ -51,6 +51,12 @@ export class AuthService {
         catchError(this.handleError)
       );
   }
+  resetPassword(resetRequest: LoginRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';
