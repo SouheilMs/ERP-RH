@@ -1,0 +1,56 @@
+<div *ngIf="!loading && employee" class="employee-container">
+
+  <!-- === SECTION 1 : Fiche Employé === -->
+  <div class="employee-profile">
+    <div class="profile-header">
+      <img src="assets/default-profile.png"  class="profile-photo">
+      <div class="profile-info">
+        <h2>{{ employee.username }}</h2>
+        <p><strong>Email :</strong> {{ employee.email }}</p>
+        <p><strong>Téléphone :</strong> {{ employee.phone }}</p>
+        <p><strong>Salaire :</strong> {{ employee.salary }} TND</p>
+        <p><strong>Status :</strong> {{ employee.status }}</p>
+        <p><strong>Date d'embauche :</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- === SECTION 2 : Formulaire de modification === -->
+  <div class="employee-form">
+    <h3>Formulaire de modification</h3>
+
+    <form (ngSubmit)="updateEmployee()">
+      <div class="form-group">
+        <label>Nom :</label>
+        <input type="text" [(ngModel)]="employee.username" name="username">
+      </div>
+
+      <div class="form-group">
+        <label>Email :</label>
+        <input type="email" [(ngModel)]="employee.email" name="email">
+      </div>
+
+      <div class="form-group">
+        <label>Téléphone :</label>
+        <input type="text" [(ngModel)]="employee.phone" name="phone">
+      </div>
+
+      <div class="form-group">
+        <label>Salaire :</label>
+        <input type="number" [(ngModel)]="employee.salary" name="salary">
+      </div>
+
+      <div class="form-group">
+        <label>Status :</label>
+        <input type="text" [(ngModel)]="employee.status" name="status">
+      </div>
+
+      <div class="form-group">
+        <label>Date d'embauche :</label>
+        <input type="date" [(ngModel)]="employee.hireDate" name="hireDate">
+      </div>
+
+      <button type="submit">Modifier</button>
+    </form>
+  </div>
+</div>
