@@ -1,39 +1,23 @@
 package com.mycompany.backend.services;
 
+import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.repositories.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class EmployeeService {
+import org.springframework.http.ResponseEntity;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
+public interface EmployeeService {
 
-    public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
-    }
-
-    public Optional<Employee> getEmployeeById(String id) {
-        return employeeRepository.findById(id);
-    }
-    public Optional<Employee> getEmployeeByEmail(String email) {   // <-- ajout ici
-        return employeeRepository.findByEmail(email);
-    }
-    public Employee saveEmployee(Employee employee) {
-        return employeeRepository.save(employee);
-    }
-    public Optional<Employee> getEmployeeByUsername(String username) {
-        return employeeRepository.findByUsername(username);
-    }
-
-
-    public void deleteEmployee(String id) {
-        employeeRepository.deleteById(id);
-    }
-
+    List<Employee> getAllEmployees();
+    Optional<Employee> getEmployeeById(Long id);
+    Optional<Employee> getEmployeeByUsername(String username);
+    Employee saveEmployee(Employee employee);
+    Employee createEmployee(Employee employee);
+    Optional<Employee> getEmployeeByEmail(String email);
+    void deleteEmployee(Long id);
+    ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
 }

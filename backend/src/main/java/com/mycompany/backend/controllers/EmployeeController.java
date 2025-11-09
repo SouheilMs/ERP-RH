@@ -1,13 +1,17 @@
 package com.mycompany.backend.controllers;
 
+import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.services.EmployeeService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -23,7 +27,7 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
-    // Détails d’un employé par username
+    // Détails d'un employé par username
     @GetMapping("/username/{username}")
     public ResponseEntity<Employee> getEmployeeByUsername(@PathVariable String username) {
         return employeeService.getEmployeeByUsername(username)
@@ -31,41 +35,24 @@ public class EmployeeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Mettre à jour un employé par username
-    @PutMapping("/username/{username}")
-    public ResponseEntity<Employee> updateEmployee(
-            @PathVariable String username,
-            @RequestBody Employee updatedEmployee
-    ) {
-        return employeeService.getEmployeeByUsername(username)
-                .map(existingEmployee -> {
-                    updatedEmployee.setId(existingEmployee.getId());
-                    Employee savedEmployee = employeeService.saveEmployee(updatedEmployee);
-                    return ResponseEntity.ok(savedEmployee);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     // Récupérer un employé par son ID
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
         return employeeService.getEmployeeById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    // Mettre à jour un employé par ID
-    @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployeeById(
-            @PathVariable String id,
-            @RequestBody Employee updatedEmployee
-    ) {
-        return employeeService.getEmployeeById(id)
-                .map(existingEmployee -> {
-                    updatedEmployee.setId(existingEmployee.getId());
-                    Employee saved = employeeService.saveEmployee(updatedEmployee);
-                    return ResponseEntity.ok(saved);
-                })
-                .orElse(ResponseEntity.notFound().build());
+
+    // Supprimer un employé
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
+        employeeService.deleteEmployee(id);
+        return ResponseEntity.ok("Employé supprimé avec succès");
     }
 
+    // Créer un employé
+    @PostMapping("/Add-employee")
+    public ResponseEntity<?> registerNewEmployee(@RequestBody @Valid EmployeeDTO employeeDTO, final HttpServletRequest request) {
+        return employeeService.registerNewEmployee(employeeDTO, request);
+    }
 }
