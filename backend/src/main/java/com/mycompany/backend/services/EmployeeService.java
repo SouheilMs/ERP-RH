@@ -15,14 +15,25 @@ import org.springframework.web.multipart.MultipartFile;
 public interface EmployeeService {
 
     List<Employee> getAllEmployees();
-    Optional<Employee> getEmployeeById(Long id);
+
+    Optional<Employee> getEmployeeById(String id);
+
     Optional<Employee> getEmployeeByUsername(String username);
+
     Employee saveEmployee(Employee employee);
+
     Employee createEmployee(Employee employee);
+
     Optional<Employee> getEmployeeByEmail(String email);
-    void deleteEmployee(Long id);
+
+    void deleteEmployee(String id);
+
     ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
+
     void ImportFromExcel(MultipartFile file) throws IOException;
+
     ByteArrayOutputStream exportToExcel() throws IOException;
+
+    String storeEmployeePhoto(String id, MultipartFile file);
 
 }

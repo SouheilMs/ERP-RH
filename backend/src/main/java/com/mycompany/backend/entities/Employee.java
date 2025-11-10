@@ -26,6 +26,8 @@ public class Employee {
     private Date hireDate;
     private Double salary;
     private String status;
+    private String photoUrl; // URL de la photo
+
 
     @DBRef
     private Set<Role> roles = new HashSet<>();

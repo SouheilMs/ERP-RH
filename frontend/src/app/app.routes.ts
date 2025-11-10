@@ -12,7 +12,6 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'employees', component: EmployeeListComponent },
   { path: 'employees/:id', component: EmployeeDetailComponent },
-
   { path: '**', redirectTo: '/login'}
 ];
 

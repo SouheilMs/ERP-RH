@@ -3,10 +3,10 @@
     <div class="auth-header">
       <div class="logo">
         <i class="logo-icon">🏢</i>
-        <span class="logo-text">HR ERP</span>
+        <span class="logo-text">ERP RH</span>
       </div>
-      <h1 class="auth-title">Login</h1>
-      <p class="auth-subtitle">Access your personal space</p>
+      <h1 class="auth-title">Connexion</h1>
+      <p class="auth-subtitle">Accédez à votre espace personnel</p>
     </div>
 
     <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
@@ -17,25 +17,29 @@
           id="email"
           formControlName="email"
           class="form-input"
-          placeholder="your@email.com"
+          placeholder="votre@email.com"
           [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-        <div class="error-message" [class.show]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-          Please enter a valid email address
-        </div>
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <div class="error-message">
+            Veuillez entrer un email valide
+          </div>
+        }
       </div>
 
       <div class="form-group">
-        <label for="password" class="form-label">Password</label>
+        <label for="password" class="form-label">Mot de passe</label>
         <input
           type="password"
           id="password"
           formControlName="password"
           class="form-input"
-          placeholder="Your password"
+          placeholder="Votre mot de passe"
           [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-        <div class="error-message" [class.show]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-          Password is required
-        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <div class="error-message">
+            Le mot de passe est requis
+          </div>
+        }
       </div>
 
       <button
@@ -43,16 +47,16 @@
         class="auth-button"
         [disabled]="loginForm.invalid || isLoading">
         @if (!isLoading) {
-          <span>Sign In</span>
+          <span>Se connecter</span>
         }
         @if (isLoading) {
-          <span class="loading">Signing in...</span>
+          <span class="loading">Connexion...</span>
         }
       </button>
 
       <div class="auth-footer">
-        <p>Forgot password? 
-          <a routerLink="/reset-password" class="auth-link">Reset password</a>
+        <p>Nouveau sur la plateforme ? 
+          <a routerLink="/signup" class="auth-link">Créer un compte</a>
         </p>
       </div>
     </form>

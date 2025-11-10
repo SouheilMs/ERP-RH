@@ -22,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
@@ -45,12 +48,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Optional<Employee> getEmployeeById(Long id) {
+    public Optional<Employee> getEmployeeById(String id) {
         return employeeRepository.findById(String.valueOf(id));
     }
 
     @Override
-    public void deleteEmployee(Long id) {
+    public void deleteEmployee(String id) {
         employeeRepository.deleteById(String.valueOf(id));
     }
 
@@ -176,5 +179,24 @@ public ByteArrayOutputStream exportToExcel() throws IOException {
     workbook.close();
     return out;
 }
+    // Méthode pour stocker la photo d'un employé
+    @Override
+    public String storeEmployeePhoto(String id, MultipartFile file) {
+        try {
+            Path uploadsDir = Paths.get("backend/uploads");
+            Files.createDirectories(uploadsDir);
+
+            String fileName = id + "_" + file.getOriginalFilename();
+            Path filePath = uploadsDir.resolve(fileName);
+            Files.write(filePath, file.getBytes());
+
+            return fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de l'enregistrement de la photo", e);
+        }
+    }
+
+
+
 
 }
