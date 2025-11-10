@@ -1,22 +1,57 @@
 <div class="rh-container">
-  <div class="header-actions">
-    <div class="page-title">
-      <h2>Gestion des Employés</h2>
-      <p class="subtitle">{{ employees.length }} employé(s) au total</p>
+  <div class="page-title">
+    <h2>Gestion des Employés</h2>
+  </div>
+
+  <!-- Grille de cartes statistiques -->
+  <div class="stats-grid">
+    <!-- Carte nombre d'employés -->
+    <div class="stat-card employee-count">
+      <div class="stat-icon">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="stat-number">{{ employees.length }}</div>
+      <div class="stat-label">Employés</div>
     </div>
 
-    <div class="action-buttons">
-      <label class="import-button">
-        <i class="bi bi-upload"></i>
-        Importer un Fichier
-        <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
-      </label>
-
-      <button class="export-button" (click)="exportExcel()">
-        <i class="bi bi-download"></i>
-        Exporter un Fichier
-      </button>
+    <!-- Cartes vides -->
+    <div class="stat-card empty-card">
+      <div class="empty-card-content">
+        <i class="bi bi-graph-up"></i>
+        <span>Statistique 2</span>
+      </div>
     </div>
+
+    <div class="stat-card empty-card">
+      <div class="empty-card-content">
+        <i class="bi bi-calendar-check"></i>
+        <span>Statistique 3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boutons d'action -->
+  <div class="action-buttons-container">
+    <!-- Bouton Importer avec input file intégré -->
+    <label class="action-btn import-btn">
+      <i class="bi bi-upload"></i>
+      Importer
+      <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
+    </label>
+
+    <button class="action-btn export-btn" (click)="exportExcel()">
+      <i class="bi bi-download"></i>
+      Exporter
+    </button>
+    <button class="action-btn export-btn" (click)="exportExcel()">
+      <i class="bi bi-download"></i>
+      Ajouter Employé
+    </button>
+
+
+
+    <!-- Input file caché pour l'import -->
+    <input #fileInput type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
   </div>
 
   <div *ngIf="loading" class="loading-state">
@@ -29,11 +64,12 @@
     {{ errorMessage }}
   </div>
 
+  <!-- Tableau sans fond blanc -->
   <div *ngIf="!loading && employees.length > 0" class="table-container">
     <table class="employee-table">
       <thead>
       <tr>
-        <th>Nom d'utilisateur</th>
+        <th>Nom d'Employé</th>
         <th>Email</th>
         <th>Status</th>
         <th>Actions</th>
