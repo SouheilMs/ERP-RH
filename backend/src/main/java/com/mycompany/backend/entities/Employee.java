@@ -26,6 +26,8 @@ public class Employee {
     private Date hireDate;
     private Double salary;
     private String status;
+    private String photoUrl; // URL de la photo
+
 
     @DBRef
     private Set<Role> roles = new HashSet<>();
@@ -83,13 +85,18 @@ public class Employee {
     public String getStatus() {
         return status;
     }
-    public String phone(){
+    public String getPhone(){
         return phone;
     }
     public void setPhone(String phone){
         this.phone = phone;
     }
-
+     public String getPhotoUrl(){
+        return photoUrl;
+     }
+ public void setPhotoUrl(String photoUrl){
+        this.photoUrl = photoUrl;
+ }
     public void setPassword(String password) {
         this.password = password;
     }

@@ -3,33 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EmployeeServices } from '../../services/employee.services';
 import { saveAs } from 'file-saver';
-import { FormsModule } from '@angular/forms';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
-
-
 })
 export class EmployeeListComponent implements OnInit {
 
   employees: any[] = [];
-  filteredEmployees: any[] = [];
-  searchTerm: string = '';
   loading = false;
   errorMessage = '';
 
-
-  constructor(private employeeService: EmployeeServices ,  private fb: FormBuilder){}
+  constructor(private employeeService: EmployeeServices) {}
 
   ngOnInit(): void {
     this.loadEmployees();
-
   }
 
 
@@ -80,6 +71,4 @@ export class EmployeeListComponent implements OnInit {
       }
     );
   }
-
-
 }

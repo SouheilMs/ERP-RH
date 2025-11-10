@@ -114,6 +114,21 @@ button:hover {
 .employee-profile, .employee-form {
   animation: fadeIn 0.4s ease-in-out;
 }
+.profile-photo {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
+}
+
+.photo-upload {
+  margin-top: 15px;
+}
+
+.photo-upload button {
+  margin-top: 10px;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
