@@ -1,6 +1,5 @@
 package com.mycompany.backend.controllers;
 
-
 import com.mycompany.backend.entities.ERole;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Role;
@@ -51,18 +50,18 @@ public class AuthController {
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+				new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateJwtToken(authentication);
-		
+
 		EmployeeDetailsImpl employeeDetails = (EmployeeDetailsImpl) authentication.getPrincipal();
 		List<String> roles = employeeDetails.getAuthorities().stream()
 				.map(item -> item.getAuthority())
 				.collect(Collectors.toList());
 
 		return ResponseEntity.ok(new JwtResponse(jwt,
-				employeeDetails.getId(),
+				employeeDetails.getId().toString(), // Convert Long to String for response
 				employeeDetails.getUsername(),
 				employeeDetails.getEmail(),
 				roles));
@@ -92,28 +91,26 @@ public class AuthController {
 		Set<Role> roles = new HashSet<>();
 
 		if (strRoles == null) {
-			Role userRole = roleRepository.findByName( ERole.ROLE_EMPLOYEE)
+			Role userRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
 					.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 			roles.add(userRole);
 		} else {
 			strRoles.forEach(role -> {
 				switch (role) {
-				case "hrManager":
-					Role adminRole = roleRepository.findByName(ERole.ROLE_HRMANAGER)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(adminRole);
-
-					break;
-				case "hr":
-					Role hrRole = roleRepository.findByName(ERole.ROLE_HR)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(hrRole);
-
-					break;
-				default:
-					Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
-							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-					roles.add(employeeRole);
+					case "hrManager":
+						Role adminRole = roleRepository.findByName(ERole.ROLE_HRMANAGER)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(adminRole);
+						break;
+					case "hr":
+						Role hrRole = roleRepository.findByName(ERole.ROLE_HR)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(hrRole);
+						break;
+					default:
+						Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
+								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+						roles.add(employeeRole);
 				}
 			});
 		}
@@ -123,19 +120,20 @@ public class AuthController {
 
 		Set<String> roleNames = roles.stream()
 				.map(role -> {
-					String name = role.getName().name().toLowerCase();
-					if (name.startsWith("role_")) {
-						name = name.substring(5);
+					String roleName = role.getName().name().toLowerCase(); // Use getName() instead of getRoleName()
+					if (roleName.startsWith("role_")) {
+						roleName = roleName.substring(5);
 					}
-					return name;
+					return roleName;
 				})
 				.collect(Collectors.toSet());
 
 		return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
 	}
+
 	@PostMapping("/reset-password")
 	public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
-		Employee employee = employeeRepository.findByUsername(resetRequest.getUsername())
+		Employee employee = employeeRepository.findByEmail(resetRequest.getEmail())
 				.orElseThrow(() -> new RuntimeException("Error: User not found."));
 
 		employee.setPassword(encoder.encode(resetRequest.getPassword()));

@@ -17,11 +17,12 @@ public class EmployeeDetailsServiceImpl implements UserDetailsService {
 
 	@Override
 	@Transactional
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Employee employee = employeeRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		Employee employee = employeeRepository.findByEmail(email)
+				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
 
 		return EmployeeDetailsImpl.build(employee);
 	}
-
 }
+
+

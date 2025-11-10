@@ -1,143 +1,117 @@
-<div>
-    <div class="background">
-        <div class="modal-container">
-            <div class="modal">
-                <!-- Left Section - Promo -->
-                <div class="left-section">
-                    <div class="promo-content">
-                        <h3 class="promo-title">Rhombus <span class="pro-badge">PRO</span></h3>
-                        <p class="promo-text">Unlimited traffic, strategic support, and AI-driven upsells</p>
-                        <a href="#" class="learn-more">Learn More</a>
-                    </div>
-                </div>
-
-                <!-- Right Section - Form -->
-                <div class="right-section">
-                    <!-- Logo -->
-                    <div class="logo-container">
-                        <svg class="logo" viewBox="0 0 40 40" width="40" height="40">
-                            <polygon points="20,5 35,20 20,35 5,20" fill="none" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        <span class="logo-text">Rhombus</span>
-                    </div>
-
-                    <!-- Form Title -->
-                    <h1 class="form-title">Sign up</h1>
-
-                    <!-- Form -->
-                    <form class="signin-form" [formGroup]="signupForm" (ngSubmit)="onSubmit()">
-                        <!-- Username Field -->
-                        <div class="form-group">
-                            <label for="username" class="form-label">Username</label>
-                            <input
-                                type="text"
-                                id="username"
-                                class="form-input"
-                                placeholder="Your username"
-                                required
-                                formControlName="username"
-                                [class.error]="signupForm.get('username')?.invalid && signupForm.get('username')?.touched"
-                            />
-                            <div class="error-message" *ngIf="signupForm.get('username')?.invalid && signupForm.get('username')?.touched">
-                                {{ getErrorMessage('username') }}
-                            </div>
-                        </div>
-
-                        <!-- Email Field -->
-                        <div class="form-group">
-                            <label for="email" class="form-label">Email address</label>
-                            <input
-                                type="email"
-                                id="email"
-                                class="form-input"
-                                placeholder="Your email address"
-                                required
-                                formControlName="email"
-                                [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched"
-                            />
-                            <div class="error-message" *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
-                                {{ getErrorMessage('email') }}
-                            </div>
-                        </div>
-
-                        <!-- Password Field -->
-                        <div class="form-group">
-                            <label for="password" class="form-label">Password</label>
-                            <div class="password-wrapper">
-                                <input
-                                    type="password"
-                                    id="password"
-                                    class="form-input"
-                                    placeholder="Enter password"
-                                    required
-                                    formControlName="password"
-                                    [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.touched"
-                                />
-                                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="error-message" *ngIf="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
-                                {{ getErrorMessage('password') }}
-                            </div>
-                        </div>
-
-                        <!-- Roles Field -->
-                        <div class="form-group">
-                            <label for="roles" class="form-label">Roles (optional)</label>
-                            <select
-                                id="roles"
-                                class="form-input"
-                                formControlName="roles"
-                                multiple
-                            >
-                                <option value="hrManager">HR Manager</option>
-                                <option value="hr">HR</option>
-                                <option value="employee">Employee</option>
-                            </select>
-                            <small class="help-text">Hold Ctrl (Cmd on Mac) to select multiple roles.</small>
-                        </div>
-
-                        <!-- Sign Up Button -->
-                        <button type="submit" class="signin-button" [disabled]="isLoading">
-                            {{ isLoading ? 'Signing Up...' : 'Sign Up' }}
-                            <span class="arrow">→</span>
-                        </button>
-
-                        <div class="error-message" *ngIf="errorMessage">
-                            {{ errorMessage }}
-                        </div>
-                    </form>
-
-                    <!-- Sign In Link -->
-                    <p class="signup-text">
-                        Already have an account? <a routerLink="/login" class="signup-link">Sign In</a>
-                    </p>
-                </div>
-            </div>
-        </div>
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <i class="logo-icon">🏢</i>
+        <span class="logo-text">ERP RH</span>
+      </div>
+      <h1 class="auth-title">Créer un compte</h1>
+      <p class="auth-subtitle">Rejoignez notre plateforme</p>
     </div>
 
-    <script>
-        // Toggle password visibility
-        const toggleBtn = document.querySelector('.toggle-password');
-        const passwordInput = document.querySelector('#password');
+    <form class="auth-form" [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username" class="form-label">Nom d'utilisateur</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-input"
+          placeholder="Votre nom d'utilisateur"
+          [class.error]="signupForm.get('username')?.invalid && signupForm.get('username')?.touched">
+        @if (signupForm.get('username')?.invalid && signupForm.get('username')?.touched) {
+          <div class="error-message">
+            Le nom d'utilisateur est requis
+          </div>
+        }
+      </div>
 
-        toggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            toggleBtn.classList.toggle('active');
-        });
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="votre@email.com"
+          [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+        @if (signupForm.get('email')?.invalid && signupForm.get('email')?.touched) {
+          <div class="error-message">
+            Veuillez entrer un email valide
+          </div>
+        }
+      </div>
 
-        // Form submission
-        const form = document.querySelector('.signin-form');
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            console.log('Sign up clicked');
-        });
-    </script>
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="Votre mot de passe"
+          [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
+        @if (signupForm.get('password')?.invalid && signupForm.get('password')?.touched) {
+          <div class="error-message">
+            Le mot de passe doit contenir au moins 6 caractères
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          class="form-input"
+          placeholder="Confirmer votre mot de passe"
+          [class.error]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.touched">
+        @if (signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.touched) {
+          <div class="error-message">
+            Les mots de passe ne correspondent pas
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rôle</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" formControlName="role" value="employee" class="radio-input">
+            <span class="radio-custom"></span>
+            Employé
+          </label>
+          <label class="radio-label">
+            <input type="radio" formControlName="role" value="hr" class="radio-input">
+            <span class="radio-custom"></span>
+            RH
+          </label>
+          <label class="radio-label">
+            <input type="radio" formControlName="role" value="hrManager" class="radio-input">
+            <span class="radio-custom"></span>
+            Manager RH
+          </label>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="auth-button"
+        [disabled]="signupForm.invalid || isLoading">
+        @if (!isLoading) {
+          <span>Créer mon compte</span>
+        }
+        @if (isLoading) {
+          <span class="loading">Création...</span>
+        }
+      </button>
+
+      <div class="auth-footer">
+        <p>Déjà un compte ? 
+          <a routerLink="/login" class="auth-link">Se connecter</a>
+        </p>
+      </div>
+    </form>
+  </div>
 </div>

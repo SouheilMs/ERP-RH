@@ -1,77 +1,52 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService, SignupRequest } from '../../services/auth.service';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.css']
 })
 export class SignupComponent {
   signupForm: FormGroup;
   isLoading = false;
-  errorMessage = '';
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
     private router: Router
   ) {
     this.signupForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      username: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      roles: [[]] // Optional, default to empty array
-    });
+      confirmPassword: ['', [Validators.required]],
+      role: ['employee', [Validators.required]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('password');
+    const confirmPassword = form.get('confirmPassword');
+    
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+    } else {
+      confirmPassword?.setErrors(null);
+    }
   }
 
   onSubmit() {
     if (this.signupForm.valid) {
       this.isLoading = true;
-      this.errorMessage = '';
-
-      const signupRequest: SignupRequest = this.signupForm.value;
-
-      this.authService.signup(signupRequest).subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          console.log('Signup successful:', response);
-          // Navigate to login or dashboard
-          this.router.navigate(['/login']); // Assuming login route exists, adjust as needed
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.errorMessage = error;
-        }
-      });
-    } else {
-      this.markFormGroupTouched();
+      // Appel API de signup
+      console.log('Signup data:', this.signupForm.value);
+      setTimeout(() => {
+        this.isLoading = false;
+        this.router.navigate(['/login']);
+      }, 2000);
     }
-  }
-
-  private markFormGroupTouched() {
-    Object.keys(this.signupForm.controls).forEach(key => {
-      const control = this.signupForm.get(key);
-      control?.markAsTouched();
-    });
-  }
-
-  getErrorMessage(field: string): string {
-    const control = this.signupForm.get(field);
-    if (control?.hasError('required')) {
-      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
-    }
-    if (control?.hasError('email')) {
-      return 'Please enter a valid email';
-    }
-    if (control?.hasError('minlength')) {
-      const minLength = control.errors?.['minlength']?.requiredLength;
-      return `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${minLength} characters`;
-    }
-    return '';
   }
 }

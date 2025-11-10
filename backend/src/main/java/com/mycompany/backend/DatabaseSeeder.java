@@ -5,6 +5,7 @@ import com.mycompany.backend.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import java.util.Set;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -35,34 +36,44 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) throws Exception {
         // Seed roles
         if (roleRepository.findByName(ERole.ROLE_EMPLOYEE).isEmpty()) {
-            Role employeeRole = new Role();
-            employeeRole.setName(ERole.ROLE_EMPLOYEE);
+            Role employeeRole = new Role ( ERole.ROLE_EMPLOYEE  );
             roleRepository.save(employeeRole);
             System.out.println("Employee role created");
         }
 
         if (roleRepository.findByName(ERole.ROLE_HR).isEmpty()) {
-            Role hrRole = new Role();
-            hrRole.setName(ERole.ROLE_HR);
+            Role hrRole = new Role( ERole.ROLE_HR  );
             roleRepository.save(hrRole);
             System.out.println("HR role created");
         }
 
         if (roleRepository.findByName(ERole.ROLE_HRMANAGER).isEmpty()) {
-            Role hrManagerRole = new Role();
-            hrManagerRole.setName(ERole.ROLE_HRMANAGER);
+            Role hrManagerRole = new Role(ERole.ROLE_HRMANAGER );
             roleRepository.save(hrManagerRole);
             System.out.println("HR Manager role created");
         }
         Employee emp = new Employee();
         emp.setUsername("souheil moussa");
         emp.setEmail("moussa@gmail.com");
+        emp.setPassword(passwordEncoder.encode("password"));
         employeRepository.save(emp);
         System.out.println("Collection created");
+
+        // Add test user for signin
+        Employee testEmp = new Employee();
+        testEmp.setUsername("hela");
+        testEmp.setEmail("hela@gmail.com");
+        testEmp.setPassword(passwordEncoder.encode("123456"));
+        testEmp.setRoles(Set.of(roleRepository.findByName(ERole.ROLE_EMPLOYEE).get()));
+        employeRepository.save(testEmp);
+        System.out.println("Test user created");
         Notification n = new Notification();
         n.setMessage("Welcome to the system!");
         notificationRepository.save(n);
