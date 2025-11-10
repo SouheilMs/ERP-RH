@@ -1,0 +1,5 @@
+- [x] Update EmployeeRepository to add findByEmail method
+- [x] Update EmployeeDetailsServiceImpl to use findByEmail instead of findByUsername
+- [x] Update DatabaseSeeder to set password for existing employee and add a new employee with email "hela@gmail.com" and password "123456"
+- [ ] Restart the backend to apply changes
+- [ ] Test the signin endpoint

@@ -1,0 +1,110 @@
+
+<div>
+    <div class="background">
+        <div class="modal-container">
+            <div class="modal">
+                <!-- Left Section - Promo -->
+                <div class="left-section">
+                    <div class="promo-content">
+                        <h3 class="promo-title">Rh <span class="pro-badge">PRO</span></h3>
+                        <p class="promo-text">Unlimited traffic, strategic support, and AI-driven upsells</p>
+                        <a href="#" class="learn-more">Learn More</a>
+                    </div>
+                </div>
+
+                <!-- Right Section - Form -->
+                <div class="right-section">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <svg class="logo" viewBox="0 0 40 40" width="40" height="40">
+                            <polygon points="20,5 35,20 20,35 5,20" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="logo-text">Rh</span>
+                    </div>
+
+                    <!-- Form Title -->
+                    <h1 class="form-title">Sign in</h1>
+
+                    <!-- Form -->
+                    <form class="signin-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                        <!-- Email Field -->
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email address</label>
+                            <input
+                                type="email"
+                                id="email"
+                                formControlName="email"
+                                class="form-input"
+                                placeholder="Your email address"
+                                required
+                            [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+      />
+      <div class="error-message" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+        {{ getErrorMessage('email') }}
+      </div>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="password-wrapper">
+                                <input
+                                    type="password"
+                                    id="password"
+                                    formControlName="password"
+                                    class="form-input"
+                                    placeholder="Enter password"
+                                    required
+                                [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+      />
+      <div class="error-message" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+        {{ getErrorMessage('password') }}
+      </div>
+                                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                          <a routerLink="/reset-password" class="forgot-password">Forgot password?</a>
+                        </div>
+
+                        <!-- Sign In Button -->
+                        <button type="submit" class="signin-button"[disabled]="isLoading">
+      {{ isLoading ? 'Logging In...' : 'Log In' }}
+                            <span class="arrow">→</span>
+                        </button>
+                        <div class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+                    </form>
+                    <!-- Sign Up Link -->
+                    <p class="signup-text">
+                        Don't have an account? <a routerLink="/signup" class="signup-link">Sign Up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const toggleBtn = document.querySelector('.toggle-password');
+        const passwordInput = document.querySelector('#password');
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            toggleBtn.classList.toggle('active');
+        });
+
+        // Form submission
+        const form = document.querySelector('.signin-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log('Sign in clicked');
+        });
+    </script>
+</div>

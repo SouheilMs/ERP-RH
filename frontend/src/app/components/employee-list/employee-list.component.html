@@ -1,0 +1,25 @@
+<div *ngIf="loading">Chargement des employés...</div>
+<div *ngIf="errorMessage && !loading" class="error">{{ errorMessage }}</div>
+
+<table *ngIf="!loading && employees.length > 0" class="employee-table">
+  <thead>
+  <tr>
+    <th>Nom d'utilisateur</th>
+    <th>Email</th>
+    <th>Status</th>
+    <th>Détails</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let emp of employees">
+    <td>{{ emp.username }}</td>
+    <td>{{ emp.email }}</td>
+    <td>{{ emp.status || 'N/A' }}</td>
+    <td>
+      <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-info-circle"></i> Détails
+      </button>
+    </td>
+  </tr>
+  </tbody>
+</table>
