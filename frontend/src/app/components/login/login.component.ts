@@ -31,7 +31,7 @@ export class LoginComponent {
       console.log('Login data:', this.loginForm.value);
       setTimeout(() => {
         this.isLoading = false;
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/employees']);
       }, 2000);
     }
   }
