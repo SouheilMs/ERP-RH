@@ -1,1 +1,48 @@
-<p>first-time-setup works!</p>
+<div class="setup-container">
+  <div class="setup-card">
+    <div class="setup-header">
+      <div class="logo">
+        <i class="logo-icon">🏢</i>
+        <span class="logo-text">ERP RH - Première Configuration</span>
+      </div>
+      <h1 class="setup-title">Configuration Initiale</h1>
+      <p class="setup-subtitle">Bienvenue dans votre nouveau système ERP RH</p>
+    </div>
+
+    <div class="setup-content">
+      <div class="info-card">
+        <div class="info-icon">🔐</div>
+        <h3>Compte HR Manager créé</h3>
+        <p>Un compte HR Manager a été automatiquement créé avec les identifiants suivants :</p>
+        
+        <div class="credentials">
+          <div class="credential-item">
+            <strong>Email :</strong>
+            <span class="credential-value">hrmanager@erp.com</span>
+          </div>
+          <div class="credential-item">
+            <strong>Mot de passe :</strong>
+            <span class="credential-value">Admin123!</span>
+          </div>
+        </div>
+
+        <div class="security-warning">
+          <div class="warning-icon">⚠️</div>
+          <p>
+            <strong>Important :</strong> Ces identifiants sont temporaires. 
+            Veuillez vous connecter immédiatement et changer le mot de passe.
+          </p>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn-primary" (click)="goToLogin()">
+          Se connecter maintenant
+        </button>
+        <button class="btn-secondary" (click)="copyCredentials()">
+          Copier les identifiants
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
