@@ -1,3 +1,4 @@
+
 package com.mycompany.backend.controllers;
 
 import com.mycompany.backend.dto.EmployeeDTO;
@@ -8,9 +9,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -55,4 +59,29 @@ public class EmployeeController {
     public ResponseEntity<?> registerNewEmployee(@RequestBody @Valid EmployeeDTO employeeDTO, final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
+    //Exporter
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportEmployees() throws IOException {
+        ByteArrayOutputStream out = employeeService.exportToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("employees.xlsx")
+                .build());
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(out.toByteArray());
+    }
+    // Importer
+    @PostMapping("/import")
+    public ResponseEntity<String> importEmployees(@RequestParam("file") MultipartFile file) {
+        try {
+            employeeService.ImportFromExcel(file);
+            return ResponseEntity.ok("Fichier importé avec succès");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de l'import : " + e.getMessage());
+        }
+    }
 }
+
