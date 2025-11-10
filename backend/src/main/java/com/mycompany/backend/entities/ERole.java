@@ -5,3 +5,4 @@ public enum ERole {
   ROLE_HR,
   ROLE_HRMANAGER
 }
+

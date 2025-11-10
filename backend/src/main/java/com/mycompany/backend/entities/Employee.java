@@ -35,9 +35,8 @@ public class Employee {
     public Employee() {
     }
 
-    public Employee(String username,  String email, String phone,
+    public Employee(String username, String email, String phone,
                     String password, Date hireDate, Double salary, String status) {
-
         this.username = username;
         this.email = email;
         this.phone = phone;
@@ -45,16 +44,24 @@ public class Employee {
         this.hireDate = hireDate;
         this.salary = salary;
         this.status = status;
-
     }
 
     public Employee(String username, String email, String encode) {
+        this.username = username;
+        this.email = email;
+        this.password = encode;
     }
 
+    // Remove the duplicate getId() method and fix the return type
     public String getId() {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    // Keep other getters and setters as they are
     public String getUsername() {
         return username;
     }
@@ -66,12 +73,37 @@ public class Employee {
     public String getPassword() {
         return password;
     }
-    public void setPassword(String password) { this.password = password; }
+
+    public Date getHireDate() {
+        return hireDate;
+    }
+
+    public Double getSalary() {
+        return salary;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+    public String phone(){
+        return phone;
+    }
+    public void setPhone(String phone){
+        this.phone = phone;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public void setUsername(String username) {
         this.username = username;
     }
-    public void setEmail(String email) { this.email = email; }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }
@@ -80,5 +112,15 @@ public class Employee {
         this.roles = roles;
     }
 
+    public void setHireDate(Date hireDate) {
+        this.hireDate = hireDate;
+    }
 
+    public void setSalary(Double salary) {
+        this.salary = salary;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

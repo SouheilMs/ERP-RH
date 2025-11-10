@@ -1,54 +1,39 @@
 package com.mycompany.backend.services;
-
+import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.repositories.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class EmployeeService {
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
-    @Autowired
-    private EmployeeRepository employeeRepository ;// Dépend d'une abstraction (interface), pas d'une implémentation concrète
+public interface EmployeeService {
 
-    public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();// Logique métier : récupérer tous les employés
-    }
-    public Optional<Employee> getEmployeeById(String id) {
-        return employeeRepository.findById(id);
-    }
-    public Employee saveEmployee(Employee employee) {
-        // Logique existante
-        return employeeRepository.save(employee);
-    }
+    List<Employee> getAllEmployees();
 
-    public void deleteEmployee(String id) {
-        employeeRepository.deleteById(id);
-    }
-    // Méthode pour stocker la photo d'un employé
-    public String storeEmployeePhoto(String id, MultipartFile file) throws IOException {
-        // chemin vers backend/uploads
-        Path uploadsDir = Paths.get("backend/uploads");
-        Files.createDirectories(uploadsDir);
+    Optional<Employee> getEmployeeById(String id);
 
-        String fileName = id + "_" + file.getOriginalFilename();
-        Path filePath = uploadsDir.resolve(fileName);
-        Files.write(filePath, file.getBytes());
+    Optional<Employee> getEmployeeByUsername(String username);
 
-        return fileName; // NE PAS mettre /uploads/ ici, c’est juste le nom du fichier
-    }
+    Employee saveEmployee(Employee employee);
 
+    Employee createEmployee(Employee employee);
 
+    Optional<Employee> getEmployeeByEmail(String email);
 
+    void deleteEmployee(String id);
 
+    ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
 
+    void ImportFromExcel(MultipartFile file) throws IOException;
+
+    ByteArrayOutputStream exportToExcel() throws IOException;
+
+    String storeEmployeePhoto(String id, MultipartFile file);
 
 }
