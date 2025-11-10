@@ -1,6 +1,18 @@
+
+<div>
+<div>
 <div *ngIf="loading">Chargement des employés...</div>
 <div *ngIf="errorMessage && !loading" class="error">{{ errorMessage }}</div>
 
+  <label class="import-button">
+    Importer un Fichier
+    <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
+  </label>
+
+    <button class="export-button" (click)="exportExcel()">
+      Exporter un Fichier
+    </button>
+  </div>
 <table *ngIf="!loading && employees.length > 0" class="employee-table">
   <thead>
   <tr>
@@ -23,3 +35,4 @@
   </tr>
   </tbody>
 </table>
+</div>
