@@ -1,34 +1,38 @@
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\config\SecurityConfig.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\controllers\AuthController.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\controllers\TestController.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\DatabaseSeeder.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Candidature.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Conge.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Department.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Documents.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Employee.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\ERole.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\JobOffer.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Notification.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Role.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Training.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\ErpBackendApplication.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\payload\request\LoginRequest.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\payload\request\SignupRequest.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\payload\response\JwtResponse.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\payload\response\MessageResponse.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\CandidatureRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\CongeRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\DepartmentRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\DocumentsRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\EmployeeRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\NotificationRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\OffreEmploiRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\RoleRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\TrainingRepository.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\AuthEntryPointJwt.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\AuthTokenFilter.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\JwtUtils.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\services\EmployeeDetailsImpl.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\services\EmployeeDetailsServiceImpl.java
-C:\Users\lenovo\Desktop\Deuxième Année du Cycle d'Ingénieur Informatique\erp-rh\backend\src\main\java\com\mycompany\backend\security\WebSecurityConfig.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\config\OpenApiConfig.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\config\SecurityConfig.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\controllers\AuthController.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\controllers\EmployeeController.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\controllers\TestController.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\DatabaseSeeder.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Candidature.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Conge.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Department.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Documents.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Employee.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\ERole.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\JobOffer.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Notification.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Role.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\entities\Training.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\ErpBackendApplication.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\payload\request\LoginRequest.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\payload\request\SignupRequest.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\payload\response\JwtResponse.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\payload\response\MessageResponse.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\payload\response\SignupResponse.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\CandidatureRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\CongeRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\DepartmentRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\DocumentsRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\EmployeeRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\NotificationRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\OffreEmploiRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\RoleRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\repositories\TrainingRepository.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\AuthEntryPointJwt.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\AuthTokenFilter.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\security\jwt\JwtUtils.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\security\WebSecurityConfig.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\services\EmployeeDetailsImpl.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\services\EmployeeDetailsServiceImpl.java
+C:\Users\Yasmine\Documents\erp-rh\backend\src\main\java\com\mycompany\backend\services\EmployeeService.java
