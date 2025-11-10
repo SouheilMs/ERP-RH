@@ -62,8 +62,8 @@ export class EmployeeListComponent implements OnInit {
 
     this.employeeService.importEmployeesFromExcel(file).subscribe(
       (res: string) => {
-        this.loadEmployees(); // Recharge la liste après import
-        alert(res);           // Affiche le message envoyé par le backend
+        this.loadEmployees();
+        alert(res);
       },
       (error: any) => {
         console.error("Erreur import Excel :", error);
