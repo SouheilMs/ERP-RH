@@ -1,38 +1,64 @@
+<div class="rh-container">
+  <div class="header-actions">
+    <div class="page-title">
+      <h2>Gestion des Employés</h2>
+      <p class="subtitle">{{ employees.length }} employé(s) au total</p>
+    </div>
 
-<div>
-<div>
-<div *ngIf="loading">Chargement des employés...</div>
-<div *ngIf="errorMessage && !loading" class="error">{{ errorMessage }}</div>
+    <div class="action-buttons">
+      <label class="import-button">
+        <i class="bi bi-upload"></i>
+        Importer un Fichier
+        <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
+      </label>
 
-  <label class="import-button">
-    Importer un Fichier
-    <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
-  </label>
-
-    <button class="export-button" (click)="exportExcel()">
-      Exporter un Fichier
-    </button>
-  </div>
-<table *ngIf="!loading && employees.length > 0" class="employee-table">
-  <thead>
-  <tr>
-    <th>Nom d'utilisateur</th>
-    <th>Email</th>
-    <th>Status</th>
-    <th>Détails</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr *ngFor="let emp of employees">
-    <td>{{ emp.username }}</td>
-    <td>{{ emp.email }}</td>
-    <td>{{ emp.status || 'N/A' }}</td>
-    <td>
-      <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-info-circle"></i> Détails
+      <button class="export-button" (click)="exportExcel()">
+        <i class="bi bi-download"></i>
+        Exporter un Fichier
       </button>
-    </td>
-  </tr>
-  </tbody>
-</table>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <div>Chargement des employés...</div>
+  </div>
+
+  <div *ngIf="errorMessage && !loading" class="error-message">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!loading && employees.length > 0" class="table-container">
+    <table class="employee-table">
+      <thead>
+      <tr>
+        <th>Nom d'utilisateur</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let emp of employees">
+        <td class="username">{{ emp.username }}</td>
+        <td class="email">{{ emp.email }}</td>
+        <td [class]="'status status-' + (emp.status?.toLowerCase() || 'na')">
+          {{ emp.status || 'N/A' }}
+        </td>
+        <td>
+          <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye"></i> Détails
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && employees.length === 0" class="empty-state">
+    <i class="bi bi-people"></i>
+    <h3>Aucun employé trouvé</h3>
+    <p>Commencez par importer un fichier Excel pour ajouter des employés.</p>
+  </div>
 </div>
