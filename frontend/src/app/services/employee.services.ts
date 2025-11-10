@@ -58,5 +58,9 @@ export class EmployeeServices {
     return this.http.post(`${this.apiUrl}/import`, formData, { responseType: 'text' });
   }
 
+  // Dans votre fichier employee.services.ts
+  createEmployee(employee: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/employees`, employee);
+  }
 
 }

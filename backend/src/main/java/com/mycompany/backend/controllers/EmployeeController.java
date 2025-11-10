@@ -28,7 +28,7 @@ public class EmployeeController {
 
     // Liste tous les employés
     @GetMapping
-    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
+
     public ResponseEntity<List<Employee>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());// Délégation à EmployeeService
     }
