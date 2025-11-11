@@ -12,25 +12,25 @@ import { EmployeeServices, Employee } from '../../services/employee.services';
   styleUrls: ['./employee-detail.component.css']
 })
 export class EmployeeDetailComponent implements OnInit {
-  employee: Employee | null = null; // seule déclaration
+  employee: Employee = {} as Employee; // Initialisation pour éviter null
   loading = true;
   errorMessage = '';
   successMessage = '';
 
-  selectedPhoto: File | null = null; // pour upload
-  previewUrl: any = null;             // pour preview
+  selectedPhoto: File | null = null;
+  previewUrl: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private employeeService: EmployeeServices
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.getEmployee(id);
   }
 
-  // Récupérer un employé
+  // Récupérer un employé par ID
   getEmployee(id: string) {
     this.loading = true;
     this.employeeService.getEmployeeById(id).subscribe({
@@ -46,12 +46,24 @@ export class EmployeeDetailComponent implements OnInit {
     });
   }
 
-  // Mettre à jour l'employé
+  // Mettre à jour un employé
   updateEmployee() {
-    if (!this.employee?.id) return;
+    if (!this.employee.id) return;
 
     this.loading = true;
-    this.employeeService.updateEmployeeById(this.employee.id, this.employee).subscribe({
+
+    // Crée un nouvel objet pour éviter d'envoyer des champs undefined
+    const updatedData: Employee = {
+      username: this.employee.username,
+      email: this.employee.email,
+      phone: this.employee.phone,
+      salary: this.employee.salary,
+      status: this.employee.status,
+      hireDate: this.employee.hireDate,
+      photoUrl: this.employee.photoUrl
+    };
+
+    this.employeeService.updateEmployeeById(this.employee.id, updatedData).subscribe({
       next: (data: Employee) => {
         this.employee = data;
         this.successMessage = 'Mise à jour réussie !';
@@ -80,8 +92,9 @@ export class EmployeeDetailComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  // Upload photo
   uploadPhoto() {
-    if (!this.employee?.id || !this.selectedPhoto) return;
+    if (!this.employee.id || !this.selectedPhoto) return;
 
     this.loading = true;
     const formData = new FormData();
@@ -89,19 +102,24 @@ export class EmployeeDetailComponent implements OnInit {
 
     this.employeeService.uploadPhoto(this.employee.id, formData).subscribe({
       next: (data: Employee) => {
-        this.employee!.photoUrl = data.photoUrl; // <-- ici
-        this.previewUrl = null;
+        if (data.photoUrl) {
+          this.employee.photoUrl = data.photoUrl;
+          this.previewUrl = data.photoUrl;
+        }
+
         this.selectedPhoto = null;
         this.successMessage = "Photo mise à jour avec succès !";
+        this.errorMessage = '';
         this.loading = false;
 
         setTimeout(() => this.successMessage = '', 3000);
       },
-      error: () => {
+      error: (err) => {
+        console.error(err);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
+        this.successMessage = '';
         this.loading = false;
       }
     });
   }
-
 }

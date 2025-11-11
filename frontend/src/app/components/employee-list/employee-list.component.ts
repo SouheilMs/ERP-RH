@@ -1,74 +1,115 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { EmployeeServices } from '../../services/employee.services';
+import { EmployeeServices, Employee } from '../../services/employee.services';
 import { saveAs } from 'file-saver';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })
 export class EmployeeListComponent implements OnInit {
 
-  employees: any[] = [];
+  employees: Employee[] = [];
+  searchTerm: string = '';
   loading = false;
   errorMessage = '';
+  successMessage = '';
 
-  constructor(private employeeService: EmployeeServices) {}
+  constructor(
+    private employeeService: EmployeeServices,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadEmployees();
   }
 
-
+  // Charger les employés
   loadEmployees(): void {
     this.loading = true;
     this.errorMessage = '';
 
     this.employeeService.getAllEmployees().subscribe({
-      next: (data: any[]) => {
-        console.log(" Employés récupérés :", data);
+      next: (data: Employee[]) => {
         this.employees = data;
-        if (this.employees.length === 0) {
-          this.errorMessage = 'Aucun employé trouvé.';
-        }
         this.loading = false;
       },
       error: (err) => {
-        console.error(" Erreur récupération :", err);
+        console.error("Erreur récupération :", err);
         this.errorMessage = 'Impossible de récupérer la liste des employés.';
         this.loading = false;
       }
-
-    });
-
-  }
-
-  // Exporter la liste en Excel
-  exportExcel(): void {
-    this.employeeService.exportEmployeesToExcel().subscribe((blob: any) => {
-      saveAs(blob, 'employees.xlsx');
-    }, (error: any) => {
-      console.error("Erreur export Excel :", error);
     });
   }
-  // Importer un fichier Excel
-  importExcel(event: any): void {
-    const file: File = event.target.files[0];
-    if (!file) return;
 
-    this.employeeService.importEmployeesFromExcel(file).subscribe(
-      (res: string) => {
-        this.loadEmployees();
-        alert(res);
-      },
-      (error: any) => {
-        console.error("Erreur import Excel :", error);
-        alert('Erreur lors de l’import du fichier.');
-      }
+  // Filtrage par nom ou email
+  filterEmployees(): Employee[] {
+    const term = this.searchTerm.toLowerCase();
+    return this.employees.filter(
+      e => e.username.toLowerCase().includes(term) || e.email.toLowerCase().includes(term)
     );
   }
+
+  // Export Excel
+  exportExcel(): void {
+    this.employeeService.exportEmployees().subscribe({
+      next: (blob: any) => saveAs(blob, 'employees.xlsx'),
+      error: (err) => console.error("Erreur export Excel :", err)
+    });
+  }
+
+  // Import Excel
+  importExcel(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.employeeService.importEmployees(file).subscribe({
+      next: (res) => {
+        this.loadEmployees(); // Recharge la liste après import
+        this.successMessage = "Import réussi !";
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        console.error("Erreur import Excel :", err);
+        this.errorMessage = "Erreur lors de l'import.";
+        setTimeout(() => this.errorMessage = '', 3000);
+      }
+    });
+  }
+
+  // Supprimer un employé
+  deleteEmployee(id: string | undefined): void {
+    if (!id) return;
+    if (!confirm("Confirmer la suppression ?")) return;
+
+    this.loading = true;
+
+    this.employeeService.deleteEmployee(id).subscribe({
+      next: () => {
+        // Remplacer le tableau par une nouvelle instance filtrée
+        this.employees = [...this.employees.filter(e => e.id !== id)];
+
+        this.loading = false;
+        this.successMessage = "Employé supprimé avec succès !";
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        console.error("Erreur suppression :", err);
+        this.loading = false;
+        this.errorMessage = "Suppression impossible.";
+        setTimeout(() => this.errorMessage = '', 3000);
+      }
+    });
+  }
+
+
+  trackByEmployeeId(index: number, emp: Employee): string {
+    return emp.id!;
+  }
+
 }

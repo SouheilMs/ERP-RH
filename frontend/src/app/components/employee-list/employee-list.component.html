@@ -1,48 +1,68 @@
 <div class="rh-container">
-  <div class="header-actions">
-    <div class="page-title">
-      <h2>Gestion des Employés</h2>
-      <p class="subtitle">{{ employees.length }} employé(s) au total</p>
+  <div class="page-title">
+    <h2>Gestion des Employés</h2>
+  </div>
+
+  <!-- Grille de cartes statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card employee-count">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-number">{{ employees.length }}</div>
+      <div class="stat-label">Employés</div>
     </div>
 
-    <div class="action-buttons">
-      <label class="import-button">
-        <i class="bi bi-upload"></i>
-        Importer un Fichier
-        <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
-      </label>
+    <div class="stat-card empty-card">
+      <div class="empty-card-content"><i class="bi bi-graph-up"></i><span>Statistique 2</span></div>
+    </div>
 
-      <button class="export-button" (click)="exportExcel()">
-        <i class="bi bi-download"></i>
-        Exporter un Fichier
-      </button>
+    <div class="stat-card empty-card">
+      <div class="empty-card-content"><i class="bi bi-calendar-check"></i><span>Statistique 3</span></div>
     </div>
   </div>
 
+  <!-- Boutons d'action -->
+  <div class="action-buttons-container">
+    <label class="action-btn import-btn">
+      <i class="bi bi-upload"></i> Importer
+      <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
+    </label>
+    <button class="action-btn export-btn" (click)="exportExcel()">
+      <i class="bi bi-download"></i> Exporter
+    </button>
+    <button class="action-btn add-btn">
+      <i class="bi bi-plus-circle"></i> Ajouter Employé
+    </button>
+  </div>
+
+  <!-- État de chargement -->
   <div *ngIf="loading" class="loading-state">
     <div class="spinner"></div>
     <div>Chargement des employés...</div>
   </div>
 
+  <!-- Messages -->
   <div *ngIf="errorMessage && !loading" class="error-message">
-    <i class="bi bi-exclamation-triangle"></i>
-    {{ errorMessage }}
+    <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage && !loading" class="success-message">
+    <i class="bi bi-check-circle"></i> {{ successMessage }}
   </div>
 
+  <!-- Tableau -->
   <div *ngIf="!loading && employees.length > 0" class="table-container">
     <table class="employee-table">
       <thead>
       <tr>
-        <th>Nom d'utilisateur</th>
+        <th>Nom d'Employé</th>
         <th>Email</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let emp of employees">
-        <td class="username">{{ emp.username }}</td>
-        <td class="email">{{ emp.email }}</td>
+      <tr *ngFor="let emp of employees; trackBy: trackByEmployeeId">
+        <td>{{ emp.username }}</td>
+        <td>{{ emp.email }}</td>
         <td [class]="'status status-' + (emp.status?.toLowerCase() || 'na')">
           {{ emp.status || 'N/A' }}
         </td>
@@ -50,12 +70,17 @@
           <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-eye"></i> Détails
           </button>
+          <button (click)="deleteEmployee(emp.id)" class="btn btn-sm btn-danger">
+            <i class="bi bi-trash"></i> Supprimer
+          </button>
         </td>
       </tr>
+
       </tbody>
     </table>
   </div>
 
+  <!-- État vide -->
   <div *ngIf="!loading && employees.length === 0" class="empty-state">
     <i class="bi bi-people"></i>
     <h3>Aucun employé trouvé</h3>
