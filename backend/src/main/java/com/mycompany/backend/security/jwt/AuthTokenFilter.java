@@ -16,6 +16,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class AuthTokenFilter extends OncePerRequestFilter {
   @Autowired
@@ -23,6 +25,18 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
   @Autowired
   private EmployeeDetailsServiceImpl employeeDetailsService;
+  // Liste des endpoints publics qui ne nécessitent PAS d'authentification
+  private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
+          "/api/auth/",
+          "/api/roles",
+          "/api/employees",
+          "/api/test",
+          "/swagger-ui/",
+          "/v3/api-docs",
+          "/swagger-ui.html",
+          "/uploads/",
+          "/error"
+  );
 
   private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 

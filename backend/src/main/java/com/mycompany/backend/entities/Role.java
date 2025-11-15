@@ -1,20 +1,20 @@
 package com.mycompany.backend.entities;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
-@Getter
-@Setter
 @Document(collection = "roles")
 public class Role {
   @Id
+  @JsonIgnore
   private String id;
 
-  @Field("name")
+  @JsonIgnore
   private ERole name;
+
+  @JsonIgnore
+  private String customName;
 
   public Role() {
   }
@@ -23,6 +23,11 @@ public class Role {
     this.name = name;
   }
 
+  public Role(String customName) {
+    this.customName = customName;
+  }
+
+  // Getters et setters
   public String getId() {
     return id;
   }
@@ -31,16 +36,45 @@ public class Role {
     this.id = id;
   }
 
-  public void setName(ERole name) {
-    this.name = name;
-  }
-
   public ERole getName() {
     return name;
   }
 
-  // Add this method to fix the role name issue
+  public void setName(ERole name) {
+    this.name = name;
+  }
+
+  public String getCustomName() {
+    return customName;
+  }
+
+  public void setCustomName(String customName) {
+    this.customName = customName;
+  }
+
+  // Méthode pour obtenir le nom du rôle
   public String getRoleName() {
-    return name != null ? name.name() : null;
+    if (name != null) {
+      return name.name();
+    }
+    return customName;
+  }
+
+  // Méthode pour vérifier si c'est un rôle personnalisé
+  @JsonIgnore
+  public boolean isCustomRole() {
+    return customName != null && !customName.isEmpty();
+  }
+
+  // Méthode pour définir le nom du rôle
+  public void setRoleName(String roleName) {
+    ERole eRole = ERole.fromString(roleName);
+    if (eRole != null) {
+      this.name = eRole;
+      this.customName = null;
+    } else {
+      this.customName = roleName;
+      this.name = null;
+    }
   }
 }

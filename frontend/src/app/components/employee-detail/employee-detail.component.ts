@@ -12,7 +12,7 @@ import { EmployeeServices, Employee } from '../../services/employee.services';
   styleUrls: ['./employee-detail.component.css']
 })
 export class EmployeeDetailComponent implements OnInit {
-  employee: Employee = {} as Employee; // Initialisation pour éviter null
+  employee: Employee = {} as Employee; 
   loading = true;
   errorMessage = '';
   successMessage = '';

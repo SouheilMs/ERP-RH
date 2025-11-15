@@ -54,25 +54,80 @@ public class Employee {
         this.password = encode;
     }
 
-    // Getters et Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    public Date getHireDate() { return hireDate; }
-    public void setHireDate(Date hireDate) { this.hireDate = hireDate; }
-    public Double getSalary() { return salary; }
-    public void setSalary(Double salary) { this.salary = salary; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
-    public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+    // Remove the duplicate getId() method and fix the return type
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    // Keep other getters and setters as they are
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public Date getHireDate() {
+        return hireDate;
+    }
+
+    public Double getSalary() {
+        return salary;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+    public String getPhone(){
+        return phone;
+    }
+    public void setPhone(String phone){
+        this.phone = phone;
+    }
+     public String getPhotoUrl(){
+        return photoUrl;
+     }
+ public void setPhotoUrl(String photoUrl){
+        this.photoUrl = photoUrl;
+ }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    public void setHireDate(Date hireDate) {
+        this.hireDate = hireDate;
+    }
+
+    public void setSalary(Double salary) {
+        this.salary = salary;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
