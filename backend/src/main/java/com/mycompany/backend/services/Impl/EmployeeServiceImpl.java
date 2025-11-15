@@ -5,16 +5,24 @@ import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.entities.ERole;
 import com.mycompany.backend.repositories.EmployeeRepository;
+import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.RoleRepository;
 import com.mycompany.backend.services.EmailService;
 import com.mycompany.backend.services.EmployeeService;
+import com.mycompany.backend.services.GridFsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,9 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -42,6 +48,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private FormationRepository formationRepository;
+
+    @Autowired
+    private GridFsService gridFsService;
+
     @Override
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
@@ -49,7 +61,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Optional<Employee> getEmployeeById(String id) {
-        return employeeRepository.findById(String.valueOf(id));
+        return employeeRepository.findById(id);
     }
 
     @Override
@@ -78,15 +90,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request) {
-        boolean employeeExists = employeeRepository.existsByEmail(employeeDTO.getEmail());
-
-        if (employeeExists) {
-            return ResponseEntity.badRequest()
-                    .body("Employee with provided email already exists!");
+    public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, HttpServletRequest request) {
+        if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
+            return ResponseEntity.badRequest().body("Employee with provided email already exists!");
         }
 
-        // Create new employee
         Employee employee = new Employee();
         employee.setUsername(employeeDTO.getUsername());
         employee.setEmail(employeeDTO.getEmail());
@@ -96,32 +104,43 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setSalary(employeeDTO.getSalary());
         employee.setStatus(employeeDTO.getStatus());
 
-        // Set default role if not specified
+        // Nouveaux champs
+        employee.setCin(employeeDTO.getCin());
+        employee.setCnssNumber(employeeDTO.getCnssNumber());
+        employee.setPosition(employeeDTO.getPosition());
+        employee.setAddress(employeeDTO.getAddress());
+        employee.setCity(employeeDTO.getCity());
+        employee.setMatricule(employeeDTO.getMatricule());
+        employee.setRib(employeeDTO.getRib());
+        employee.setBankName(employeeDTO.getBankName());
+        employee.setWorkingDays(employeeDTO.getWorkingDays());
+        employee.setActualWorkingDays(employeeDTO.getActualWorkingDays());
+        employee.setTransportAllowance(employeeDTO.getTransportAllowance());
+        employee.setFamilyAllowance(employeeDTO.getFamilyAllowance());
+        employee.setOtherBonuses(employeeDTO.getOtherBonuses());
+
         Set<Role> roles = new HashSet<>();
         Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new RuntimeException("Error: Role not found."));
         roles.add(employeeRole);
-
         employee.setRoles(roles);
+
         Employee savedEmployee = employeeRepository.save(employee);
 
-        // Send email with credentials
         try {
             emailService.sendEmployeeCredentials(
                     savedEmployee.getEmail(),
                     savedEmployee.getUsername(),
-                    employeeDTO.getPassword() // Send the plain password for first login
+                    employeeDTO.getPassword()
             );
         } catch (Exception e) {
-            // Log the error but don't fail the request
             System.err.println("Failed to send email: " + e.getMessage());
         }
 
         return ResponseEntity.ok("Employee registered successfully!");
     }
 
-    //Importer
-
+    @Override
     public void ImportFromExcel(MultipartFile file) throws IOException {
         Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
@@ -133,10 +152,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             Employee emp = new Employee();
             emp.setEmail(getCellValue(row.getCell(1)));
             emp.setUsername(getCellValue(row.getCell(2)));
-
             employeeRepository.save(emp);
         }
-
         workbook.close();
     }
 
@@ -146,60 +163,288 @@ public class EmployeeServiceImpl implements EmployeeService {
         return cell.getStringCellValue();
     }
 
-//Export
-public ByteArrayOutputStream exportToExcel() throws IOException {
-    List<Employee> employees = employeeRepository.findAll();
+    @Override
+    public ByteArrayOutputStream exportToExcel() throws IOException {
+        List<Employee> employees = employeeRepository.findAll();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Employees");
 
-    Workbook workbook = new XSSFWorkbook();
-    Sheet sheet = workbook.createSheet("Liste Employees");
+        // En-têtes étendues
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("ID");
+        header.createCell(1).setCellValue("Email");
+        header.createCell(2).setCellValue("Nom");
+        header.createCell(3).setCellValue("Téléphone");
+        header.createCell(4).setCellValue("Salaire");
+        header.createCell(5).setCellValue("Poste");
+        header.createCell(6).setCellValue("CIN");
+        header.createCell(7).setCellValue("CNSS");
 
-    // Titre
-    Row header = sheet.createRow(0);
-    header.createCell(0).setCellValue("ID");
-    header.createCell(1).setCellValue("Email");
-    header.createCell(2).setCellValue("Name");
+        int rowNum = 1;
+        for (Employee emp : employees) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(emp.getId() != null ? emp.getId() : "");
+            row.createCell(1).setCellValue(emp.getEmail() != null ? emp.getEmail() : "");
+            row.createCell(2).setCellValue(emp.getUsername() != null ? emp.getUsername() : "");
+            row.createCell(3).setCellValue(emp.getPhone() != null ? emp.getPhone() : "");
+            row.createCell(4).setCellValue(emp.getSalary() != null ? emp.getSalary() : 0.0);
+            row.createCell(5).setCellValue(emp.getPosition() != null ? emp.getPosition() : "");
+            row.createCell(6).setCellValue(emp.getCin() != null ? emp.getCin() : "");
+            row.createCell(7).setCellValue(emp.getCnssNumber() != null ? emp.getCnssNumber() : "");
+        }
 
+        for (int i = 0; i < 8; i++) sheet.autoSizeColumn(i);
 
-    // Rows
-    int rowNum = 1;
-    for (Employee emp : employees) {
-        Row row = sheet.createRow(rowNum++);
-        row.createCell(0).setCellValue(emp.getId());
-        row.createCell(1).setCellValue(emp.getEmail());
-        row.createCell(2).setCellValue(emp.getUsername());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        workbook.close();
+        return out;
     }
 
-    // Ajuste la largeur des colonnes
-    for (int i = 0; i < 4; i++) {
-        sheet.autoSizeColumn(i);
-    }
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    workbook.write(out);
-    workbook.close();
-    return out;
-}
-
-    // Méthode pour stocker la photo d'un employé
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
         try {
-            // Chemin relatif au dossier backend
-            Path uploadsDir = Paths.get("backend/uploads");
-            Files.createDirectories(uploadsDir); // crée le dossier s'il n'existe pas
-
-            String fileName = id + "_" + file.getOriginalFilename();
-            Path filePath = uploadsDir.resolve(fileName);
-            Files.write(filePath, file.getBytes());
-
-            return fileName;
+            return gridFsService.saveFile(file);
         } catch (IOException e) {
-            throw new RuntimeException("Erreur lors de l'enregistrement de la photo", e);
+            throw new RuntimeException("Erreur GridFS", e);
         }
     }
 
+    @Override
+    public String storeFormationFile(MultipartFile file) {
+        try {
+            return gridFsService.saveFile(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de l'enregistrement du fichier formation", e);
+        }
+    }
 
+    @Override
+    public byte[] generatePaySlipPDF(String employeeId) throws IOException {
+        Employee emp = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             PDDocument document = new PDDocument()) {
 
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
 
+            PDPageContentStream content = new PDPageContentStream(document, page);
+            float pageWidth = page.getMediaBox().getWidth();
+            float margin = 50;
+            float yPosition = 750;
+
+            // ================= EN-TÊTE =================
+            content.setFont(PDType1Font.HELVETICA_BOLD, 16);
+            drawCenteredText(content, "FICHE DE PAIE - TUNISIE", pageWidth, yPosition);
+            yPosition -= 20;
+
+            // Informations entreprise
+            content.setFont(PDType1Font.HELVETICA, 10);
+            drawCenteredText(content, "ENTREPRISE TUNISIENNE SARL", pageWidth, yPosition);
+            yPosition -= 12;
+            drawCenteredText(content, "Avenue Habib Bourguiba - 1002 Tunis", pageWidth, yPosition);
+            yPosition -= 12;
+            drawCenteredText(content, "Tél: 71 000 000 - Matricule Fiscal: 12345678/A/M/000", pageWidth, yPosition);
+            yPosition -= 12;
+            drawCenteredText(content, "Code CNSS: TN12345678 - Numéro Employeur: 987654321", pageWidth, yPosition);
+            yPosition -= 15;
+
+            // Ligne séparatrice
+            content.setLineWidth(1f);
+            content.moveTo(margin, yPosition);
+            content.lineTo(pageWidth - margin, yPosition);
+            content.stroke();
+            yPosition -= 20;
+
+            // ================= INFORMATIONS EMPLOYÉ =================
+            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            content.beginText();
+            content.newLineAtOffset(margin, yPosition);
+            content.showText("Période de paie: " + new SimpleDateFormat("MMMM yyyy").format(new Date()));
+            content.endText();
+            yPosition -= 20;
+
+            // Informations employé
+            content.setFont(PDType1Font.HELVETICA, 10);
+
+            // Ligne 1
+            drawEmployeeInfo(content, margin, yPosition,
+                    "Matricule:", emp.getMatricule() != null ? emp.getMatricule() : emp.getId(),
+                    "Nom & Prénom:", emp.getUsername());
+            yPosition -= 15;
+
+            // Ligne 2
+            drawEmployeeInfo(content, margin, yPosition,
+                    "CNSS:", emp.getCnssNumber() != null ? emp.getCnssNumber() : "Non renseigné",
+                    "Fonction:", emp.getPosition() != null ? emp.getPosition() : "-");
+            yPosition -= 15;
+
+            // Ligne 3
+            String hireDate = emp.getHireDate() != null ?
+                    new SimpleDateFormat("dd/MM/yyyy").format(emp.getHireDate()) : "-";
+            drawEmployeeInfo(content, margin, yPosition,
+                    "Date embauche:", hireDate,
+                    "N° CIN:", emp.getCin() != null ? emp.getCin() : "-");
+            yPosition -= 30;
+
+            // ================= CALCULS SALARIAUX =================
+            Double baseSalary = emp.getSalary() != null ? emp.getSalary() : 0.0;
+            Integer workingDays = emp.getWorkingDays() != null ? emp.getWorkingDays() : 22;
+            Integer actualDays = emp.getActualWorkingDays() != null ? emp.getActualWorkingDays() : workingDays;
+
+            // Salaire de base proportionnel
+            Double proportionalSalary = baseSalary * actualDays / workingDays;
+
+            // Cotisations sociales
+            Double cnssEmployee = proportionalSalary * 0.0918; // 9.18% employé
+            Double retirement = proportionalSalary * 0.035; // 3.5% retraite
+            Double healthInsurance = proportionalSalary * 0.02; // 2% assurance maladie
+
+            // Total des avantages
+            Double transport = emp.getTransportAllowance() != null ? emp.getTransportAllowance() : 0.0;
+            Double family = emp.getFamilyAllowance() != null ? emp.getFamilyAllowance() : 0.0;
+            Double bonuses = emp.getOtherBonuses() != null ? emp.getOtherBonuses() : 0.0;
+            Double totalBenefits = transport + family + bonuses;
+
+            // Salaire brut total
+            Double totalBrut = proportionalSalary + totalBenefits;
+
+            // Assiette IRPP
+            Double taxableIncome = totalBrut - cnssEmployee - retirement - healthInsurance;
+
+            // Calcul IRPP
+            Double irpp = calculateIRPP(taxableIncome);
+
+            // Net à payer
+            Double netSalary = taxableIncome - irpp;
+
+            // ================= TABLEAU DES GAINS =================
+            content.setFont(PDType1Font.HELVETICA_BOLD, 11);
+            content.beginText();
+            content.newLineAtOffset(margin, yPosition);
+            content.showText("GAINS ET AVANTAGES");
+            content.endText();
+            yPosition -= 20;
+
+            String[][] gainsData = {
+                    {"Salaire de base (" + actualDays + "/" + workingDays + " j)", String.format("%.3f", proportionalSalary)},
+                    {"Indemnité transport", String.format("%.3f", transport)},
+                    {"Allocation familiale", String.format("%.3f", family)},
+                    {"Autres primes", String.format("%.3f", bonuses)},
+                    {"TOTAL BRUT", String.format("%.3f", totalBrut)}
+            };
+
+            for (String[] row : gainsData) {
+                drawTableRow(content, margin, yPosition, row[0], row[1] + " TND");
+                yPosition -= 15;
+            }
+
+            yPosition -= 10;
+
+            // ================= TABLEAU DES RETENUES =================
+            content.setFont(PDType1Font.HELVETICA_BOLD, 11);
+            content.beginText();
+            content.newLineAtOffset(margin, yPosition);
+            content.showText("RETENUES SOCIALES");
+            content.endText();
+            yPosition -= 20;
+
+            String[][] deductionsData = {
+                    {"CNSS (9.18%)", String.format("%.3f", cnssEmployee)},
+                    {"Retraite (3.5%)", String.format("%.3f", retirement)},
+                    {"Assurance maladie (2%)", String.format("%.3f", healthInsurance)},
+                    {"Impôt sur le revenu (IRPP)", String.format("%.3f", irpp)},
+                    {"TOTAL RETENUES", String.format("%.3f", cnssEmployee + retirement + healthInsurance + irpp)}
+            };
+
+            for (String[] row : deductionsData) {
+                drawTableRow(content, margin, yPosition, row[0], row[1] + " TND");
+                yPosition -= 15;
+            }
+
+            yPosition -= 20;
+
+            // ================= NET À PAYER =================
+            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            content.beginText();
+            content.newLineAtOffset(margin, yPosition);
+            content.showText("NET À PAYER: " + String.format("%.3f", netSalary) + " TND");
+            content.endText();
+
+            // ================= SIGNATURES =================
+            yPosition -= 40;
+            content.setFont(PDType1Font.HELVETICA, 10);
+            content.beginText();
+            content.newLineAtOffset(margin + 30, yPosition);
+            content.showText("Signature employé");
+            content.newLineAtOffset(300, 0);
+            content.showText("Signature employeur");
+            content.endText();
+
+            // Lignes de signatures
+            content.setLineWidth(0.5f);
+            content.moveTo(margin, yPosition - 10);
+            content.lineTo(margin + 150, yPosition - 10);
+            content.moveTo(margin + 200, yPosition - 10);
+            content.lineTo(margin + 350, yPosition - 10);
+            content.stroke();
+
+            content.close();
+            document.save(out);
+
+            return out.toByteArray();
+        }
+    }
+
+    // Méthode utilitaire pour le texte centré
+    private void drawCenteredText(PDPageContentStream content, String text, float pageWidth, float y) throws IOException {
+        content.beginText();
+        float titleWidth = PDType1Font.HELVETICA.getStringWidth(text) / 1000 * 10;
+        content.newLineAtOffset((pageWidth - titleWidth) / 2, y);
+        content.showText(text);
+        content.endText();
+    }
+
+    // Méthode utilitaire pour les informations employé
+    private void drawEmployeeInfo(PDPageContentStream content, float margin, float y,
+                                  String label1, String value1, String label2, String value2) throws IOException {
+        content.beginText();
+        content.newLineAtOffset(margin, y);
+        content.showText(label1);
+        content.newLineAtOffset(50, 0);
+        content.showText(value1);
+        content.newLineAtOffset(200, 0);
+        content.showText(label2);
+        content.newLineAtOffset(50, 0);
+        content.showText(value2);
+        content.endText();
+    }
+
+    // Méthode utilitaire pour les lignes de tableau
+    private void drawTableRow(PDPageContentStream content, float margin, float y, String label, String value) throws IOException {
+        content.setFont(PDType1Font.HELVETICA, 10);
+        content.beginText();
+        content.newLineAtOffset(margin + 10, y);
+        content.showText(label);
+        content.newLineAtOffset(300, 0);
+        content.showText(value);
+        content.endText();
+    }
+
+    // Méthode pour calculer l'IRPP selon le barème tunisien
+    private Double calculateIRPP(Double taxableIncome) {
+        if (taxableIncome == null || taxableIncome <= 5000) {
+            return 0.0;
+        } else if (taxableIncome <= 20000) {
+            return (taxableIncome - 5000) * 0.26;
+        } else if (taxableIncome <= 30000) {
+            return (15000 * 0.26) + (taxableIncome - 20000) * 0.28;
+        } else if (taxableIncome <= 50000) {
+            return (15000 * 0.26) + (10000 * 0.28) + (taxableIncome - 30000) * 0.32;
+        } else {
+            return (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (taxableIncome - 50000) * 0.35;
+        }
+    }
 }

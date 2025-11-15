@@ -9,9 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // correspond à backend/uploads/
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:backend/uploads/");
+        // Supprime ces lignes, car stockage local empêche la synchronisation
+        // registry.addResourceHandler("/uploads/photos/**")
+        //         .addResourceLocations("file:C:/Users/gamin/uploads/photos/");
+        // registry.addResourceHandler("/uploads/formations/**")
+        //         .addResourceLocations("file:C:/Users/gamin/uploads/formations/");
     }
-}
 
+}

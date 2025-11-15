@@ -45,7 +45,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true) // ✅ active @PreAuthorize
 @EnableWebSecurity
 public class SecurityConfig {
 

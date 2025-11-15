@@ -1,9 +1,8 @@
 package com.mycompany.backend.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -11,11 +10,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-
+import java.util.List;
+import java.util.ArrayList;
 @Data
-@Getter
-@Setter
 @Document(collection = "employees")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Employee {
 
     @Id
@@ -30,10 +29,31 @@ public class Employee {
 
     private Double salary;
     private String status;
-    private String photoUrl;
+
+    // ✅ NOUVEAUX CHAMPS POUR FICHE DE PAIE TUNISIENNE
+    private String cin; // Carte d'identité nationale
+    private String cnssNumber; // Numéro de sécurité sociale
+    private String position; // Poste/Fonction
+    private String address; // Adresse
+    private String city; // Ville
+    private String matricule; // Matricule interne
+    private String rib; // RIB bancaire
+    private String bankName; // Nom de la banque
+    private Integer workingDays = 22; // Jours travaillés par défaut
+    private Integer actualWorkingDays = 22; // Jours réellement travaillés
+    private Double transportAllowance = 0.0; // Indemnité de transport
+    private Double familyAllowance = 0.0; // Allocation familiale
+    private Double otherBonuses = 0.0; // Autres primes
+
+    // ✅ Stockage de l'ID de la photo dans GridFS
+    private String photoId;
 
     @DBRef
     private Set<Role> roles = new HashSet<>();
+
+    @DBRef
+    @JsonIgnoreProperties("employee") // évite boucle infinie JSON
+    private List<formation> formations = new ArrayList<>();
 
     public Employee() {}
 
@@ -48,31 +68,9 @@ public class Employee {
         this.status = status;
     }
 
-    public Employee(String username, String email, String encode) {
+    public Employee(String username, String email, String password) {
         this.username = username;
         this.email = email;
-        this.password = encode;
+        this.password = password;
     }
-
-    // Getters et Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    public Date getHireDate() { return hireDate; }
-    public void setHireDate(Date hireDate) { this.hireDate = hireDate; }
-    public Double getSalary() { return salary; }
-    public void setSalary(Double salary) { this.salary = salary; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
-    public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 }

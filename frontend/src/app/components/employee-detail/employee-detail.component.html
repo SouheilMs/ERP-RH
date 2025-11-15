@@ -1,77 +1,200 @@
 <div *ngIf="!loading && employee" class="employee-container">
 
 
+  <!-- Profil Employé -->
   <div class="employee-profile">
     <div class="profile-header">
+      <!-- Photo à gauche -->
+      <div class="photo-section">
+        <div class="photo-wrapper">
+          <img class="profile-photo"
+               [src]="getPhotoUrl()"
+               alt="Photo Employé">
+        </div>
+      </div>
 
-      <!-- Photo avec preview si existante -->
-      <img [src]="previewUrl || employee.photoUrl || 'assets/default-profile.png'" class="profile-photo">
-
-
-
-
+      <!-- Informations à droite -->
+      <!-- Informations à droite -->
       <div class="profile-info">
         <h2>{{ employee.username }}</h2>
         <p><strong>Email :</strong> {{ employee.email }}</p>
-        <p><strong>Téléphone :</strong> {{ employee.phone }}</p>
-        <p><strong>Salaire :</strong> {{ employee.salary }} TND</p>
-        <p><strong>Status :</strong> {{ employee.status }}</p>
+        <p><strong>Téléphone :</strong> {{ employee.phone || '-' }}</p>
+        <!-- Ligne Salaire + Bouton - SANS bordure -->
+        <p class="salary-row no-border">
+          <strong>Salaire :</strong>
+          <!-- BOUTON FICHE DE PAIE -->
+          <button class="download-btn" (click)="downloadPayslipPDF()">
+            fiche de paie
+          </button>
+        </p>
+        <p><strong>Status :</strong> {{ employee.status || '-' }}</p>
         <p><strong>Date d'embauche :</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
       </div>
-    </div>
 
-    <!-- Upload Photo -->
-    <div class="photo-upload">
-      <h3>Changer la photo</h3>
-      <input type="file" (change)="onPhotoSelected($event)" accept="image/*">
-      <button type="button" (click)="uploadPhoto()" [disabled]="!selectedPhoto">
-        Upload Photo
-      </button>
-      <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
-      <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
-    </div>
   </div>
 
 
+  </div>
+
+  <!-- Le reste du code reste inchangé -->
+  <!-- Formulaire de modification -->
   <div class="employee-form">
-    <h3>Formulaire de modification</h3>
-
+    <h3>Modifier les informations</h3>
     <form (ngSubmit)="updateEmployee()">
-      <div class="form-group">
-        <label>Nom :</label>
-        <input type="text" [(ngModel)]="employee.username" name="username" required>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">Nom :</label>
+          <input id="username" type="text" [(ngModel)]="employee.username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email :</label>
+          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Email :</label>
-        <input type="email" [(ngModel)]="employee.email" name="email" required>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Téléphone :</label>
+          <input id="phone" type="text" [(ngModel)]="employee.phone" name="phone">
+        </div>
+
+        <div class="form-group">
+          <label for="salary">Salaire :</label>
+          <input id="salary" type="number" [(ngModel)]="employee.salary" name="salary" min="0">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Téléphone :</label>
-        <input type="text" [(ngModel)]="employee.phone" name="phone">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="status">Status :</label>
+          <input id="status" type="text" [(ngModel)]="employee.status" name="status">
+        </div>
+        <div class="form-group">
+          <label for="hireDate">Date d'embauche :</label>
+          <input id="hireDate" type="date" [(ngModel)]="employee.hireDate" name="hireDate">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Salaire :</label>
-        <input type="number" [(ngModel)]="employee.salary" name="salary" min="0">
+      <!-- Section Changer la photo dans le formulaire -->
+      <div class="photo-upload-section">
+        <h4>Changer la photo de profil</h4>
+        <div class="photo-upload-form">
+          <input type="file" (change)="onPhotoSelected($event)" accept="image/*">
+          <button type="button" (click)="uploadPhoto()" [disabled]="!selectedPhoto" class="upload-photo-btn">
+            Upload Photo
+          </button>
+        </div>
+        <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
+        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
       </div>
 
-      <div class="form-group">
-        <label>Status :</label>
-        <input type="text" [(ngModel)]="employee.status" name="status">
-      </div>
-
-      <div class="form-group">
-        <label>Date d'embauche :</label>
-        <input type="date" [(ngModel)]="employee.hireDate" name="hireDate">
-      </div>
-
-      <button type="submit">Modifier</button>
+      <button type="submit" class="update-btn">Modifier les informations</button>
     </form>
-
-    <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
-    <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
   </div>
 
+  <!-- Container des Formations -->
+  <div class="formation-container">
+    <h3 class="formation-title">
+      Formations
+      <button class="icon-btn" (click)="showFormationModal = true" title="Ajouter une formation">&#10010;</button>
+    </h3>
+
+    <!-- Message si pas de formations -->
+    <div *ngIf="!employee.formations || employee.formations.length === 0" class="no-formations">
+      Aucune formation ajoutée pour le moment.
+    </div>
+
+    <!-- Liste Formations -->
+    <ul class="formation-list" *ngIf="employee.formations && employee.formations.length > 0">
+      <li *ngFor="let f of employee.formations" class="formation-item">
+
+        <!-- Ligne 1 : Nom + Start Date -->
+        <div class="formation-row">
+          <div class="formation-left">
+            <span class="formation-label">Nom de la formation:</span> {{ f.name }}
+          </div>
+          <div class="formation-right">
+            <span class="formation-label">Start Date:</span> {{ f.startDate | date:'yyyy-MM-dd' }}
+          </div>
+        </div>
+
+        <!-- Ligne 2 : Location + End Date -->
+        <div class="formation-row">
+          <div class="formation-left">
+            <span class="formation-label">Location:</span> {{ f.location || '-' }}
+          </div>
+          <div class="formation-right">
+            <span class="formation-label">End Date:</span> {{ f.endDate | date:'yyyy-MM-dd' }}
+          </div>
+        </div>
+
+        <!-- Ligne 3 : PDF + Actions -->
+        <div class="formation-row formation-actions">
+          <div class="formation-left" *ngIf="f.certificateId">
+            <span class="formation-label">Formation PDF:</span>
+            <a [href]="employeeService.getFormationCertificate(f.certificateId)" target="_blank" class="pdf-link">
+              📄 Voir le PDF
+            </a>
+          </div>
+          <div class="formation-right">
+            <button class="delete-btn" (click)="deleteFormation(f.id)" title="Supprimer la formation">
+              🗑️ Supprimer
+            </button>
+          </div>
+        </div>
+
+        <hr class="formation-separator">
+      </li>
+    </ul>
+  </div>
+
+  <!-- Modal d'ajout de formation -->
+  <div class="modal" *ngIf="showFormationModal">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeFormationModal()">&times;</span>
+
+      <h3>Ajouter une Formation</h3>
+
+      <form (ngSubmit)="addFormation($event)">
+        <div class="form-group">
+          <label for="formationName">Libellé de la Formation : <span class="required">*</span></label>
+          <input id="formationName" type="text" [(ngModel)]="newFormation.name" name="name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="formationLocation">Lieu : <span class="required">*</span></label>
+          <input id="formationLocation" type="text" [(ngModel)]="newFormation.location" name="location" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Date de début : <span class="required">*</span></label>
+            <input id="startDate" type="date" [(ngModel)]="newFormation.startDate" name="startDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="endDate">Date de fin : <span class="required">*</span></label>
+            <input id="endDate" type="date" [(ngModel)]="newFormation.endDate" name="endDate" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="certificate">Certificat (PDF) :</label>
+          <input id="certificate" type="file" (change)="onCertificateSelected($event)" accept="application/pdf">
+          <small class="file-info">Format accepté : PDF uniquement</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeFormationModal()">Annuler</button>
+          <button type="submit" class="add-btn"
+                  [disabled]="!newFormation.name || !newFormation.location || !newFormation.startDate || !newFormation.endDate">
+            Créer Formation
+          </button>
+        </div>
+      </form>
+
+      <p *ngIf="formationSuccessMessage" class="success-message">{{ formationSuccessMessage }}</p>
+      <p *ngIf="formationErrorMessage" class="error-message">{{ formationErrorMessage }}</p>
+    </div>
+  </div>
 </div>

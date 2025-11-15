@@ -22,6 +22,20 @@ public class EmployeeDTO {
     private Date hireDate;
     private Double salary;
     private String status;
+    // Nouveaux champs
+    private String cin;
+    private String cnssNumber;
+    private String position;
+    private String address;
+    private String city;
+    private String matricule;
+    private String rib;
+    private String bankName;
+    private Integer workingDays;
+    private Integer actualWorkingDays;
+    private Double transportAllowance;
+    private Double familyAllowance;
+    private Double otherBonuses;
 
     // Keep other getters and setters as they are
     public String getUsername() {

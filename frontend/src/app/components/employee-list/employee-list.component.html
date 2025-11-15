@@ -67,13 +67,14 @@
           {{ emp.status || 'N/A' }}
         </td>
         <td>
-          <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary">
+          <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary me-2">
             <i class="bi bi-eye"></i> Détails
           </button>
           <button (click)="deleteEmployee(emp.id)" class="btn btn-sm btn-danger">
             <i class="bi bi-trash"></i> Supprimer
           </button>
         </td>
+
       </tr>
 
       </tbody>
