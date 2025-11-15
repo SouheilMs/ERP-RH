@@ -5,6 +5,7 @@ import { LoginComponent } from './components/login/login.component';
 import { ResetPasswordComponent } from './components/ResetPassword/reset-password.component';
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
+import { RoleListComponent } from './components/role-list/role-list';
 
 
 export const routes: Routes = [
@@ -13,7 +14,7 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'employees', component: EmployeeListComponent },
   { path: 'employees/:id', component: EmployeeDetailComponent },
-
+  { path: 'roles', component: RoleListComponent },
   { path: '**', redirectTo: '/login'}
 ];
 

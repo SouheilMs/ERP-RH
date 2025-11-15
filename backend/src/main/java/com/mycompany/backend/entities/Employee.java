@@ -1,5 +1,6 @@
 package com.mycompany.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,17 +24,18 @@ public class Employee {
     private String email;
     private String phone;
     private String password;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date hireDate;
+
     private Double salary;
     private String status;
-    private String photoUrl; // URL de la photo
-
+    private String photoUrl;
 
     @DBRef
     private Set<Role> roles = new HashSet<>();
 
-    public Employee() {
-    }
+    public Employee() {}
 
     public Employee(String username, String email, String phone,
                     String password, Date hireDate, Double salary, String status) {

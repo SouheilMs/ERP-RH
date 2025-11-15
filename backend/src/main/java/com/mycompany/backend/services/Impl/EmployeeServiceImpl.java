@@ -54,7 +54,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void deleteEmployee(String id) {
-        employeeRepository.deleteById(String.valueOf(id));
+        employeeRepository.deleteById(id);
     }
 
     @Override
@@ -179,12 +179,14 @@ public ByteArrayOutputStream exportToExcel() throws IOException {
     workbook.close();
     return out;
 }
+
     // Méthode pour stocker la photo d'un employé
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
         try {
+            // Chemin relatif au dossier backend
             Path uploadsDir = Paths.get("backend/uploads");
-            Files.createDirectories(uploadsDir);
+            Files.createDirectories(uploadsDir); // crée le dossier s'il n'existe pas
 
             String fileName = id + "_" + file.getOriginalFilename();
             Path filePath = uploadsDir.resolve(fileName);
@@ -195,6 +197,7 @@ public ByteArrayOutputStream exportToExcel() throws IOException {
             throw new RuntimeException("Erreur lors de l'enregistrement de la photo", e);
         }
     }
+
 
 
 

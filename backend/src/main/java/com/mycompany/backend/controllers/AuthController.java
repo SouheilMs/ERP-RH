@@ -1,6 +1,5 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.entities.ERole;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.payload.request.LoginRequest;
@@ -61,7 +60,7 @@ public class AuthController {
 				.collect(Collectors.toList());
 
 		return ResponseEntity.ok(new JwtResponse(jwt,
-				employeeDetails.getId().toString(), // Convert Long to String for response
+				employeeDetails.getId().toString(),
 				employeeDetails.getUsername(),
 				employeeDetails.getEmail(),
 				roles));
@@ -91,24 +90,24 @@ public class AuthController {
 		Set<Role> roles = new HashSet<>();
 
 		if (strRoles == null) {
-			Role userRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
+			Role userRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
 					.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 			roles.add(userRole);
 		} else {
 			strRoles.forEach(role -> {
 				switch (role) {
 					case "hrManager":
-						Role adminRole = roleRepository.findByName(ERole.ROLE_HRMANAGER)
+						Role adminRole = roleRepository.findByRoleName("ROLE_HRMANAGER")
 								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 						roles.add(adminRole);
 						break;
 					case "hr":
-						Role hrRole = roleRepository.findByName(ERole.ROLE_HR)
+						Role hrRole = roleRepository.findByRoleName("ROLE_HR")
 								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 						roles.add(hrRole);
 						break;
 					default:
-						Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
+						Role employeeRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
 								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 						roles.add(employeeRole);
 				}
@@ -120,7 +119,8 @@ public class AuthController {
 
 		Set<String> roleNames = roles.stream()
 				.map(role -> {
-					String roleName = role.getName().name().toLowerCase(); // Use getName() instead of getRoleName()
+					// Utilisez getRoleName() au lieu de getName().name()
+					String roleName = role.getRoleName().toLowerCase();
 					if (roleName.startsWith("role_")) {
 						roleName = roleName.substring(5);
 					}
