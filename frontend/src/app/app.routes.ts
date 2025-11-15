@@ -5,6 +5,7 @@ import { ResetPasswordComponent } from './components/ResetPassword/reset-passwor
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
+import { RoleListComponent } from './components/role-list/role-list';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -17,9 +18,15 @@ export const routes: Routes = [
     component: DashboardComponent,
     children: [
       { path: '', component: EmployeeListComponent },       // Liste des employés
-      { path: ':id', component: EmployeeDetailComponent }   // Détail d’un employé (toujours en dernier)
+      { path: ':id', component: EmployeeDetailComponent },  // Détail d'un employé
+      { path: 'roles', component: RoleListComponent },      // Liste des rôles
     ]
   },
 
-  { path: '**', redirectTo: '/login' }  // Redirection par défaut
+  // Route directe pour les rôles (si nécessaire)
+  { path: 'roles', component: RoleListComponent },
+
+  // Redirection par défaut
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/login' }
 ];

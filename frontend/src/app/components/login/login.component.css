@@ -51,39 +51,21 @@
   }
 }
 
-/* Carte d'authentification avec scroll si nécessaire */
+/* Carte d'authentification avec hauteur fixe */
 .auth-card {
-  background: rgba(255, 255, 255, 0.863);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-  padding: 38px 30px;
-  width: 40%;
-  max-width: 30%;
+  padding: 35px 40px;
+  margin-bottom: 2%;
+  width: 100%;
+  max-width: 450px;
   position: relative;
   z-index: 2;
   animation: slideIn 0.5s ease-out;
-  margin-bottom: 2%;
-  max-height:85vh;
-  /* overflow-y: auto; */
-}
-
-/* Scrollbar personnalisée pour la carte */
-.auth-card::-webkit-scrollbar {
-  width: 6px;
-}
-
-.auth-card::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.auth-card::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 10px;
-}
-
-.auth-card::-webkit-scrollbar-thumb:hover {
-  background: #764ba2;
+  min-height: 500px; /* Hauteur minimale fixe */
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideIn {
@@ -101,6 +83,7 @@
 .auth-header {
   text-align: center;
   margin-bottom: 40px;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -149,6 +132,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  flex: 1;
+  min-height: 0; /* Important pour le flex */
 }
 
 /* SOLUTION: Réserver l'espace pour les messages d'erreur */
@@ -156,7 +141,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 95px; /* Hauteur fixe pour inclure label + input + erreur */
+  min-height: 80px; /* Hauteur fixe pour chaque groupe */
 }
 
 .form-label {
@@ -177,6 +162,7 @@
   background-color: #f7fafc;
   color: #2d3748;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .form-input::placeholder {
@@ -196,24 +182,23 @@
   animation: shake 0.4s ease;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+/* Container pour les messages d'erreur avec hauteur fixe */
+.error-container {
+  height: 20px; /* Hauteur fixe réservée pour les erreurs */
+  position: relative;
 }
 
-/* Message d'erreur avec hauteur réservée */
 .error-message {
   color: #e53e3e;
   font-size: 13px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 20px; /* Hauteur fixe toujours présente */
-  margin-top: 4px;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 .error-message::before {
@@ -221,10 +206,15 @@
   font-size: 14px;
 }
 
-/* Afficher le message quand la classe .show est ajoutée */
-.error-message.show {
-  opacity: 1;
-  visibility: visible;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Bouton */
@@ -243,6 +233,7 @@
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
 }
 
 .auth-button:hover:not(:disabled) {
@@ -277,9 +268,10 @@
 /* Footer */
 .auth-footer {
   text-align: center;
-  margin-top: 5px;
+  margin-top: auto; /* Pousse le footer vers le bas */
   padding-top: 24px;
   border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .auth-link {
@@ -293,16 +285,11 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
-  .auth-container {
-    padding: 15px;
-  }
-  
+@media (max-width: 768px) {
   .auth-card {
     padding: 36px 24px;
-    max-height: 85vh;
-    width: 100%;
-    max-width: 100%;
+    max-width: 400px;
+    min-height: 480px;
   }
 
   .auth-title {
@@ -316,13 +303,24 @@
   .logo-text {
     font-size: 20px;
   }
+}
 
-  .form-input {
-    width: 100%;
-    padding: 12px 16px;
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 15px;
+  }
+  
+  .auth-card {
+    padding: 32px 20px;
+    max-width: 100%;
+    min-height: 460px;
+  }
+
+  .auth-title {
+    font-size: 26px;
   }
 
   .form-group {
-    min-height: 90px;
+    min-height: 75px;
   }
 }
