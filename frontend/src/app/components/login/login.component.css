@@ -136,6 +136,7 @@
   min-height: 0; /* Important pour le flex */
 }
 
+/* SOLUTION: Réserver l'espace pour les messages d'erreur */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -151,7 +152,7 @@
 }
 
 .form-input {
-  width: 100%;
+  width: 90%;
   padding: 14px 18px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
@@ -178,6 +179,7 @@
 .form-input.error {
   border-color: #f56565;
   background-color: #fff5f5;
+  animation: shake 0.4s ease;
 }
 
 /* Container pour les messages d'erreur avec hauteur fixe */
@@ -227,7 +229,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 8px;
+  margin-top: 1px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);

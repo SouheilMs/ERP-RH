@@ -34,6 +34,12 @@ public interface EmployeeService {
 
     ByteArrayOutputStream exportToExcel() throws IOException;
 
-    String storeEmployeePhoto(String id, MultipartFile file);
+
+
+    // Gestion des fichiers (photos et formations)
+    String storeEmployeePhoto(String id, MultipartFile file); // retourne photoId
+    String storeFormationFile(MultipartFile file);           // retourne URL ou ID du PDF
+    byte[] generatePaySlipPDF(String employeeId) throws Exception; // génère un PDF de bulletin de salaire
 
 }
+

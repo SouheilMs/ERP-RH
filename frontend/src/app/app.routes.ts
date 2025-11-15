@@ -1,26 +1,32 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { SignupComponent } from './components/signup/signup.component';
+import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
+import { SignupComponent } from './components/signup/signup.component';
 import { ResetPasswordComponent } from './components/ResetPassword/reset-password.component';
-import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
+import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { RoleListComponent } from './components/role-list/role-list';
 
-
 export const routes: Routes = [
-  { path: 'signup', component: SignupComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'employees', component: EmployeeListComponent },
-  { path: 'employees/:id', component: EmployeeDetailComponent },
+
+  // Dashboard layout avec children
+  {
+    path: 'employees',
+    component: DashboardComponent,
+    children: [
+      { path: '', component: EmployeeListComponent },       // Liste des employés
+      { path: ':id', component: EmployeeDetailComponent },  // Détail d'un employé
+      { path: 'roles', component: RoleListComponent },      // Liste des rôles
+    ]
+  },
+
+  // Route directe pour les rôles (si nécessaire)
   { path: 'roles', component: RoleListComponent },
-  { path: '**', redirectTo: '/login'}
+
+  // Redirection par défaut
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/login' }
 ];
-
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}
