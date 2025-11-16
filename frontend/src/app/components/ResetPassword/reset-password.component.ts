@@ -1,78 +1,141 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { AuthService, LoginRequest } from '../../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { PasswordResetService } from '../../services/password-reset.service';
 
 @Component({
   selector: 'app-reset-password',
-  standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.css']
+  styleUrls: ['./reset-password.component.css'],
+  imports : [ReactiveFormsModule]
 })
-export class ResetPasswordComponent {
-  resetForm: FormGroup;
+export class ResetPasswordComponent implements OnInit {
+  resetForm!: FormGroup;
   isLoading = false;
-  successMessage = '';
   errorMessage = '';
-  showPassword = false;
+  successMessage = '';
+  token = '';
+  tokenValid = false;
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
+    private passwordResetService: PasswordResetService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    // Get token from URL query parameters
+    this.route.queryParams.subscribe(params => {
+      this.token = params['token'];
+      if (this.token) {
+        this.validateToken();
+      } else {
+        this.errorMessage = 'Invalid reset link. Please request a new password reset.';
+      }
+    });
+
+    this.initForm();
+  }
+
+  private initForm(): void {
     this.resetForm = this.fb.group({
-      username: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, {
+      validators: this.passwordMatchValidator
     });
   }
 
-  onSubmit() {
-    if (this.resetForm.valid) {
+  /**
+   * Custom validator to check if passwords match
+   */
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+
+    if (!password || !confirmPassword) {
+      return null;
+    }
+
+    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+  }
+
+  get email() {
+    return this.resetForm.get('email');
+  }
+
+  get password() {
+    return this.resetForm.get('password');
+  }
+
+  get confirmPassword() {
+    return this.resetForm.get('confirmPassword');
+  }
+
+  /**
+   * Validate the token from URL
+   */
+  private validateToken(): void {
+    this.passwordResetService.validateToken(this.token).subscribe({
+      next: (response) => {
+        this.tokenValid = true;
+        console.log('Token is valid');
+      },
+      error: (error) => {
+        this.tokenValid = false;
+        this.errorMessage = 'This password reset link is invalid or has expired. Please request a new one.';
+        console.error('Token validation error:', error);
+      }
+    });
+  }
+
+  onSubmit(): void {
+    if (this.resetForm.valid && this.tokenValid) {
       this.isLoading = true;
       this.errorMessage = '';
       this.successMessage = '';
 
-      const resetRequest: LoginRequest = this.resetForm.value;
+      const newPassword = this.resetForm.value.password;
 
-      this.authService.resetPassword(resetRequest).subscribe({
+      this.passwordResetService.resetPassword(this.token, newPassword).subscribe({
         next: (response) => {
           this.isLoading = false;
-          this.successMessage = 'Password reset successfully! You can now log in.';
-          setTimeout(() => this.router.navigate(['/login']), 2000);
+          this.successMessage = 'Your password has been reset successfully! Redirecting to login...';
+          this.resetForm.reset();
+
+          // Redirect to login after 2 seconds
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 2000);
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Error resetting password. Please try again.';
+          if (error.status === 400) {
+            this.errorMessage = error.error || 'Invalid or expired token. Please request a new password reset.';
+          } else {
+            this.errorMessage = 'An error occurred while resetting your password. Please try again.';
+          }
+          console.error('Reset password error:', error);
         }
       });
     } else {
-      this.markFormGroupTouched();
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.resetForm.controls).forEach(key => {
+        this.resetForm.get(key)?.markAsTouched();
+      });
+
+      if (!this.tokenValid) {
+        this.errorMessage = 'Invalid or expired reset link.';
+      }
     }
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
+  goToLogin(): void {
+    this.router.navigate(['/login']);
   }
 
-  private markFormGroupTouched() {
-    Object.keys(this.resetForm.controls).forEach(key => {
-      const control = this.resetForm.get(key);
-      control?.markAsTouched();
-    });
-  }
-
-  getErrorMessage(field: string): string {
-    const control = this.resetForm.get(field);
-    if (control?.hasError('required')) {
-      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
-    }
-    if (control?.hasError('minlength')) {
-      const minLength = control.errors?.['minlength']?.requiredLength;
-      return `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${minLength} characters`;
-    }
-    return '';
+  goToForgotPassword(): void {
+    this.router.navigate(['/forgot-password']);
   }
 }
