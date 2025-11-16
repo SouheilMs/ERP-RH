@@ -155,6 +155,42 @@
 }
 
 /* =========================== */
+/* Bouton Payslip Bleu */
+/* =========================== */
+.payslip-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.payslip-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.payslip-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.payslip-btn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========================== */
 /* Ligne salaire SANS bordure */
 /* =========================== */
 .salary-row {
@@ -656,6 +692,67 @@
   margin-top: 10px;
 }
 
+.pdf-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #666;
+  font-style: italic;
+  font-size: 16px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.payslip-modal .modal-content {
+  max-width: 95%;
+  width: 900px;
+  max-height: 95vh;
+}
+
+.payslip-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+}
+
+.pdf-container {
+  flex: 1;
+  min-height: 400px;
+  margin: 15px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Styles pour les boutons PDF */
+.pdf-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  padding: 0;
+}
+
+.pdf-btn:hover {
+  color: #0056b3;
+}
+
+/* Styles pour la modal PDF de formation */
+.formation-pdf-modal .modal-content {
+  max-width: 95%;
+  width: 800px;
+  max-height: 95vh;
+}
+
+.formation-pdf-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+}
+
 /* =========================== */
 /* Responsive */
 /* =========================== */
@@ -754,6 +851,11 @@
   .modal-actions button {
     width: 100%;
   }
+
+  .payslip-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -790,5 +892,109 @@
     width: 40px;
     height: 40px;
     font-size: 16px;
+  }
+
+  .payslip-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  /* =========================== */
+  /* Confirmation Modals */
+  /* =========================== */
+  .confirmation-modal .modal-content {
+    max-width: 450px;
+    text-align: center;
+  }
+
+  .confirmation-message {
+    margin: 20px 0;
+    line-height: 1.6;
+  }
+
+  .confirmation-message p {
+    margin: 10px 0;
+    color: #4a5568;
+  }
+
+  .warning-text {
+    color: #e53e3e !important;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .confirmation-modal .modal-actions {
+    justify-content: center;
+    margin-top: 25px;
+  }
+
+  .confirmation-modal .delete-btn,
+  .confirmation-modal .update-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .confirmation-modal .cancel-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  /* =========================== */
+  /* Success Modals */
+  /* =========================== */
+  .success-modal .modal-content,
+  .error-modal .modal-content {
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .success-icon,
+  .error-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+
+  .success-modal .success-message,
+  .error-modal .error-message {
+    margin: 20px 0;
+    line-height: 1.6;
+  }
+
+  .success-modal .success-message p,
+  .error-modal .error-message p {
+    margin: 10px 0;
+    color: #4a5568;
+    font-size: 16px;
+  }
+
+  .success-btn {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .success-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  }
+
+  .error-modal .modal-content {
+    border-left: 4px solid #e53e3e;
+  }
+
+  .success-modal .modal-content {
+    border-left: 4px solid #48bb78;
+  }
+
+  .success-modal .modal-actions,
+  .error-modal .modal-actions {
+    justify-content: center;
+    margin-top: 20px;
   }
 }
