@@ -1,22 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { EmployeeServices, Employee, Formation } from '../../services/employee.services';
-
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+// Define pipe directly in component
+@Pipe({
+  name: 'safeUrl',
+  standalone: true
+})
+export class SafeUrlPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
+
+  transform(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 }
 
 @Component({
   selector: 'app-employee-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SafeUrlPipe],
   templateUrl: './employee-detail.component.html',
   styleUrls: ['./employee-detail.component.css']
 })
@@ -26,7 +32,7 @@ export class EmployeeDetailComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // Modal formation
+  // Formation modal
   showFormationModal = false;
   newFormation: any = { name: '', location: '', startDate: '', endDate: '' };
   selectedCertificate: File | null = null;
@@ -37,6 +43,29 @@ export class EmployeeDetailComponent implements OnInit {
   selectedPhoto: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
 
+  // Payslip
+  showPayslipModal = false;
+  currentPdfUrl: string | null = null;
+  payslipLoading = false;
+
+  // Formation PDF
+  showFormationPdfModal = false;
+  currentFormationPdfUrl: string | null = null;
+  currentFormationTitle: string = '';
+  formationPdfLoading = false;
+
+  // Confirmation modals
+  showDeleteConfirmation = false;
+  formationToDelete: string | undefined;
+  showUpdateConfirmation = false;
+// Success modals
+  showDeleteSuccess = false;
+  showUploadSuccess = false;
+  showUpdateSuccess = false;
+  showFormationSuccess = false;
+
+// Error modal
+  showErrorModal = false;
   constructor(private route: ActivatedRoute, public employeeService: EmployeeServices) {}
 
   ngOnInit(): void {
@@ -53,7 +82,7 @@ export class EmployeeDetailComponent implements OnInit {
         this.previewUrl = null;
       },
       error: () => {
-        this.errorMessage = "Impossible de récupérer l'employé";
+        this.errorMessage = "Unable to retrieve employee";
         this.loading = false;
       }
     });
@@ -65,7 +94,15 @@ export class EmployeeDetailComponent implements OnInit {
     return 'assets/default-profile.png';
   }
 
-  updateEmployee() {
+  // ================= UPDATE EMPLOYEE WITH CONFIRMATION =================
+  onUpdateSubmit(event: Event) {
+    event.preventDefault();
+    this.showUpdateConfirmation = true;
+  }
+
+  confirmUpdate() {
+    this.showUpdateConfirmation = false;
+
     if (!this.employee?.id) return;
 
     const updatedData: Employee = {
@@ -76,7 +113,7 @@ export class EmployeeDetailComponent implements OnInit {
       status: this.employee.status,
       hireDate: this.employee.hireDate,
 
-      // Nouveaux champs
+      // New fields
       cin: this.employee.cin,
       cnssNumber: this.employee.cnssNumber,
       position: this.employee.position,
@@ -95,15 +132,21 @@ export class EmployeeDetailComponent implements OnInit {
     this.employeeService.updateEmployeeById(this.employee.id, updatedData).subscribe({
       next: (data: Employee) => {
         this.employee = data;
-        this.successMessage = 'Mise à jour réussie !';
+        this.successMessage = 'Update successful!';
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
-        this.errorMessage = 'Erreur lors de la mise à jour.';
+        this.errorMessage = 'Error during update.';
+        setTimeout(() => this.errorMessage = '', 3000);
       }
     });
   }
 
+  cancelUpdate() {
+    this.showUpdateConfirmation = false;
+  }
+
+  // ================= PHOTO UPLOAD =================
   onPhotoSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -123,16 +166,17 @@ export class EmployeeDetailComponent implements OnInit {
       next: (data: Employee) => {
         this.employee = data;
         this.selectedPhoto = null;
-        this.successMessage = "Photo mise à jour avec succès !";
+        this.successMessage = "Photo updated successfully!";
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
-        this.errorMessage = "Erreur lors du téléchargement de la photo.";
+        this.errorMessage = "Error uploading photo.";
         setTimeout(() => this.errorMessage = '', 3000);
       }
     });
   }
 
+  // ================= FORMATION MANAGEMENT =================
   onCertificateSelected(event: any) {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
@@ -140,7 +184,7 @@ export class EmployeeDetailComponent implements OnInit {
       this.formationErrorMessage = '';
     } else {
       this.selectedCertificate = null;
-      this.formationErrorMessage = 'Veuillez sélectionner un fichier PDF.';
+      this.formationErrorMessage = 'Please select a PDF file.';
       setTimeout(() => (this.formationErrorMessage = ''), 3000);
     }
   }
@@ -162,11 +206,11 @@ export class EmployeeDetailComponent implements OnInit {
         if (!this.employee!.formations) this.employee!.formations = [];
         this.employee!.formations.push(formation);
         this.closeFormationModal();
-        this.formationSuccessMessage = 'Formation ajoutée avec succès !';
+        this.formationSuccessMessage = 'Formation added successfully!';
         setTimeout(() => (this.formationSuccessMessage = ''), 3000);
       },
       error: () => {
-        this.formationErrorMessage = 'Erreur lors de l\'ajout de la formation.';
+        this.formationErrorMessage = 'Error adding formation.';
         setTimeout(() => (this.formationErrorMessage = ''), 3000);
       }
     });
@@ -184,66 +228,113 @@ export class EmployeeDetailComponent implements OnInit {
     this.resetFormationModal();
   }
 
+  // ================= DELETE FORMATION WITH CONFIRMATION =================
   deleteFormation(formationId: string | undefined) {
     if (!formationId || !this.employee?.id) return;
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) return;
 
-    this.employeeService.deleteFormation(this.employee.id, formationId).subscribe({
+    this.formationToDelete = formationId;
+    this.showDeleteConfirmation = true;
+  }
+
+  confirmDelete() {
+    if (!this.formationToDelete || !this.employee?.id) return;
+
+    this.employeeService.deleteFormation(this.employee.id, this.formationToDelete).subscribe({
       next: () => {
-        this.employee!.formations = this.employee!.formations?.filter((f: Formation) => f.id !== formationId);
-        this.successMessage = 'Formation supprimée avec succès !';
+        this.employee!.formations = this.employee!.formations?.filter((f: Formation) => f.id !== this.formationToDelete);
+        this.successMessage = 'Formation deleted successfully!';
         setTimeout(() => this.successMessage = '', 3000);
+        this.closeDeleteConfirmation();
       },
       error: () => {
-        this.errorMessage = 'Erreur lors de la suppression de la formation.';
+        this.errorMessage = 'Error deleting formation.';
+        setTimeout(() => this.errorMessage = '', 3000);
+        this.closeDeleteConfirmation();
+      }
+    });
+  }
+
+  cancelDelete() {
+    this.closeDeleteConfirmation();
+  }
+
+  closeDeleteConfirmation() {
+    this.showDeleteConfirmation = false;
+    this.formationToDelete = undefined;
+  }
+
+  // ================= VIEW FORMATION PDF =================
+  viewFormationCertificate(formation: Formation) {
+    if (!formation.certificateId) {
+      alert('No certificate available for this formation');
+      return;
+    }
+
+    this.formationPdfLoading = true;
+    this.currentFormationTitle = `Certificate - ${formation.name}`;
+
+    this.employeeService.getFormationCertificateBlob(formation.certificateId).subscribe({
+      next: (pdfBlob: Blob) => {
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        this.currentFormationPdfUrl = pdfUrl;
+        this.showFormationPdfModal = true;
+        this.formationPdfLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading formation PDF:', err);
+        this.errorMessage = 'Unable to load certificate';
+        this.formationPdfLoading = false;
         setTimeout(() => this.errorMessage = '', 3000);
       }
     });
   }
 
-  // ====================== MÉTHODE CALCUL IRPP ======================
+  printFormationCertificate() {
+    if (!this.currentFormationPdfUrl) return;
 
-  // Méthode pour calculer l'IRPP selon le barème tunisien
-  calculateIRPP(salaireImposable: number): number {
-    let irpp = 0;
-
-    if (salaireImposable <= 5000) {
-      irpp = 0;
-    } else if (salaireImposable <= 20000) {
-      irpp = (salaireImposable - 5000) * 0.26;
-    } else if (salaireImposable <= 30000) {
-      irpp = (15000 * 0.26) + (salaireImposable - 20000) * 0.28;
-    } else if (salaireImposable <= 50000) {
-      irpp = (15000 * 0.26) + (10000 * 0.28) + (salaireImposable - 30000) * 0.32;
-    } else {
-      irpp = (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (salaireImposable - 50000) * 0.35;
-    }
-
-    return irpp;
-  }
-
-  // Méthode pour formater la date
-  formatDate(dateString?: string): string {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fr-FR');
-    } catch (error) {
-      return '-';
+    const printWindow = window.open(this.currentFormationPdfUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
     }
   }
 
-  // ====================== FICHE DE PAIE AVEC TABLEAU ======================
+  onFormationPdfLoad() {
+    console.log('Formation PDF loaded successfully');
+  }
 
-  // ====================== FICHE DE PAIE SANS AUTOTABLE ======================
+  closeFormationPdfModal() {
+    this.showFormationPdfModal = false;
+    if (this.currentFormationPdfUrl) {
+      URL.revokeObjectURL(this.currentFormationPdfUrl);
+      this.currentFormationPdfUrl = null;
+    }
+  }
 
-// ====================== FICHE DE PAIE AVEC VOTRE STRUCTURE ======================
+  downloadFormationCertificate() {
+    if (!this.currentFormationPdfUrl || !this.currentFormationTitle) return;
 
-  // ====================== FICHE DE PAIE AVEC VOTRE STRUCTURE ======================
+    const link = document.createElement('a');
+    link.href = this.currentFormationPdfUrl;
+    link.download = `${this.currentFormationTitle}.pdf`;
+    link.click();
+  }
 
-  downloadPayslipPDF() {
+  // ================= PAYSLIP WITH TABLE =================
+  viewPayslipPDF() {
+    if (!this.employee?.id) {
+      alert('Employee information not yet loaded.');
+      return;
+    }
+
+    this.payslipLoading = true;
+    this.generatePayslipWithTable();
+  }
+
+  generatePayslipWithTable() {
     if (!this.employee) {
-      alert('Les informations de l\'employé ne sont pas encore chargées.');
+      alert('Employee information not yet loaded.');
       return;
     }
 
@@ -253,83 +344,83 @@ export class EmployeeDetailComponent implements OnInit {
       const margin = 20;
       let yPosition = 20;
 
-      // ================= EN-TÊTE =================
+      // ================= HEADER =================
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('FICHE DE PAIE - TUNISIE', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text('PAYSLIP - TUNISIA', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
 
-      // Informations entreprise
+      // Company information
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('ENTREPRISE TUNISIENNE SARL', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text('TUNISIAN COMPANY SARL', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 5;
       doc.text('Avenue Habib Bourguiba - 1002 Tunis', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 5;
-      doc.text('Tél: 71 000 000 - Matricule Fiscal: 12345678/A/M/000', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text('Tel: 71 000 000 - Tax ID: 12345678/A/M/000', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 5;
-      doc.text('Code CNSS: TN12345678 - Numéro Employeur: 987654321', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text('CNSS Code: TN12345678 - Employer Number: 987654321', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
 
-      // Ligne séparatrice
+      // Separator line
       doc.setLineWidth(0.5);
       doc.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 15;
 
-      // ================= INFORMATIONS EMPLOYÉ =================
+      // ================= EMPLOYEE INFORMATION =================
       const currentDate = new Date();
-      const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Période de paie: ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`, margin, yPosition);
+      doc.text(`Pay Period: ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`, margin, yPosition);
       yPosition += 12;
 
-      // Informations employé sur 2 lignes
+      // Employee information on 2 lines
       const col1X = margin;
       const col2X = pageWidth / 2;
 
-      // Ligne 1
+      // Line 1
       doc.setFont('helvetica', 'bold');
-      doc.text('Matricule:', col1X, yPosition);
+      doc.text('Employee ID:', col1X, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text(this.employee.matricule || this.employee.id || '-', col1X + 25, yPosition);
+      doc.text(this.employee.matricule || this.employee.id || '-', col1X + 30, yPosition);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Nom & Prénom:', col2X, yPosition);
+      doc.text('Full Name:', col2X, yPosition);
       doc.setFont('helvetica', 'normal');
       doc.text(this.employee.username || '-', col2X + 30, yPosition);
 
       yPosition += 8;
 
-      // Ligne 2
+      // Line 2
       doc.setFont('helvetica', 'bold');
-      doc.text('CNSS:', col1X, yPosition);
+      doc.text('CNSS Number:', col1X, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text(this.employee.cnssNumber || 'Non renseigné', col1X + 15, yPosition);
+      doc.text(this.employee.cnssNumber || 'Not provided', col1X + 35, yPosition);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Fonction:', col2X, yPosition);
+      doc.text('Position:', col2X, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text(this.employee.position || '-', col2X + 20, yPosition);
+      doc.text(this.employee.status|| '-', col2X + 25, yPosition);
 
       yPosition += 8;
 
-      // Ligne 3
+      // Line 3
       doc.setFont('helvetica', 'bold');
-      doc.text('Date embauche:', col1X, yPosition);
+      doc.text('Hire Date:', col1X, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text(this.formatDate(this.employee.hireDate), col1X + 35, yPosition);
+      doc.text(this.formatDate(this.employee.hireDate), col1X + 30, yPosition);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('N° CIN:', col2X, yPosition);
+      doc.text('ID Number:', col2X, yPosition);
       doc.setFont('helvetica', 'normal');
-      doc.text(this.employee.cin || '-', col2X + 18, yPosition);
+      doc.text(this.employee.cin || '-', col2X + 30, yPosition);
 
       yPosition += 15;
 
-      // ================= CALCULS =================
+      // ================= CALCULATIONS =================
       const baseSalary = this.employee.salary || 0;
       const transport = this.employee.transportAllowance || 0;
       const family = this.employee.familyAllowance || 0;
@@ -345,26 +436,26 @@ export class EmployeeDetailComponent implements OnInit {
       const irpp = this.calculateIRPP(taxableIncome);
       const netAPayer = taxableIncome - irpp;
 
-      // ================= TABLEAU GAINS ET RETENUES =================
+      // ================= EARNINGS AND DEDUCTIONS TABLE =================
       const tableWidth = pageWidth - 2 * margin;
       const colWidth = tableWidth / 2;
       const col1XTable = margin;
       const col2XTable = margin + colWidth;
       const rowHeight = 8;
 
-      // Fonction pour dessiner une ligne de tableau
+      // Function to draw a table row
       const drawRow = (col1Label: string, col1Value: string, col2Label: string, col2Value: string, isHeader: boolean = false) => {
-        // Bordures
+        // Borders
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.1);
 
-        // Colonne 1
+        // Column 1
         doc.rect(col1XTable, yPosition, colWidth, rowHeight);
-        // Colonne 2
+        // Column 2
         doc.rect(col2XTable, yPosition, colWidth, rowHeight);
 
         if (isHeader) {
-          // Fond des en-têtes
+          // Header background
           doc.setFillColor(41, 128, 185);
           doc.rect(col1XTable, yPosition, colWidth, rowHeight, 'F');
           doc.rect(col2XTable, yPosition, colWidth, rowHeight, 'F');
@@ -376,13 +467,13 @@ export class EmployeeDetailComponent implements OnInit {
         } else {
           doc.setTextColor(0, 0, 0);
 
-          // Colonne 1
+          // Column 1
           doc.setFont('helvetica', 'bold');
           doc.text(col1Label, col1XTable + 5, yPosition + 5);
           doc.setFont('helvetica', 'normal');
           doc.text(col1Value, col1XTable + colWidth - 5, yPosition + 5, { align: 'right' });
 
-          // Colonne 2
+          // Column 2
           doc.setFont('helvetica', 'bold');
           doc.text(col2Label, col2XTable + 5, yPosition + 5);
           doc.setFont('helvetica', 'normal');
@@ -392,18 +483,18 @@ export class EmployeeDetailComponent implements OnInit {
         yPosition += rowHeight;
       };
 
-      // Fonction pour dessiner une ligne de total
+      // Function to draw a total row
       const drawTotalRow = (col1Label: string, col1Value: string, col2Label: string, col2Value: string) => {
-        // Bordures
+        // Borders
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.1);
 
-        // Colonne 1
+        // Column 1
         doc.rect(col1XTable, yPosition, colWidth, rowHeight);
-        // Colonne 2
+        // Column 2
         doc.rect(col2XTable, yPosition, colWidth, rowHeight);
 
-        // Fond des totaux
+        // Total background
         doc.setFillColor(240, 248, 255);
         doc.rect(col1XTable, yPosition, colWidth, rowHeight, 'F');
         doc.rect(col2XTable, yPosition, colWidth, rowHeight, 'F');
@@ -411,50 +502,50 @@ export class EmployeeDetailComponent implements OnInit {
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'bold');
 
-        // Colonne 1
+        // Column 1
         doc.text(col1Label, col1XTable + 5, yPosition + 5);
         doc.text(col1Value, col1XTable + colWidth - 5, yPosition + 5, { align: 'right' });
 
-        // Colonne 2
+        // Column 2
         doc.text(col2Label, col2XTable + 5, yPosition + 5);
         doc.text(col2Value, col2XTable + colWidth - 5, yPosition + 5, { align: 'right' });
 
         yPosition += rowHeight;
       };
 
-      // En-têtes du tableau
-      drawRow('GAINS ET AVANTAGES', '', 'RETENUES SOCIALES', '', true);
+      // Table headers
+      drawRow('EARNINGS AND ALLOWANCES', '', 'SOCIAL DEDUCTIONS', '', true);
 
-      // Lignes de données
-      drawRow('Salaire de base', `${baseSalary.toFixed(3)} TND`, 'CNSS (9.18% employé)', `${cnssEmployee.toFixed(3)} TND`);
-      drawRow('Indemnité transport', `${transport.toFixed(3)} TND`, 'Retraite (3.5%)', `${retirement.toFixed(3)} TND`);
-      drawRow('Allocation familiale', `${family.toFixed(3)} TND`, 'Assurance maladie (2%)', `${healthInsurance.toFixed(3)} TND`);
-      drawRow('Autres primes', `${bonuses.toFixed(3)} TND`, 'Impôt sur le revenu (IRPP)', `${irpp.toFixed(3)} TND`);
+      // Data rows
+      drawRow('Base salary', `${baseSalary.toFixed(3)} TND`, 'CNSS (9.18% employee)', `${cnssEmployee.toFixed(3)} TND`);
+      drawRow('Transport allowance', `${transport.toFixed(3)} TND`, 'Retirement (3.5%)', `${retirement.toFixed(3)} TND`);
+      drawRow('Family allowance', `${family.toFixed(3)} TND`, 'Health insurance (2%)', `${healthInsurance.toFixed(3)} TND`);
+      drawRow('Other bonuses', `${bonuses.toFixed(3)} TND`, 'Income tax (IRPP)', `${irpp.toFixed(3)} TND`);
 
-      // Lignes de total
-      drawTotalRow('TOTAL BRUT', `${totalBrut.toFixed(3)} TND`, 'TOTAL RETENUES', `${(totalCotisations + irpp).toFixed(3)} TND`);
+      // Total rows
+      drawTotalRow('TOTAL GROSS', `${totalBrut.toFixed(3)} TND`, 'TOTAL DEDUCTIONS', `${(totalCotisations + irpp).toFixed(3)} TND`);
 
       yPosition += 15;
 
-      // ================= TABLEAU RÉCAPITULATIF =================
-      // Fonction pour le tableau récapitulatif
+      // ================= SUMMARY TABLE =================
+      // Function for summary table
       const drawRecapRow = (label: string, value: string, isHeader: boolean = false, isTotal: boolean = false) => {
         const recapRowHeight = 8;
 
-        // Bordures
+        // Borders
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.1);
         doc.rect(margin, yPosition, tableWidth, recapRowHeight);
 
         if (isHeader) {
-          // Fond en-tête
+          // Header background
           doc.setFillColor(41, 128, 185);
           doc.rect(margin, yPosition, tableWidth, recapRowHeight, 'F');
           doc.setTextColor(255, 255, 255);
           doc.setFont('helvetica', 'bold');
           doc.text(label, pageWidth / 2, yPosition + 5, { align: 'center' });
         } else if (isTotal) {
-          // Fond total
+          // Total background
           doc.setFillColor(200, 230, 201);
           doc.rect(margin, yPosition, tableWidth, recapRowHeight, 'F');
           doc.setTextColor(0, 0, 0);
@@ -472,35 +563,134 @@ export class EmployeeDetailComponent implements OnInit {
         yPosition += recapRowHeight;
       };
 
-      // Tableau récapitulatif
-      drawRecapRow('RÉCAPITULATIF', '', true);
-      drawRecapRow('Salaire brut', `${totalBrut.toFixed(3)} TND`);
-      drawRecapRow('Total retenues sociales', `${totalCotisations.toFixed(3)} TND`);
-      drawRecapRow('Impôt sur le revenu (IRPP)', `${irpp.toFixed(3)} TND`);
-      drawRecapRow('NET À PAYER', `${netAPayer.toFixed(3)} TND`, false, true);
+      // Summary table
+      drawRecapRow('SUMMARY', '', true);
+      drawRecapRow('Gross salary', `${totalBrut.toFixed(3)} TND`);
+      drawRecapRow('Total social deductions', `${totalCotisations.toFixed(3)} TND`);
+      drawRecapRow('Income tax (IRPP)', `${irpp.toFixed(3)} TND`);
+      drawRecapRow('NET PAY', `${netAPayer.toFixed(3)} TND`, false, true);
 
       yPosition += 15;
 
       // ================= SIGNATURES =================
       doc.setFontSize(10);
-      doc.text('Signature employé', margin, yPosition);
-      doc.text('Signature employeur', pageWidth - margin - 50, yPosition);
+      doc.text('Employee signature', margin, yPosition);
+      doc.text('Employer signature', pageWidth - margin - 50, yPosition);
 
       doc.setLineWidth(0.3);
       doc.line(margin, yPosition + 5, margin + 50, yPosition + 5);
       doc.line(pageWidth - margin - 50, yPosition + 5, pageWidth - margin, yPosition + 5);
 
-      // ================= TÉLÉCHARGEMENT =================
-      const fileName = `Fiche_Paie_${this.employee.username || 'Employe'}_${monthNames[currentDate.getMonth()]}_${currentDate.getFullYear()}.pdf`;
-      doc.save(fileName);
+      // ================= CREATE BLOB URL FOR DISPLAY =================
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      this.successMessage = 'Fiche de paie générée avec succès !';
+      // Display in modal
+      this.currentPdfUrl = pdfUrl;
+      this.showPayslipModal = true;
+      this.payslipLoading = false;
+
+      this.successMessage = 'Payslip generated successfully!';
       setTimeout(() => this.successMessage = '', 3000);
 
     } catch (error: any) {
-      console.error('Erreur détaillée:', error);
-      this.errorMessage = 'Erreur lors de la génération de la fiche de paie. Vérifiez la console.';
+      console.error('Detailed error:', error);
+      this.errorMessage = 'Error generating payslip. Check console.';
+      this.payslipLoading = false;
       setTimeout(() => this.errorMessage = '', 5000);
     }
+  }
+
+  // Method to download generated PDF
+  downloadPayslip() {
+    if (!this.currentPdfUrl || !this.employee) return;
+
+    const link = document.createElement('a');
+    link.href = this.currentPdfUrl;
+
+    const currentDate = new Date();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+
+    link.download = `Payslip_${this.employee.username || 'Employee'}_${monthNames[currentDate.getMonth()]}_${currentDate.getFullYear()}.pdf`;
+    link.click();
+  }
+
+  // Method to print
+  printPayslip() {
+    if (!this.currentPdfUrl) return;
+
+    const printWindow = window.open(this.currentPdfUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  }
+
+  // Close modal
+  closePayslipModal() {
+    this.showPayslipModal = false;
+    if (this.currentPdfUrl) {
+      URL.revokeObjectURL(this.currentPdfUrl);
+      this.currentPdfUrl = null;
+    }
+    this.payslipLoading = false;
+  }
+
+  // Method to calculate IRPP according to Tunisian scale
+  calculateIRPP(taxableIncome: number): number {
+    let irpp = 0;
+
+    if (taxableIncome <= 5000) {
+      irpp = 0;
+    } else if (taxableIncome <= 20000) {
+      irpp = (taxableIncome - 5000) * 0.26;
+    } else if (taxableIncome <= 30000) {
+      irpp = (15000 * 0.26) + (taxableIncome - 20000) * 0.28;
+    } else if (taxableIncome <= 50000) {
+      irpp = (15000 * 0.26) + (10000 * 0.28) + (taxableIncome - 30000) * 0.32;
+    } else {
+      irpp = (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (taxableIncome - 50000) * 0.35;
+    }
+
+    return irpp;
+  }
+
+  // Method to format date
+  formatDate(dateString?: string): string {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US');
+    } catch (error) {
+      return '-';
+    }
+  }
+
+  // Method called when PDF is loaded
+  onPdfLoad() {
+    console.log('Payslip PDF loaded successfully');
+  }
+  // ================= SUCCESS MODAL METHODS =================
+  closeDeleteSuccess() {
+    this.showDeleteSuccess = false;
+  }
+
+  closeUploadSuccess() {
+    this.showUploadSuccess = false;
+  }
+
+  closeUpdateSuccess() {
+    this.showUpdateSuccess = false;
+  }
+
+  closeFormationSuccess() {
+    this.showFormationSuccess = false;
+  }
+
+  closeErrorModal() {
+    this.showErrorModal = false;
+    this.errorMessage = '';
   }
 }

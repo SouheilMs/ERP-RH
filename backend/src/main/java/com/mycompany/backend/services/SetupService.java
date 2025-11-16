@@ -16,6 +16,6 @@ public class SetupService {
     }
 
     public boolean hasHRManager() {
-        return employeeRepository.findByEmail("mailakdous2@gmail.com").isPresent();
+        return employeeRepository.findByEmail("sirinerezgui585@gmail.com").isPresent();
     }
 }
