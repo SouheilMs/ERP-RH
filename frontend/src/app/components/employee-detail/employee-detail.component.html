@@ -1,124 +1,131 @@
 <div *ngIf="!loading && employee" class="employee-container">
 
-
-  <!-- Profil Employé -->
+  <!-- Employee Profile -->
   <div class="employee-profile">
     <div class="profile-header">
-      <!-- Photo à gauche -->
+      <!-- Photo on left -->
       <div class="photo-section">
         <div class="photo-wrapper">
           <img class="profile-photo"
                [src]="getPhotoUrl()"
-               alt="Photo Employé">
+               alt="Employee Photo">
         </div>
       </div>
 
-      <!-- Informations à droite -->
-      <!-- Informations à droite -->
+      <!-- Information on right -->
       <div class="profile-info">
         <h2>{{ employee.username }}</h2>
-        <p><strong>Email :</strong> {{ employee.email }}</p>
-        <p><strong>Téléphone :</strong> {{ employee.phone || '-' }}</p>
-        <!-- Ligne Salaire + Bouton - SANS bordure -->
-        <p class="salary-row no-border">
-          <strong>Salaire :</strong>
-          <!-- BOUTON FICHE DE PAIE -->
-          <button class="download-btn" (click)="downloadPayslipPDF()">
-            fiche de paie
-          </button>
-        </p>
-        <p><strong>Status :</strong> {{ employee.status || '-' }}</p>
-        <p><strong>Date d'embauche :</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
+        <p><strong>Email:</strong> {{ employee.email }}</p>
+        <p><strong>Phone:</strong> {{ employee.phone || '-' }}</p>
+        <p><strong>Status:</strong> {{ employee.status || '-' }}</p>
+        <p><strong>Hire Date:</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
       </div>
-
+      <button class="payslip-btn" (click)="viewPayslipPDF()" [disabled]="payslipLoading">
+        📄 {{ payslipLoading ? 'Generating...' : 'View Payslip' }}
+      </button>
+    </div>
   </div>
 
-
-  </div>
-
-  <!-- Le reste du code reste inchangé -->
-  <!-- Formulaire de modification -->
+  <!-- Modification form -->
   <div class="employee-form">
-    <h3>Modifier les informations</h3>
-    <form (ngSubmit)="updateEmployee()">
+    <h3>Update Information</h3>
+    <form (ngSubmit)="onUpdateSubmit($event)">
       <div class="form-row">
         <div class="form-group">
-          <label for="username">Nom :</label>
+          <label for="matricule">Matricule:</label>
+          <input id="matricule" type="text" [(ngModel)]="employee.matricule" name="matricule">
+        </div>
+        <div class="form-group">
+          <label for="username">Name:</label>
           <input id="username" type="text" [(ngModel)]="employee.username" name="username" required>
         </div>
-        <div class="form-group">
-          <label for="email">Email :</label>
-          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
-        </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="phone">Téléphone :</label>
-          <input id="phone" type="text" [(ngModel)]="employee.phone" name="phone">
+          <label for="email">Email:</label>
+          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
         </div>
-
         <div class="form-group">
-          <label for="salary">Salaire :</label>
+          <label for="salary">Salary:</label>
           <input id="salary" type="number" [(ngModel)]="employee.salary" name="salary" min="0">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="status">Status :</label>
+          <label for="status">Status:</label>
           <input id="status" type="text" [(ngModel)]="employee.status" name="status">
         </div>
         <div class="form-group">
-          <label for="hireDate">Date d'embauche :</label>
+          <label for="hireDate">Hire Date:</label>
           <input id="hireDate" type="date" [(ngModel)]="employee.hireDate" name="hireDate">
         </div>
       </div>
 
-      <!-- Section Changer la photo dans le formulaire -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Phone:</label>
+          <input id="phone" type="text" [(ngModel)]="employee.phone" name="phone">
+        </div>
+        <div class="form-group">
+          <label for="rib">RIB:</label>
+          <input id="rib" type="text" [(ngModel)]="employee.rib" name="rib">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cin">CIN:</label>
+          <input id="cin" type="text" [(ngModel)]="employee.cin" name="cin">
+        </div>
+        <div class="form-group">
+          <label for="cnssNumber">CNSS Number:</label>
+          <input id="cnssNumber" type="text" [(ngModel)]="employee.cnssNumber" name="cnssNumber">
+        </div>
+      </div>
+
+      <!-- Change photo section in form -->
       <div class="photo-upload-section">
-        <h4>Changer la photo de profil</h4>
+        <h4>Change Profile Photo</h4>
         <div class="photo-upload-form">
           <input type="file" (change)="onPhotoSelected($event)" accept="image/*">
           <button type="button" (click)="uploadPhoto()" [disabled]="!selectedPhoto" class="upload-photo-btn">
             Upload Photo
           </button>
         </div>
-        <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
-        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
       </div>
 
-      <button type="submit" class="update-btn">Modifier les informations</button>
+      <button type="submit" class="update-btn">Update Information</button>
     </form>
   </div>
 
-  <!-- Container des Formations -->
+  <!-- Formations Container -->
   <div class="formation-container">
     <h3 class="formation-title">
       Formations
-      <button class="icon-btn" (click)="showFormationModal = true" title="Ajouter une formation">&#10010;</button>
+      <button class="icon-btn" (click)="showFormationModal = true" title="Add formation">&#10010;</button>
     </h3>
 
-    <!-- Message si pas de formations -->
+    <!-- Message if no formations -->
     <div *ngIf="!employee.formations || employee.formations.length === 0" class="no-formations">
-      Aucune formation ajoutée pour le moment.
+      No formations added yet.
     </div>
 
-    <!-- Liste Formations -->
+    <!-- Formations List -->
     <ul class="formation-list" *ngIf="employee.formations && employee.formations.length > 0">
       <li *ngFor="let f of employee.formations" class="formation-item">
-
-        <!-- Ligne 1 : Nom + Start Date -->
+        <!-- Line 1: Name + Start Date -->
         <div class="formation-row">
           <div class="formation-left">
-            <span class="formation-label">Nom de la formation:</span> {{ f.name }}
+            <span class="formation-label">Formation Name:</span> {{ f.name }}
           </div>
           <div class="formation-right">
             <span class="formation-label">Start Date:</span> {{ f.startDate | date:'yyyy-MM-dd' }}
           </div>
         </div>
 
-        <!-- Ligne 2 : Location + End Date -->
+        <!-- Line 2: Location + End Date -->
         <div class="formation-row">
           <div class="formation-left">
             <span class="formation-label">Location:</span> {{ f.location || '-' }}
@@ -128,17 +135,17 @@
           </div>
         </div>
 
-        <!-- Ligne 3 : PDF + Actions -->
+        <!-- Line 3: PDF + Actions -->
         <div class="formation-row formation-actions">
           <div class="formation-left" *ngIf="f.certificateId">
             <span class="formation-label">Formation PDF:</span>
-            <a [href]="employeeService.getFormationCertificate(f.certificateId)" target="_blank" class="pdf-link">
-              📄 Voir le PDF
-            </a>
+            <button class="pdf-btn" (click)="viewFormationCertificate(f)" title="View certificate">
+              📄 View PDF
+            </button>
           </div>
           <div class="formation-right">
-            <button class="delete-btn" (click)="deleteFormation(f.id)" title="Supprimer la formation">
-              🗑️ Supprimer
+            <button class="delete-btn" (click)="deleteFormation(f.id)" title="Delete formation">
+              🗑️ Delete
             </button>
           </div>
         </div>
@@ -148,53 +155,214 @@
     </ul>
   </div>
 
-  <!-- Modal d'ajout de formation -->
+  <!-- Modal to display formation PDF -->
+  <div class="modal formation-pdf-modal" *ngIf="showFormationPdfModal">
+    <div class="modal-content formation-pdf-modal-content">
+      <span class="close-btn" (click)="closeFormationPdfModal()">&times;</span>
+      <h3>{{ currentFormationTitle }}</h3>
+      <div class="pdf-container">
+        <iframe
+          *ngIf="currentFormationPdfUrl"
+          [src]="currentFormationPdfUrl | safeUrl"
+          width="100%"
+          height="600px"
+          style="border: none;"
+          (load)="onFormationPdfLoad()">
+        </iframe>
+        <div *ngIf="!currentFormationPdfUrl && formationPdfLoading" class="pdf-loading">
+          ⏳ Loading certificate...
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="download-btn" (click)="downloadFormationCertificate()" *ngIf="currentFormationPdfUrl">
+          📥 Download
+        </button>
+        <button class="print-btn" (click)="printFormationCertificate()" *ngIf="currentFormationPdfUrl">
+          🖨️ Print
+        </button>
+        <button class="cancel-btn" (click)="closeFormationPdfModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add formation modal -->
   <div class="modal" *ngIf="showFormationModal">
     <div class="modal-content">
       <span class="close-btn" (click)="closeFormationModal()">&times;</span>
-
-      <h3>Ajouter une Formation</h3>
-
+      <h3>Add Formation</h3>
       <form (ngSubmit)="addFormation($event)">
         <div class="form-group">
-          <label for="formationName">Libellé de la Formation : <span class="required">*</span></label>
+          <label for="formationName">Formation Name: <span class="required">*</span></label>
           <input id="formationName" type="text" [(ngModel)]="newFormation.name" name="name" required>
         </div>
-
         <div class="form-group">
-          <label for="formationLocation">Lieu : <span class="required">*</span></label>
+          <label for="formationLocation">Location: <span class="required">*</span></label>
           <input id="formationLocation" type="text" [(ngModel)]="newFormation.location" name="location" required>
         </div>
-
         <div class="form-row">
           <div class="form-group">
-            <label for="startDate">Date de début : <span class="required">*</span></label>
+            <label for="startDate">Start Date: <span class="required">*</span></label>
             <input id="startDate" type="date" [(ngModel)]="newFormation.startDate" name="startDate" required>
           </div>
-
           <div class="form-group">
-            <label for="endDate">Date de fin : <span class="required">*</span></label>
+            <label for="endDate">End Date: <span class="required">*</span></label>
             <input id="endDate" type="date" [(ngModel)]="newFormation.endDate" name="endDate" required>
           </div>
         </div>
-
         <div class="form-group">
-          <label for="certificate">Certificat (PDF) :</label>
+          <label for="certificate">Certificate (PDF):</label>
           <input id="certificate" type="file" (change)="onCertificateSelected($event)" accept="application/pdf">
-          <small class="file-info">Format accepté : PDF uniquement</small>
+          <small class="file-info">Accepted format: PDF only</small>
         </div>
-
         <div class="modal-actions">
-          <button type="button" class="cancel-btn" (click)="closeFormationModal()">Annuler</button>
+          <button type="button" class="cancel-btn" (click)="closeFormationModal()">Cancel</button>
           <button type="submit" class="add-btn"
                   [disabled]="!newFormation.name || !newFormation.location || !newFormation.startDate || !newFormation.endDate">
-            Créer Formation
+            Create Formation
           </button>
         </div>
       </form>
-
-      <p *ngIf="formationSuccessMessage" class="success-message">{{ formationSuccessMessage }}</p>
       <p *ngIf="formationErrorMessage" class="error-message">{{ formationErrorMessage }}</p>
+    </div>
+  </div>
+
+  <!-- Modal to display payslip -->
+  <div class="modal payslip-modal" *ngIf="showPayslipModal">
+    <div class="modal-content payslip-modal-content">
+      <span class="close-btn" (click)="closePayslipModal()">&times;</span>
+      <h3>Payslip - {{ employee?.username }}</h3>
+      <div class="pdf-container">
+        <iframe
+          *ngIf="currentPdfUrl"
+          [src]="currentPdfUrl | safeUrl"
+          width="100%"
+          height="600px"
+          style="border: none;"
+          (load)="onPdfLoad()">
+        </iframe>
+        <div *ngIf="!currentPdfUrl && payslipLoading" class="pdf-loading">
+          ⏳ Generating payslip...
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="download-btn" (click)="downloadPayslip()" *ngIf="currentPdfUrl">
+          📥 Download
+        </button>
+        <button class="print-btn" (click)="printPayslip()" *ngIf="currentPdfUrl">
+          🖨️ Print
+        </button>
+        <button class="cancel-btn" (click)="closePayslipModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal for Delete Formation -->
+  <div class="modal confirmation-modal" *ngIf="showDeleteConfirmation">
+    <div class="modal-content">
+      <span class="close-btn" (click)="cancelDelete()">&times;</span>
+      <h3>Confirm Deletion</h3>
+      <div class="confirmation-message">
+        <p>Are you sure you want to delete this formation?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="cancelDelete()">Cancel</button>
+        <button type="button" class="delete-btn" (click)="confirmDelete()">
+          🗑️ Delete Formation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal for Update Employee -->
+  <div class="modal confirmation-modal" *ngIf="showUpdateConfirmation">
+    <div class="modal-content">
+      <span class="close-btn" (click)="cancelUpdate()">&times;</span>
+      <h3>Confirm Update</h3>
+      <div class="confirmation-message">
+        <p>Are you sure you want to update this employee's information?</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="cancelUpdate()">Cancel</button>
+        <button type="button" class="update-btn" (click)="confirmUpdate()">
+          ✓ Update Information
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Delete Formation -->
+  <div class="modal success-modal" *ngIf="showDeleteSuccess">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeDeleteSuccess()">&times;</span>
+      <div class="success-icon">✅</div>
+      <h3>Success!</h3>
+      <div class="success-message">
+        <p>Formation deleted successfully!</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="success-btn" (click)="closeDeleteSuccess()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Photo Upload -->
+  <div class="modal success-modal" *ngIf="showUploadSuccess">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeUploadSuccess()">&times;</span>
+      <div class="success-icon">✅</div>
+      <h3>Success!</h3>
+      <div class="success-message">
+        <p>Photo uploaded successfully!</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="success-btn" (click)="closeUploadSuccess()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Update Employee -->
+  <div class="modal success-modal" *ngIf="showUpdateSuccess">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeUpdateSuccess()">&times;</span>
+      <div class="success-icon">✅</div>
+      <h3>Success!</h3>
+      <div class="success-message">
+        <p>Employee information updated successfully!</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="success-btn" (click)="closeUpdateSuccess()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Formation Added -->
+  <div class="modal success-modal" *ngIf="showFormationSuccess">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeFormationSuccess()">&times;</span>
+      <div class="success-icon">✅</div>
+      <h3>Success!</h3>
+      <div class="success-message">
+        <p>Formation added successfully!</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="success-btn" (click)="closeFormationSuccess()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal error-modal" *ngIf="showErrorModal">
+    <div class="modal-content">
+      <span class="close-btn" (click)="closeErrorModal()">&times;</span>
+      <div class="error-icon">❌</div>
+      <h3>Error</h3>
+      <div class="error-message">
+        <p>{{ errorMessage }}</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" (click)="closeErrorModal()">OK</button>
+      </div>
     </div>
   </div>
 </div>

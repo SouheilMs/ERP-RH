@@ -212,19 +212,25 @@ public class EmployeeController {
 
         return ResponseEntity.ok(savedFormation);
     }
-
-
-    // Récupérer le certificat PDF par ID
+// Récupérer le certificat de formation (PDF) par ID
     @GetMapping("/formations/certificate/{id}")
     public ResponseEntity<byte[]> getFormationCertificate(@PathVariable String id) throws IOException {
         GridFsResource resource = gridFsService.getFile(id);
         byte[] data = resource.getInputStream().readAllBytes();
 
-        return ResponseEntity.ok()
-                .header("Content-Disposition", "inline; filename=\"" + resource.getFilename() + "\"")
-                .contentType(MediaType.parseMediaType(resource.getContentType()))
-                .body(data);
+        // En-têtes pour afficher dans le navigateur
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(resource.getContentType()));
+        headers.setContentLength(data.length);
+        headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
+
+        // En-têtes de sécurité
+        headers.set("X-Content-Type-Options", "nosniff");
+        headers.set("X-Frame-Options", "SAMEORIGIN");
+
+        return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
+
     // Supprimer une formation et son PDF
     @DeleteMapping("/{employeeId}/formations/{formationId}")
     public ResponseEntity<String> deleteFormation(
@@ -268,10 +274,17 @@ public class EmployeeController {
     public ResponseEntity<byte[]> generatePaySlip(@PathVariable String id) {
         try {
             byte[] pdf = employeeService.generatePaySlipPDF(id);
-            return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=fiche_paie_" + id + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(pdf);
+
+            // En-têtes pour afficher dans le navigateur plutôt que téléchargement
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(ContentDisposition.inline().filename("fiche_paie_" + id + ".pdf").build());
+
+            // En-têtes de sécurité
+            headers.set("X-Content-Type-Options", "nosniff");
+            headers.set("X-Frame-Options", "SAMEORIGIN");
+
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

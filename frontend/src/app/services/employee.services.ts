@@ -24,7 +24,7 @@ export interface Employee {
   photoId?: string;
   formations?: Formation[];
 
-  // Nouveaux champs pour fiche de paie tunisienne
+  // New fields for Tunisian payslip
   cin?: string;
   cnssNumber?: string;
   position?: string;
@@ -48,20 +48,13 @@ export class EmployeeServices {
 
   constructor(private http: HttpClient) {}
 
-  // ================= EMPLOYÉ =================
+  // ================= EMPLOYEE =================
   getAllEmployees(): Observable<Employee[]> {
     return this.http.get<Employee[]>(this.apiUrl);
   }
 
   getEmployeeById(id: string): Observable<Employee> {
     return this.http.get<Employee>(`${this.apiUrl}/${id}`);
-  }
-
-  // ================= BULLETIN DE PAIE =================
-  downloadPayslip(employeeId: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${employeeId}/payslip`, {
-      responseType: 'blob',
-    });
   }
 
   createEmployee(employee: Employee): Observable<Employee> {
@@ -94,9 +87,31 @@ export class EmployeeServices {
     return `${this.apiUrl}/formations/certificate/${certificateId}`;
   }
 
-  // ================= SUPPRESSION FORMATION =================
   deleteFormation(employeeId: string, formationId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${employeeId}/formations/${formationId}`, { responseType: 'text' });
+  }
+  // Dans EmployeeServices, ajoutez cette méthode
+  getFormationCertificateBlob(certificateId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/formations/certificate/${certificateId}`, {
+      responseType: 'blob',
+      headers: {
+        'Accept': 'application/pdf'
+      }
+    });
+  }
+
+  // ================= PAYSLIP =================
+  getPayslipPDF(employeeId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${employeeId}/payslip`, {
+      responseType: 'blob',
+      headers: {
+        'Accept': 'application/pdf'
+      }
+    });
+  }
+
+  openPayslipInApp(employeeId: string): Observable<Blob> {
+    return this.getPayslipPDF(employeeId);
   }
 
   // ================= EXPORT / IMPORT EXCEL =================
@@ -107,7 +122,7 @@ export class EmployeeServices {
   downloadEmployeesExcel(): void {
     this.exportEmployees().subscribe({
       next: (res: Blob) => saveAs(res, 'employees.xlsx'),
-      error: (err: any) => console.error("Erreur export Excel :", err)
+      error: (err: any) => console.error("Excel export error:", err)
     });
   }
 

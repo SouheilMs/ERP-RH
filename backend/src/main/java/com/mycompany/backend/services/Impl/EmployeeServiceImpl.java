@@ -162,7 +162,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         cell.setCellType(CellType.STRING);
         return cell.getStringCellValue();
     }
-
+//  exportToExcel avec des en-têtes étendues
     @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
         List<Employee> employees = employeeRepository.findAll();
@@ -200,7 +200,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         workbook.close();
         return out;
     }
-
+// Gestion des fichiers (photos et formations)
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
         try {
@@ -209,7 +209,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Erreur GridFS", e);
         }
     }
-
+// Génération du PDF du bulletin de salaire
     @Override
     public String storeFormationFile(MultipartFile file) {
         try {
@@ -218,7 +218,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Erreur lors de l'enregistrement du fichier formation", e);
         }
     }
-
+// Génération du PDF du bulletin de salaire
     @Override
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
         Employee emp = employeeRepository.findById(employeeId)
