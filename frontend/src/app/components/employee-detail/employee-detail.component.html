@@ -140,12 +140,12 @@
           <div class="formation-left" *ngIf="f.certificateId">
             <span class="formation-label">Formation PDF:</span>
             <button class="pdf-btn" (click)="viewFormationCertificate(f)" title="View certificate">
-              📄 View PDF
+              View PDF
             </button>
           </div>
           <div class="formation-right">
             <button class="delete-btn" (click)="deleteFormation(f.id)" title="Delete formation">
-              🗑️ Delete
+               Delete
             </button>
           </div>
         </div>
@@ -170,18 +170,10 @@
           (load)="onFormationPdfLoad()">
         </iframe>
         <div *ngIf="!currentFormationPdfUrl && formationPdfLoading" class="pdf-loading">
-          ⏳ Loading certificate...
+           Loading certificate...
         </div>
       </div>
-      <div class="modal-actions">
-        <button class="download-btn" (click)="downloadFormationCertificate()" *ngIf="currentFormationPdfUrl">
-          📥 Download
-        </button>
-        <button class="print-btn" (click)="printFormationCertificate()" *ngIf="currentFormationPdfUrl">
-          🖨️ Print
-        </button>
-        <button class="cancel-btn" (click)="closeFormationPdfModal()">Close</button>
-      </div>
+
     </div>
   </div>
 
@@ -244,15 +236,7 @@
           ⏳ Generating payslip...
         </div>
       </div>
-      <div class="modal-actions">
-        <button class="download-btn" (click)="downloadPayslip()" *ngIf="currentPdfUrl">
-          📥 Download
-        </button>
-        <button class="print-btn" (click)="printPayslip()" *ngIf="currentPdfUrl">
-          🖨️ Print
-        </button>
-        <button class="cancel-btn" (click)="closePayslipModal()">Close</button>
-      </div>
+
     </div>
   </div>
 

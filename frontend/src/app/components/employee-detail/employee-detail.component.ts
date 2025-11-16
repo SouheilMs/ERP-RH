@@ -289,16 +289,7 @@ export class EmployeeDetailComponent implements OnInit {
     });
   }
 
-  printFormationCertificate() {
-    if (!this.currentFormationPdfUrl) return;
 
-    const printWindow = window.open(this.currentFormationPdfUrl, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-    }
-  }
 
   onFormationPdfLoad() {
     console.log('Formation PDF loaded successfully');
@@ -601,32 +592,9 @@ export class EmployeeDetailComponent implements OnInit {
     }
   }
 
-  // Method to download generated PDF
-  downloadPayslip() {
-    if (!this.currentPdfUrl || !this.employee) return;
 
-    const link = document.createElement('a');
-    link.href = this.currentPdfUrl;
 
-    const currentDate = new Date();
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
 
-    link.download = `Payslip_${this.employee.username || 'Employee'}_${monthNames[currentDate.getMonth()]}_${currentDate.getFullYear()}.pdf`;
-    link.click();
-  }
-
-  // Method to print
-  printPayslip() {
-    if (!this.currentPdfUrl) return;
-
-    const printWindow = window.open(this.currentPdfUrl, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-    }
-  }
 
   // Close modal
   closePayslipModal() {
