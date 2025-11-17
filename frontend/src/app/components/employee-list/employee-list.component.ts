@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 import { EmployeeServices, Employee } from '../../services/employee.services';
 import { saveAs } from 'file-saver';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {AddEmployeeComponent} from '../add-employee/add-employee.component';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, AddEmployeeComponent],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })
@@ -19,6 +20,8 @@ export class EmployeeListComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  filteredEmployees: any[] = [];
+  showAdd = false;
 
   constructor(
     private employeeService: EmployeeServices,
@@ -47,13 +50,23 @@ export class EmployeeListComponent implements OnInit {
     });
   }
 
-  // Filtrage par nom ou email
-  filterEmployees(): Employee[] {
+
+  // Filtrer les employés
+  filterEmployees(): void {
+    if (!this.searchTerm) {
+      this.filteredEmployees = [...this.employees];
+      return;
+    }
+
     const term = this.searchTerm.toLowerCase();
-    return this.employees.filter(
-      e => e.username.toLowerCase().includes(term) || e.email.toLowerCase().includes(term)
+    this.filteredEmployees = this.employees.filter(emp =>
+      emp.username?.toLowerCase().includes(term) ||
+      emp.email?.toLowerCase().includes(term) ||
+      emp.phone?.toLowerCase().includes(term) ||
+      emp.status?.toLowerCase().includes(term)
     );
   }
+
 
   // Export Excel
   exportExcel(): void {
@@ -81,6 +94,7 @@ export class EmployeeListComponent implements OnInit {
       }
     });
   }
+
 
   // Supprimer un employé
   deleteEmployee(id: string | undefined): void {
