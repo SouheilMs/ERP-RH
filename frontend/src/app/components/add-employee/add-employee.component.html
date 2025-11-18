@@ -1,0 +1,40 @@
+<!-- Modal -->
+<div *ngIf="isOpen" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add Employee</h2>
+      <button (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <form (ngSubmit)="saveEmployee()">
+        <label>Full Name</label>
+        <input type="text" [(ngModel)]="employee.username" name="username" required />
+
+        <label>Email</label>
+        <input type="email" [(ngModel)]="employee.email" name="email" required />
+
+        <label>Password</label>
+        <input type="password" [(ngModel)]="employee.password" name="password" required />
+
+        <label>Phone Number</label>
+        <input type="text" [(ngModel)]="employee.phone" name="phone" />
+
+        <label>Status</label>
+        <select [(ngModel)]="employee.status" name="status">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+
+        <div class="modal-actions">
+          <button type="button" (click)="closeModal()">Cancel</button>
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

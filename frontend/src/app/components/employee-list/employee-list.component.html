@@ -8,18 +8,30 @@
     <div class="stat-card employee-count">
       <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
       <div class="stat-number">{{ employees.length }}</div>
-      <div class="stat-label">Employés</div>
+      <div class="stat-label">Employees</div>
     </div>
 
     <div class="stat-card empty-card">
-      <div class="empty-card-content"><i class="bi bi-graph-up"></i><span>Statistique 2</span></div>
+      <div class="empty-card-content"><i class="bi bi-graph-up"></i>
+        <div class="stat-number">{{ filteredEmployees.length }}</div>
+        <span>Employees Number by search</span></div>
+
     </div>
 
     <div class="stat-card empty-card">
       <div class="empty-card-content"><i class="bi bi-calendar-check"></i><span>Statistique 3</span></div>
     </div>
   </div>
-
+  <!-- Champ de recherche -->
+  <div class="search-container" style="margin-bottom: 2rem;">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="filterEmployees()"
+      placeholder="Rechercher par nom, email, téléphone ou statut..."
+      class="form-control"
+      style="max-width: 400px; padding: 0.75rem; border-radius: 10px; border: 2px solid #e9ecef;">
+  </div>
   <!-- Boutons d'action -->
   <div class="action-buttons-container">
     <label class="action-btn import-btn">
@@ -29,15 +41,19 @@
     <button class="action-btn export-btn" (click)="exportExcel()">
       <i class="bi bi-download"></i> Exporter
     </button>
-    <button class="action-btn add-btn">
-      <i class="bi bi-plus-circle"></i> Ajouter Employé
+    <!-- Ajoutez la classe action-btn ici -->
+    <button class="action-btn add-btn" (click)="showAdd = true">
+      <i class="bi bi-plus-circle"></i> Add Employee
     </button>
+
+    <app-add-employee *ngIf="showAdd" (closeModalEvent)="showAdd = false"></app-add-employee>
   </div>
 
-  <!-- État de chargement -->
+
+    <!-- État de chargement -->
   <div *ngIf="loading" class="loading-state">
     <div class="spinner"></div>
-    <div>Chargement des employés...</div>
+    <div>Loading Employees...</div>
   </div>
 
   <!-- Messages -->
@@ -48,19 +64,20 @@
     <i class="bi bi-check-circle"></i> {{ successMessage }}
   </div>
 
+  <div *ngIf="!loading && (employees.length > 0 || (searchTerm && filteredEmployees.length > 0))" class="table-container">
   <!-- Tableau -->
   <div *ngIf="!loading && employees.length > 0" class="table-container">
     <table class="employee-table">
       <thead>
       <tr>
-        <th>Nom d'Employé</th>
+        <th>Employees Name</th>
         <th>Email</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let emp of employees; trackBy: trackByEmployeeId">
+      <tr *ngFor="let emp of (searchTerm ? filteredEmployees : employees)">
         <td>{{ emp.username }}</td>
         <td>{{ emp.email }}</td>
         <td [class]="'status status-' + (emp.status?.toLowerCase() || 'na')">
@@ -68,10 +85,10 @@
         </td>
         <td>
           <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary me-2">
-            <i class="bi bi-eye"></i> Détails
+            <i class="bi bi-eye"></i> Details
           </button>
           <button (click)="deleteEmployee(emp.id)" class="btn btn-sm btn-danger">
-            <i class="bi bi-trash"></i> Supprimer
+            <i class="bi bi-trash"></i> Delete
           </button>
         </td>
 
@@ -87,4 +104,5 @@
     <h3>Aucun employé trouvé</h3>
     <p>Commencez par importer un fichier Excel pour ajouter des employés.</p>
   </div>
+</div>
 </div>
