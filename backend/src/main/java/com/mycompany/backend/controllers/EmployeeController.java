@@ -2,12 +2,13 @@ package com.mycompany.backend.controllers;
 
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
+import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.formation;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
+import com.mycompany.backend.repositories.PayslipRepository;
 import com.mycompany.backend.services.EmployeeService;
 import com.mycompany.backend.services.GridFsService;
-import com.mycompany.backend.services.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.*;
@@ -19,8 +20,8 @@ import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -34,23 +35,20 @@ public class EmployeeController {
     private FormationRepository formationRepository;
 
     @Autowired
-    private EmployeeService employeeService;
+    private PayslipRepository payslipRepository;
 
     @Autowired
-    private StorageService storageService;
+    private EmployeeService employeeService;
 
     @Autowired
     private GridFsService gridFsService;
 
     // -------------------- EMPLOYÉ --------------------
-
-    // Liste tous les employés
     @GetMapping
     public ResponseEntity<List<Employee>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
-    // Récupérer un employé par ID
     @GetMapping("/{id}")
     public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
         return employeeService.getEmployeeById(id)
@@ -58,14 +56,12 @@ public class EmployeeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Créer un employé
     @PostMapping("/Add-employee")
     public ResponseEntity<?> registerNewEmployee(@RequestBody @Valid EmployeeDTO employeeDTO,
                                                  final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
 
-    // Mettre à jour un employé
     @PutMapping("/{id}")
     public ResponseEntity<Employee> updateEmployee(@PathVariable String id,
                                                    @RequestBody Employee employeeDetails) {
@@ -98,7 +94,6 @@ public class EmployeeController {
         return ResponseEntity.ok(updated);
     }
 
-    // Supprimer un employé
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteEmployee(@PathVariable String id) {
         employeeService.deleteEmployee(id);
@@ -106,36 +101,27 @@ public class EmployeeController {
     }
 
     // -------------------- PHOTO --------------------
-
-    // Upload photo
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<Employee> uploadPhoto(@PathVariable String id,
                                                 @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
-            // Supprimer l'ancienne photo si elle existe
             if (employee.getPhotoId() != null) {
                 gridFsService.deleteFile(employee.getPhotoId());
             }
 
-            // Stocker la nouvelle photo dans GridFS
             String photoId = employeeService.storeEmployeePhoto(id, file);
             employee.setPhotoId(photoId);
-
-            // Sauvegarder l'employé dans MongoDB pour que tous les binômes voient le changement
             employeeRepository.save(employee);
 
             return ResponseEntity.ok(employee);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erreur upload photo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
-
-
-    // Get employee photo by employee ID
     @GetMapping("/{id}/photo")
     public ResponseEntity<byte[]> getEmployeePhoto(@PathVariable String id) throws IOException {
         Employee emp = employeeRepository.findById(id)
@@ -152,7 +138,6 @@ public class EmployeeController {
     }
 
     // -------------------- EXPORT / IMPORT --------------------
-
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportEmployees() throws IOException {
         ByteArrayOutputStream out = employeeService.exportToExcel();
@@ -173,7 +158,8 @@ public class EmployeeController {
                     .body("Erreur lors de l'import : " + e.getMessage());
         }
     }
-// -------------------- FORMATION --------------------
+
+    // -------------------- FORMATION --------------------
     @PostMapping("/{id}/formations")
     public ResponseEntity<formation> addFormation(
             @PathVariable String id,
@@ -194,102 +180,247 @@ public class EmployeeController {
         f.setEmployee(emp);
 
         if (certificate != null && !certificate.isEmpty()) {
-            // Supprimer ancien certificat si déjà existant (optionnel)
             if(f.getCertificateId() != null) {
                 gridFsService.deleteFile(f.getCertificateId());
             }
 
-            // Stocker le PDF dans GridFS
             String fileId = employeeService.storeFormationFile(certificate);
             f.setCertificateId(fileId);
         }
 
         formation savedFormation = formationRepository.save(f);
-
-        // Ajouter la formation à l'employé et sauvegarder
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
         return ResponseEntity.ok(savedFormation);
     }
-// Récupérer le certificat de formation (PDF) par ID
+
     @GetMapping("/formations/certificate/{id}")
     public ResponseEntity<byte[]> getFormationCertificate(@PathVariable String id) throws IOException {
         GridFsResource resource = gridFsService.getFile(id);
         byte[] data = resource.getInputStream().readAllBytes();
 
-        // En-têtes pour afficher dans le navigateur
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(resource.getContentType()));
         headers.setContentLength(data.length);
         headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
-
-        // En-têtes de sécurité
         headers.set("X-Content-Type-Options", "nosniff");
         headers.set("X-Frame-Options", "SAMEORIGIN");
 
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
-    // Supprimer une formation et son PDF
     @DeleteMapping("/{employeeId}/formations/{formationId}")
     public ResponseEntity<String> deleteFormation(
             @PathVariable String employeeId,
             @PathVariable String formationId) {
 
-        // Vérifier si l'employé existe
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found");
         }
         Employee employee = employeeOpt.get();
 
-        // Trouver la formation
         Optional<formation> formationOpt = formationRepository.findById(formationId);
         if (formationOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Formation not found");
         }
         formation f = formationOpt.get();
 
-        // Supprimer le PDF si existant
         if (f.getCertificateId() != null) {
             try {
                 gridFsService.deleteFile(f.getCertificateId());
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Erreur suppression fichier certificat: " + e.getMessage());
             }
         }
 
-        // Supprimer la formation de l'employé
         employee.getFormations().removeIf(form -> form.getId().equals(formationId));
         employeeRepository.save(employee);
-
-        // Supprimer la formation du repository
         formationRepository.deleteById(formationId);
 
         return ResponseEntity.ok("Formation supprimée avec succès");
     }
-    // -------------------- FICHE DE PAIE --------------------
-    @GetMapping("/{id}/payslip")
-    public ResponseEntity<byte[]> generatePaySlip(@PathVariable String id) {
+
+    // -------------------- HISTORIQUE FICHES DE PAIE --------------------
+    @GetMapping("/{id}/payslips/by-year")
+    public ResponseEntity<List<Payslip>> getEmployeePayslipsByYear(
+            @PathVariable String id,
+            @RequestParam int year) {
         try {
-            byte[] pdf = employeeService.generatePaySlipPDF(id);
-
-            // En-têtes pour afficher dans le navigateur plutôt que téléchargement
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDisposition(ContentDisposition.inline().filename("fiche_paie_" + id + ".pdf").build());
-
-            // En-têtes de sécurité
-            headers.set("X-Content-Type-Options", "nosniff");
-            headers.set("X-Frame-Options", "SAMEORIGIN");
-
-            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+            System.out.println("API - Recherche fiches pour employé: " + id + ", année: " + year);
+            List<Payslip> payslips = employeeService.getEmployeePayslipsByYear(id, year);
+            System.out.println("API - Fiches retournées: " + payslips.size() + " pour " + year);
+            return ResponseEntity.ok(payslips);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("API - Erreur recherche fiches: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/{id}/payslips")
+    public ResponseEntity<List<Payslip>> getEmployeePayslips(@PathVariable String id) {
+        try {
+            System.out.println("Récupération de TOUTES les fiches pour: " + id);
+            List<Payslip> payslips = employeeService.getEmployeePayslips(id);
+            System.out.println(payslips.size() + " fiche(s) trouvée(s)");
+            return ResponseEntity.ok(payslips);
+        } catch (Exception e) {
+            System.err.println("Erreur récupération toutes les fiches: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/{employeeId}/payslips/years")
+    public ResponseEntity<List<Integer>> getAvailableYears(@PathVariable String employeeId) {
+        try {
+            System.out.println("API - Recherche années disponibles pour: " + employeeId);
+            List<Integer> years = employeeService.getAvailableYears(employeeId);
+            System.out.println("API - Années retournées: " + years);
+            return ResponseEntity.ok(years);
+        } catch (Exception e) {
+            System.err.println("API - Erreur années disponibles: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @PostMapping("/{employeeId}/payslip/generate")
+    public ResponseEntity<?> generatePayslipForMonth(
+            @PathVariable String employeeId,
+            @RequestParam Integer month,
+            @RequestParam Integer year) {
+
+        try {
+            System.out.println("API - Génération fiche pour employé: " + employeeId + ", " + month + "/" + year);
+
+            Optional<Employee> employeeOpt = employeeService.getEmployeeById(employeeId);
+            if (employeeOpt.isEmpty()) {
+                System.err.println("API - Employé non trouvé: " + employeeId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employé non trouvé");
+            }
+
+            Employee employee = employeeOpt.get();
+
+            if (!employeeService.isMonthAvailableForEmployee(employee, year, month)) {
+                String errorMsg = "Impossible de générer une fiche pour " + month + "/" + year +
+                        " - Employé embauché le " + employee.getHireDate();
+                System.err.println(errorMsg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+            }
+
+            if (employeeService.isMonthInFuture(year, month)) {
+                String errorMsg = "Impossible de générer une fiche pour " + month + "/" + year + " - Mois futur";
+                System.err.println(errorMsg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+            }
+
+            byte[] pdf = employeeService.generatePaySlipPDF(employeeId, month, year);
+
+            Thread.sleep(300);
+            Optional<Payslip> payslipOpt = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
+
+            if (payslipOpt.isPresent()) {
+                Payslip payslip = payslipOpt.get();
+                System.out.println("API - Fiche générée avec succès: " + payslip.getPeriod());
+                return ResponseEntity.ok(payslip);
+            } else {
+                System.err.println("API - Fiche non trouvée après génération");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Fiche non trouvée après génération");
+            }
+
+        } catch (Exception e) {
+            System.err.println("API - Erreur génération fiche: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la génération: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/payslips/generate-test")
+    public ResponseEntity<Map<String, Object>> generateTestPayslips(@PathVariable String id) {
+        try {
+            System.out.println("Génération fiches de test pour: " + id);
+
+            Map<String, Object> result = employeeService.generateTestPayslips(id);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération test: " + e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", e.getMessage());
+            errorResult.put("count", 0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    @PostMapping("/{id}/payslips/generate-year")
+    public ResponseEntity<Map<String, Object>> generatePayslipsForYear(
+            @PathVariable String id,
+            @RequestParam int year) {
+        try {
+            System.out.println("Génération fiches pour l'année " + year + " - Employé: " + id);
+
+            Map<String, Object> result = employeeService.generatePayslipsForYear(id, year);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération année: " + e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", e.getMessage());
+            errorResult.put("generatedCount", 0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    @GetMapping("/{id}/payslip")
+    public ResponseEntity<byte[]> generatePaySlip(
+            @PathVariable String id,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+
+        System.out.println("=== CREATING PAYSLIP RECORD ===");
+        System.out.println("Employee ID: " + id);
+        System.out.println("Month: " + month);
+        System.out.println("Year: " + year);
+
+        try {
+            byte[] pdf = employeeService.generatePaySlipPDF(id, month, year);
+
+            System.out.println("Payslip record created successfully");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body("{\"message\": \"Payslip record created successfully\"}".getBytes());
+
+        } catch (Exception e) {
+            System.err.println("ERROR creating payslip record: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    @GetMapping("/payslips/{payslipId}/download")
+    public ResponseEntity<byte[]> downloadHistoricalPayslip(@PathVariable String payslipId) {
+        try {
+            Optional<Payslip> payslipOpt = employeeService.getPayslipById(payslipId);
+            if (payslipOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
 
+            Payslip payslip = payslipOpt.get();
+
+            String message = "PDF généré côté frontend pour la période: " + payslip.getPeriod();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.TEXT_PLAIN);
+            headers.setContentDisposition(ContentDisposition.attachment()
+                    .filename("Fiche_Paie_" + payslip.getPeriod().replace(" ", "_") + ".txt").build());
+
+            return new ResponseEntity<>(message.getBytes(), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.err.println("Erreur téléchargement fiche: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

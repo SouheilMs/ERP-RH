@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import {map, Observable, of} from 'rxjs';
 import { saveAs } from 'file-saver';
+import { catchError, tap } from 'rxjs/operators';
 
 export interface Formation {
   id?: string;
@@ -14,6 +15,8 @@ export interface Formation {
 
 export interface Employee {
   id?: string;
+  employee?: Employee;
+
   username: string;
   email: string;
   phone?: string;
@@ -38,6 +41,27 @@ export interface Employee {
   transportAllowance?: number;
   familyAllowance?: number;
   otherBonuses?: number;
+  seniorityBonus?: number;
+  yearsOfService?: number;
+  monthsOfService?: number;
+  bonusPeriods?: number;
+  traditionalSeniorityBonus?: number;
+  nineDinarsBonus?: number;
+}
+
+export interface Payslip {
+  id: string;
+  fileName: string;
+  generationDate: string;
+  period: string;
+  month: number;
+  year: number;
+  netSalary: number;
+  grossSalary: number;
+  seniorityBonus?: number;
+  yearsOfService?: number;
+  monthsOfService?: number;
+  bonusPeriods?: number;
 }
 
 @Injectable({
@@ -57,6 +81,48 @@ export class EmployeeServices {
     return this.http.get<Employee>(`${this.apiUrl}/${id}`);
   }
 
+  /**
+   * Génère les fiches de paie pour toute une année
+   */
+  generatePayslipsForYear(employeeId: string, year: number): Observable<any> {
+    console.log(' Génération annuelle pour:', employeeId, 'année:', year);
+
+    return this.http.post<any>(
+      `${this.apiUrl}/${employeeId}/payslips/generate-year?year=${year}`,
+      {}
+    ).pipe(
+      tap(result => {
+        console.log(' Génération annuelle terminée:', result);
+      }),
+      catchError(error => {
+        console.error(' Erreur génération annuelle:', error);
+        return of({ successCount: 0, errorCount: 12, error: error.message });
+      })
+    );
+  }
+
+  // CORRECTION : Méthode pour générer des fiches de test
+  generateTestPayslips(employeeId: string): Observable<any> {
+    console.log(' Génération fiches de test pour:', employeeId);
+
+    return this.http.post<any>(
+      `${this.apiUrl}/${employeeId}/payslips/generate-test`,
+      {}
+    ).pipe(
+      tap(result => {
+        console.log(' Fiches de test générées:', result);
+      }),
+      catchError(error => {
+        console.error(' Erreur génération fiches test:', error);
+        return of({
+          count: 0,
+          message: 'Erreur lors de la génération des fiches de test',
+          error: error.message
+        });
+      })
+    );
+  }
+
   createEmployee(employee: Employee): Observable<Employee> {
     return this.http.post<Employee>(`${this.apiUrl}/Add-employee`, employee);
   }
@@ -71,7 +137,7 @@ export class EmployeeServices {
 
   // ================= PHOTO =================
   getEmployeePhoto(id: string): string {
-    return `${this.apiUrl}/${id}/photo?t=${Date.now()}`;
+    return `${this.apiUrl}/${id}/photo`;
   }
 
   uploadPhoto(id: string, formData: FormData): Observable<Employee> {
@@ -90,7 +156,7 @@ export class EmployeeServices {
   deleteFormation(employeeId: string, formationId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${employeeId}/formations/${formationId}`, { responseType: 'text' });
   }
-  // Dans EmployeeServices, ajoutez cette méthode
+
   getFormationCertificateBlob(certificateId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/formations/certificate/${certificateId}`, {
       responseType: 'blob',
@@ -110,8 +176,84 @@ export class EmployeeServices {
     });
   }
 
-  openPayslipInApp(employeeId: string): Observable<Blob> {
-    return this.getPayslipPDF(employeeId);
+  // ================= HISTORIQUE FICHES DE PAIE =================
+
+  getEmployeePayslipsByYear(employeeId: string, year: number): Observable<Payslip[]> {
+    const params = new HttpParams().set('year', year.toString());
+
+    return this.http.get<Payslip[]>(`${this.apiUrl}/${employeeId}/payslips/by-year`, { params }).pipe(
+      tap(payslips => {
+        console.log(` Fiches reçues pour ${year}:`, payslips?.length || 0);
+      }),
+      catchError(error => {
+        console.error(` Erreur chargement fiches pour ${year}:`, error);
+        // Fallback : récupérer toutes les fiches et filtrer côté client
+        return this.getEmployeePayslips(employeeId).pipe(
+          map(allPayslips => {
+            const filtered = allPayslips.filter(p => p.year === year);
+            console.log(` Fallback - Fiches filtrées pour ${year}:`, filtered.length);
+            return filtered;
+          })
+        );
+      })
+    );
+  }
+
+  // Méthode pour récupérer toutes les fiches
+  getEmployeePayslips(employeeId: string): Observable<Payslip[]> {
+    console.log(' Récupération de TOUTES les fiches pour:', employeeId);
+
+    return this.http.get<Payslip[]>(`${this.apiUrl}/${employeeId}/payslips`).pipe(
+      tap(payslips => {
+        console.log(' Toutes les fiches reçues:', payslips?.length || 0);
+      }),
+      catchError(error => {
+        console.error(' Erreur récupération toutes les fiches:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Méthode pour le téléchargement
+  downloadHistoricalPayslip(payslipId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/payslips/${payslipId}/download`, {
+      responseType: 'blob'
+    }).pipe(
+      tap(() => console.log(` Téléchargement fiche ID: ${payslipId}`)),
+      catchError(error => {
+        console.error(' Erreur téléchargement fiche:', error);
+        return of(new Blob());
+      })
+    );
+  }
+
+  /**
+   * Génère une fiche de paie pour un mois spécifique
+   */
+  generatePayslipForMonth(employeeId: string, month: number, year: number): Observable<Payslip> {
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+
+    return this.http.post<Payslip>(`${this.apiUrl}/${employeeId}/payslip/generate`, null, { params }).pipe(
+      tap(response => {
+        console.log('Payslip generation successful:', response);
+      }),
+      catchError(error => {
+        console.error('Error generating payslip:', error);
+        throw error;
+      })
+    );
+  }
+
+  getAvailableYears(employeeId: string): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiUrl}/${employeeId}/payslips/years`).pipe(
+      catchError(error => {
+        console.error('Error loading available years:', error);
+        const currentYear = new Date().getFullYear();
+        return of([currentYear, currentYear - 1, currentYear - 2]);
+      })
+    );
   }
 
   // ================= EXPORT / IMPORT EXCEL =================

@@ -13,6 +13,52 @@
   overflow: hidden;
 }
 
+.payslip-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.payslip-btn:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.payslip-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.payslip-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.payslip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Espace entre l'icône et le texte */
+}
+
+.payslip-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .employee-container::before {
   content: '';
   position: absolute;
@@ -639,29 +685,55 @@
   font-style: italic;
 }
 
+/* =========================== */
+/* Actions des Modals - BOUTONS DE MÊME LARGEUR */
+/* =========================== */
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
   margin-top: 25px;
   padding-top: 20px;
   border-top: 1px solid #e2e8f0;
 }
 
+/* Tous les boutons dans les modals auront la même largeur */
+.modal-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+/* Bouton Annuler */
 .cancel-btn {
   background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
 }
 
 .cancel-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(113, 128, 150, 0.3);
+}
+
+/* Bouton Ajouter/Créer */
+.add-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.add-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .add-btn:disabled {
@@ -671,7 +743,42 @@
   box-shadow: none;
 }
 
+/* Bouton Supprimer */
+.delete-btn {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  color: white;
+}
+
+.delete-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+/* Bouton Mettre à jour */
+.update-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.update-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+/* Bouton Succès */
+.success-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.success-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+/* =========================== */
 /* Messages */
+/* =========================== */
 .success-message {
   color: #38a169;
   font-size: 14px;
@@ -751,6 +858,66 @@
   display: flex;
   flex-direction: column;
   height: 90vh;
+}
+
+/* =========================== */
+/* Confirmation Modals */
+/* =========================== */
+.confirmation-modal .modal-content {
+  max-width: 450px;
+  text-align: center;
+}
+
+.confirmation-message {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.confirmation-message p {
+  margin: 10px 0;
+  color: #4a5568;
+}
+
+.warning-text {
+  color: #e53e3e !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* =========================== */
+/* Success Modals */
+/* =========================== */
+.success-modal .modal-content,
+.error-modal .modal-content {
+  max-width: 400px;
+  text-align: center;
+}
+
+.success-icon,
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.success-modal .success-message,
+.error-modal .error-message {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.success-modal .success-message p,
+.error-modal .error-message p {
+  margin: 10px 0;
+  color: #4a5568;
+  font-size: 16px;
+}
+
+.error-modal .modal-content {
+  border-left: 4px solid #e53e3e;
+}
+
+.success-modal .modal-content {
+  border-left: 4px solid #48bb78;
 }
 
 /* =========================== */
@@ -844,12 +1011,15 @@
     align-self: flex-start;
   }
 
+  /* Adaptation des boutons modals en mobile */
   .modal-actions {
     flex-direction: column;
+    gap: 10px;
   }
 
   .modal-actions button {
     width: 100%;
+    min-width: auto;
   }
 
   .payslip-btn {
@@ -899,102 +1069,268 @@
     font-size: 13px;
   }
   /* =========================== */
-  /* Confirmation Modals */
+  /* Update Confirmation Modal */
   /* =========================== */
-  .confirmation-modal .modal-content {
-    max-width: 450px;
-    text-align: center;
+  .update-confirmation {
+    max-width: 480px;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
   }
 
-  .confirmation-message {
-    margin: 20px 0;
-    line-height: 1.6;
-  }
-
-  .confirmation-message p {
-    margin: 10px 0;
-    color: #4a5568;
-  }
-
-  .warning-text {
-    color: #e53e3e !important;
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  .confirmation-modal .modal-actions {
-    justify-content: center;
-    margin-top: 25px;
-  }
-
-  .confirmation-modal .delete-btn,
-  .confirmation-modal .update-btn {
-    padding: 12px 24px;
-    font-size: 14px;
+  .update-confirmation .modal-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 15px;
+    padding: 30px 30px 20px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: relative;
   }
 
-  .confirmation-modal .cancel-btn {
-    padding: 12px 24px;
-    font-size: 14px;
+  .update-confirmation .modal-header h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    flex: 1;
   }
-  /* =========================== */
-  /* Success Modals */
-  /* =========================== */
-  .success-modal .modal-content,
-  .error-modal .modal-content {
-    max-width: 400px;
+
+  .update-confirmation .modal-header::after {
+    display: none;
+  }
+
+  .update-confirmation .modal-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .update-confirmation .modal-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+
+  .update-confirmation .close-btn {
+    position: static;
+    color: white;
+    font-size: 24px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .update-confirmation .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+  }
+
+  .update-confirmation .modal-body {
+    padding: 30px;
+    background: #f8fafc;
+  }
+
+  .update-confirmation .confirmation-message {
     text-align: center;
-  }
-
-  .success-icon,
-  .error-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-  }
-
-  .success-modal .success-message,
-  .error-modal .error-message {
-    margin: 20px 0;
     line-height: 1.6;
   }
 
-  .success-modal .success-message p,
-  .error-modal .error-message p {
-    margin: 10px 0;
-    color: #4a5568;
-    font-size: 16px;
+  .update-confirmation .confirmation-message p {
+    font-size: 18px;
+    color: #2d3748;
+    margin: 0 0 20px 0;
+    font-weight: 500;
   }
 
-  .success-btn {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+  .update-confirmation .warning-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    color: #4a5568;
+    font-size: 14px;
+    margin-top: 15px;
+  }
+
+  .update-confirmation .warning-note svg {
+    color: #667eea;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .update-confirmation .warning-note span {
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  .update-confirmation .modal-actions {
+    padding: 25px 30px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    gap: 15px;
+  }
+
+  /* Boutons spécifiques pour cette modal */
+  .update-confirmation .btn-secondary {
+    flex: 1;
+    padding: 14px 20px;
+    background: white;
+    color: #718096;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
 
-  .success-btn:hover {
+  .update-confirmation .btn-secondary:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .error-modal .modal-content {
-    border-left: 4px solid #e53e3e;
+  .update-confirmation .btn-primary {
+    flex: 1;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
   }
 
-  .success-modal .modal-content {
-    border-left: 4px solid #48bb78;
+  .update-confirmation .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
   }
 
+  .update-confirmation .btn-primary:hover::before {
+    left: 100%;
+  }
+
+  .update-confirmation .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+  }
+
+  .update-confirmation .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* Animation d'entrée spécifique */
+  @keyframes modalSlideInEnhanced {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+    }
+    50% {
+      transform: translateY(0) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .update-confirmation {
+    animation: modalSlideInEnhanced 0.5s ease-out;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .update-confirmation {
+      margin: 20px;
+      max-width: calc(100% - 40px);
+    }
+
+    .update-confirmation .modal-header {
+      padding: 25px 20px 15px 20px;
+      flex-wrap: wrap;
+    }
+
+    .update-confirmation .modal-header h3 {
+      font-size: 20px;
+    }
+
+    .update-confirmation .modal-body {
+      padding: 20px;
+    }
+
+    .update-confirmation .confirmation-message p {
+      font-size: 16px;
+    }
+
+    .update-confirmation .modal-actions {
+      padding: 20px;
+      flex-direction: column;
+    }
+
+    .update-confirmation .btn-secondary,
+    .update-confirmation .btn-primary {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .update-confirmation .modal-header {
+      gap: 12px;
+    }
+
+    .update-confirmation .modal-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .update-confirmation .modal-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .update-confirmation .close-btn {
+      width: 30px;
+      height: 30px;
+      font-size: 20px;
+    }
+  }
+  /* Centrage des boutons dans les modals de confirmation et succès */
+  .confirmation-modal .modal-actions,
   .success-modal .modal-actions,
   .error-modal .modal-actions {
     justify-content: center;
-    margin-top: 20px;
   }
 }
