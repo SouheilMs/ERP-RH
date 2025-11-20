@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { RoleListComponent } from './components/role-list/role-list';
+import { PayslipHistoryComponent } from './components/payslip-history/payslip-history.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
@@ -19,13 +20,14 @@ export const routes: Routes = [
     path: 'employees',
     component: DashboardComponent,
     children: [
-      { path: '', component: EmployeeListComponent },       // Liste des employés
-      { path: ':id', component: EmployeeDetailComponent },  // Détail d'un employé
-      { path: 'roles', component: RoleListComponent },      // Liste des rôles
+      { path: '', component: EmployeeListComponent },
+      { path: ':id', component: EmployeeDetailComponent },
+      { path: ':id/payslip-history', component: PayslipHistoryComponent }, // Route pour l'historique
+      { path: 'roles', component: RoleListComponent }
     ]
   },
 
-  // Route directe pour les rôles (si nécessaire)
+  // Route directe pour les rôles
   { path: 'roles', component: RoleListComponent },
 
   // Redirection par défaut
