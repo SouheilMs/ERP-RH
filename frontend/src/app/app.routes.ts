@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { RoleListComponent } from './components/role-list/role-list';
+import { PayslipHistoryComponent } from './components/payslip-history/payslip-history.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [

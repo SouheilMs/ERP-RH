@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 export interface SignupRequest {
   username: string;
@@ -34,9 +35,10 @@ export interface JwtResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/api/auth'; // Adjust if backend port differs
+  private apiUrl = 'http://localhost:8081/api/auth';
+  private isLoggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   signup(signupRequest: SignupRequest): Observable<SignupResponse> {
     return this.http.post<SignupResponse>(`${this.apiUrl}/signup`, signupRequest)
@@ -48,9 +50,21 @@ export class AuthService {
   login(loginRequest: LoginRequest): Observable<JwtResponse> {
     return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
       .pipe(
+        tap((response: JwtResponse) => {
+          // Store token and user info
+          localStorage.setItem('authToken', response.token);
+          localStorage.setItem('user', JSON.stringify({
+            id: response.id,
+            username: response.username,
+            email: response.email,
+            roles: response.roles
+          }));
+          this.isLoggedInSubject.next(true);
+        }),
         catchError(this.handleError)
       );
   }
+
   resetPassword(resetRequest: LoginRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)
       .pipe(
@@ -58,14 +72,41 @@ export class AuthService {
       );
   }
 
+  logout(): void {
+    // Clear stored data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    this.isLoggedInSubject.next(false);
+    this.router.navigate(['/login']);
+  }
+
+  isLoggedIn(): boolean {
+    return this.hasToken();
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('authToken');
+  }
+
+  getUser(): any {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  }
+
+  getAuthStatus(): Observable<boolean> {
+    return this.isLoggedInSubject.asObservable();
+  }
+
+  private hasToken(): boolean {
+    return !!localStorage.getItem('authToken');
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';
     if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
       errorMessage = `Error: ${error.error.message}`;
     } else {
-      // Backend returned an error
-      errorMessage = error.error.message || error.message;
+      errorMessage = error.error?.message || error.message || 'Server error';
     }
     return throwError(errorMessage);
   }
