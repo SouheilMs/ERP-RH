@@ -1,12 +1,31 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
-import { RoleListComponent } from './components/role-list/role-list';
+import { NavbarComponent } from  './components/navbar/navbar';
 
 @Component({
   selector: 'app-root',
   standalone: true,
- imports: [CommonModule, RouterOutlet, RoleListComponent],
-  template: '<router-outlet></router-outlet>'
+  imports: [CommonModule, RouterOutlet, NavbarComponent],
+  templateUrl: './app.html',
+  styleUrls: ['./app.css']
 })
-export class AppComponent {}
+export class AppComponent {
+  title = 'HR Management System';
+  private authPages = ['/login', '/forgot-password', '/reset-password'];
+  private currentUrl = '';
+
+  constructor(private router: Router) {
+    // Subscribe to router events to track current URL
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.currentUrl = event.url;
+    });
+  }
+
+  isAuthPage(): boolean {
+    return this.authPages.some(page => this.currentUrl.startsWith(page));
+  }
+}
