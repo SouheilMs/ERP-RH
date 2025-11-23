@@ -9,24 +9,26 @@ import { RoleListComponent } from './components/role-list/role-list';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
+  // Routes publiques (sans layout)
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
 
-  // Dashboard layout avec children
+ // Routes protégées (avec layout)
   {
-    path: 'employees',
+    path: '',
     component: DashboardComponent,
     children: [
-      { path: '', component: EmployeeListComponent },       // Liste des employés
-      { path: ':id', component: EmployeeDetailComponent },  // Détail d'un employé
-      { path: 'roles', component: RoleListComponent },      // Liste des rôles
+      { path: 'dashboard', redirectTo: 'employees', pathMatch: 'full' },
+      { path: 'employees', component: EmployeeListComponent },
+      { path: 'employees/:id', component: EmployeeDetailComponent },
+      { path: 'roles', component: RoleListComponent },
+      
+      // Redirection par défaut pour les routes protégées
+      { path: '', redirectTo: 'employees', pathMatch: 'full' }
     ]
   },
-
-  // Route directe pour les rôles (si nécessaire)
-  { path: 'roles', component: RoleListComponent },
 
   // Redirection par défaut
   { path: '', redirectTo: '/login', pathMatch: 'full' },
