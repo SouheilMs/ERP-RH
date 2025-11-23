@@ -1,13 +1,19 @@
-<div class="dashboard-layout">
+Navbar
+<app-navbar></app-navbar>
 
+<div class="dashboard-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2>ERP RH</h2>
-
     <ul>
-
       <li>
-        <a routerLink="/employees" routerLinkActive="active">Liste des employés</a>
+        <a routerLink="/employees" routerLinkActive="active">
+          👥 Liste des employés
+        </a>
+      </li>
+      <li>
+        <a routerLink="/roles" routerLinkActive="active">
+          🎯 Liste des rôles
+        </a>
       </li>
     </ul>
   </aside>
@@ -16,5 +22,4 @@
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
-
 </div>

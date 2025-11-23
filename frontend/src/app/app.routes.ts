@@ -10,25 +10,26 @@ import { PayslipHistoryComponent } from './components/payslip-history/payslip-hi
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
+  // Routes publiques (sans layout)
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
 
-  // Dashboard layout avec children
+ // Routes protégées (avec layout)
   {
-    path: 'employees',
+    path: '',
     component: DashboardComponent,
     children: [
-      { path: '', component: EmployeeListComponent },
-      { path: ':id', component: EmployeeDetailComponent },
-      { path: ':id/payslip-history', component: PayslipHistoryComponent }, // Route pour l'historique
-      { path: 'roles', component: RoleListComponent }
+      { path: 'dashboard', redirectTo: 'employees', pathMatch: 'full' },
+      { path: 'employees', component: EmployeeListComponent },
+      { path: 'employees/:id', component: EmployeeDetailComponent },
+      { path: 'roles', component: RoleListComponent },
+      
+      // Redirection par défaut pour les routes protégées
+      { path: '', redirectTo: 'employees', pathMatch: 'full' }
     ]
   },
-
-  // Route directe pour les rôles
-  { path: 'roles', component: RoleListComponent },
 
   // Redirection par défaut
   { path: '', redirectTo: '/login', pathMatch: 'full' },

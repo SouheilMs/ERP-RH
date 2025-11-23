@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Employee } from './employee.services';
+import { Employee } from './employee.service';
 
 export interface SeniorityInfo {
   monthsOfService: number;
