@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
-import { Employee } from './employee.services';
+import { Employee } from './employee.service';
 import { CalculationsService, SeniorityInfo, SalaryCalculation } from './calculations.service';
 import { TranslationService } from './translation.service';
 

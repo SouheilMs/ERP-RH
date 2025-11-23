@@ -15,8 +15,7 @@ export interface Formation {
 
 export interface Employee {
   id?: string;
-  employee?: Employee;
-
+   employee?: Employee;
   username: string;
   email: string;
   phone?: string;
@@ -25,9 +24,8 @@ export interface Employee {
   hireDate?: string;
   photoUrl?: string;
   photoId?: string;
-  formations?: Formation[];
 
-  // New fields for Tunisian payslip
+  // Informations fiche de paie tunisienne
   cin?: string;
   cnssNumber?: string;
   position?: string;
@@ -41,12 +39,19 @@ export interface Employee {
   transportAllowance?: number;
   familyAllowance?: number;
   otherBonuses?: number;
+
+  // Ancienneté et primes
   seniorityBonus?: number;
   yearsOfService?: number;
   monthsOfService?: number;
   bonusPeriods?: number;
   traditionalSeniorityBonus?: number;
   nineDinarsBonus?: number;
+  seniorityBlocks?: number;
+
+  // Rôles et formations
+  roleNames?: string[];
+  formations?: Formation[];
 }
 
 export interface Payslip {
