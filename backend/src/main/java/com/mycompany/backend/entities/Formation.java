@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @Document(collection = "formations")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class formation {
+public class Formation {
 
     @Id
     private String id;
@@ -32,5 +32,5 @@ public class formation {
     @JsonIgnoreProperties("formations")
     private Employee employee;
 
-    public formation() {}
+    public Formation() {}
 }
