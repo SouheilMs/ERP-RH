@@ -3,7 +3,7 @@ package com.mycompany.backend.controllers;
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
-import com.mycompany.backend.entities.formation;
+import com.mycompany.backend.entities.Formation;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.PayslipRepository;
@@ -161,7 +161,7 @@ public class EmployeeController {
 
     // -------------------- FORMATION --------------------
     @PostMapping("/{id}/formations")
-    public ResponseEntity<formation> addFormation(
+    public ResponseEntity<Formation> addFormation(
             @PathVariable String id,
             @RequestParam("name") String name,
             @RequestParam("location") String location,
@@ -172,7 +172,7 @@ public class EmployeeController {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
-        formation f = new formation();
+        Formation f = new Formation();
         f.setName(name);
         f.setLocation(location);
         f.setStartDate(LocalDate.parse(startDate));
@@ -188,7 +188,7 @@ public class EmployeeController {
             f.setCertificateId(fileId);
         }
 
-        formation savedFormation = formationRepository.save(f);
+        Formation savedFormation = formationRepository.save(f);
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
@@ -221,11 +221,11 @@ public class EmployeeController {
         }
         Employee employee = employeeOpt.get();
 
-        Optional<formation> formationOpt = formationRepository.findById(formationId);
+        Optional<Formation> formationOpt = formationRepository.findById(formationId);
         if (formationOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Formation not found");
         }
-        formation f = formationOpt.get();
+        Formation f = formationOpt.get();
 
         if (f.getCertificateId() != null) {
             try {

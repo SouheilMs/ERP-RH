@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { EmployeeServices, Employee } from '../../services/employee.services';
+import { EmployeeServices, Employee } from '../../services/employee.service';
 import { saveAs } from 'file-saver';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AddEmployeeComponent} from '../add-employee/add-employee.component';

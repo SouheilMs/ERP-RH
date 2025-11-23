@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { EmployeeServices, Payslip, Employee } from '../../services/employee.services';
+import { EmployeeServices, Payslip, Employee } from '../../services/employee.service';
 import { CalculationsService } from '../../services/calculations.service';
 import { PdfGenerationService } from '../../services/pdf-generation.service';
 import { TranslationService } from '../../services/translation.service';
