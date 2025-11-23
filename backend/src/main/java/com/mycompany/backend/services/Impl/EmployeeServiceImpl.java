@@ -150,56 +150,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return ResponseEntity.ok("Employee registered successfully!");
     }
 
-    @Override
-    public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
-        try {
-            if (!employeeRepository.existsById(employeeId)) {
-                System.err.println("Employé non trouvé: " + employeeId);
-                return Collections.emptyList();
-            }
-
-            System.out.println("Recherche fiches pour employé: " + employeeId + ", année: " + year);
-
-            List<Payslip> payslips = payslipRepository.findByEmployeeIdAndYearOrderByMonthDesc(employeeId, year);
-
-            if (payslips.isEmpty()) {
-                System.out.println("Tentative avec méthode alternative...");
-                payslips = payslipRepository.findByEmployeeIdAndYearRobust(employeeId, year);
-            }
-
-            if (payslips.isEmpty()) {
-                System.out.println("Fallback final - Filtrage côté serveur...");
-                List<Payslip> allPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
-                payslips = allPayslips.stream()
-                        .filter(p -> p.getYear() == year)
-                        .collect(Collectors.toList());
-            }
-
-            System.out.println("Fiches trouvées: " + payslips.size());
-            return payslips;
-
-        } catch (Exception e) {
-            System.err.println("Erreur récupération fiches: " + e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<Payslip> getEmployeePayslips(String employeeId) {
-        try {
-            if (!employeeRepository.existsById(employeeId)) {
-                System.err.println("Employé non trouvé: " + employeeId);
-                return Collections.emptyList();
-            }
-
-            List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
-            System.out.println("Fiches récupérées pour " + employeeId + ": " + payslips.size());
-            return payslips;
-        } catch (Exception e) {
-            System.err.println("Erreur récupération toutes les fiches: " + e.getMessage());
-            return Collections.emptyList();
-        }
-    }
 
     @Override
     public void ImportFromExcel(MultipartFile file) throws IOException {
@@ -317,7 +267,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
         return generatePaySlipPDF(employeeId, null, null);
     }
-
+//  Méthode pour récupérer la dernière fiche
     @Override
     public Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month) {
         try {
@@ -352,7 +302,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             return Optional.empty();
         }
     }
-
+//  Récupération des années disponibles pour un employé
     @Override
     public List<Integer> getAvailableYears(String employeeId) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
@@ -414,7 +364,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         System.out.println("Années de travail générées: " + years);
         return years;
     }
-
+//  Génération de fiche de paie avec gestion des nulls
     @Override
     public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
         try {
@@ -504,7 +454,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Erreur lors de la génération de la fiche de paie: " + e.getMessage());
         }
     }
-
+//  Méthode pour vérifier la disponibilité selon l'embauche
     @Override
     public boolean isMonthAvailableForEmployee(Employee employee, int year, int month) {
         if (employee.getHireDate() == null) {
@@ -527,6 +477,57 @@ public class EmployeeServiceImpl implements EmployeeService {
         return isAvailable;
     }
 
+    @Override
+    public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
+        try {
+            if (!employeeRepository.existsById(employeeId)) {
+                System.err.println("Employé non trouvé: " + employeeId);
+                return Collections.emptyList();
+            }
+
+            System.out.println("Recherche fiches pour employé: " + employeeId + ", année: " + year);
+
+            List<Payslip> payslips = payslipRepository.findByEmployeeIdAndYearOrderByMonthDesc(employeeId, year);
+
+            if (payslips.isEmpty()) {
+                System.out.println("Tentative avec méthode alternative...");
+                payslips = payslipRepository.findByEmployeeIdAndYearRobust(employeeId, year);
+            }
+
+            if (payslips.isEmpty()) {
+                System.out.println("Fallback final - Filtrage côté serveur...");
+                List<Payslip> allPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
+                payslips = allPayslips.stream()
+                        .filter(p -> p.getYear() == year)
+                        .collect(Collectors.toList());
+            }
+
+            System.out.println("Fiches trouvées: " + payslips.size());
+            return payslips;
+
+        } catch (Exception e) {
+            System.err.println("Erreur récupération fiches: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+//  Historique des fiches de paie
+    @Override
+    public List<Payslip> getEmployeePayslips(String employeeId) {
+        try {
+            if (!employeeRepository.existsById(employeeId)) {
+                System.err.println("Employé non trouvé: " + employeeId);
+                return Collections.emptyList();
+            }
+
+            List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
+            System.out.println("Fiches récupérées pour " + employeeId + ": " + payslips.size());
+            return payslips;
+        } catch (Exception e) {
+            System.err.println("Erreur récupération toutes les fiches: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+//  Méthode pour vérifier si un mois est dans le futur
     @Override
     public boolean isMonthInFuture(int year, int month) {
         Calendar currentDate = Calendar.getInstance();
@@ -566,7 +567,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Optional<Payslip> getPayslipById(String payslipId) {
         return payslipRepository.findById(payslipId);
     }
-
+//  Génération annuelle avec vérification des mois futurs
     @Override
     public Map<String, Object> generatePayslipsForYear(String employeeId, int year) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
@@ -632,7 +633,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return result;
     }
-
+    // Génération de fiches de test avec vérification des mois futurs
     @Override
     public Map<String, Object> generateTestPayslips(String employeeId) {
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);

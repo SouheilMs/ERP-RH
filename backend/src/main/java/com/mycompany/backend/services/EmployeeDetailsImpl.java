@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class EmployeeDetailsImpl implements UserDetails {
 	private static final long serialVersionUID = 1L;
 
-	private String id; // Changed from String to Long
+	private String id;
 
 	private String username;
 

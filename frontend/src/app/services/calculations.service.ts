@@ -30,9 +30,7 @@ export interface SalaryCalculation {
   providedIn: 'root'
 })
 export class CalculationsService {
-  /**
-   *  CALCUL CORRIGÉ - Prime de 9 dinars selon votre tableau
-   */
+  // Méthode principale pour calculer l'ancienneté selon la date cible
   calculateSeniorityBonusForPeriod(employee: Employee, targetDate: Date): SeniorityInfo {
     if (!employee.hireDate) {
       return {
@@ -87,9 +85,7 @@ export class CalculationsService {
     };
   }
 
-  /**
-   * 🔥 DEBUG : Affichage du calcul pour vérification
-   */
+ // Méthode de débogage pour vérifier le calcul de la prime 9 dinars
   private debugNineDinarsCalculation(totalMonths: number, bonusPeriods: number, nineDinarsBonus: number): void {
     console.log('===  DEBUG CALCUL PRIME 9 DINARS ===');
     console.log(`Mois total: ${totalMonths}`);
@@ -109,9 +105,7 @@ export class CalculationsService {
     console.log('=== FIN DEBUG ===');
   }
 
-  /**
-   *  VERSION ALTERNATIVE - Plus simple et claire
-   */
+  // Méthode alternative pour calculer l'ancienneté
   calculateSeniorityBonusForPeriodAlternative(employee: Employee, targetDate: Date): SeniorityInfo {
     if (!employee.hireDate) {
       return {
@@ -151,7 +145,7 @@ export class CalculationsService {
       bonusPeriods = 5;
       nineDinarsBonus = 45;
     }
-    // etc. pour les tranches suivantes
+
 
     console.log(` PRIME CALCULÉE: ${nineDinarsBonus} TND pour ${totalMonths} mois`);
 
@@ -165,9 +159,7 @@ export class CalculationsService {
     };
   }
 
-  /**
-   *  Calcule l'ancienneté + prime de 9 dinars
-   */
+  // Méthode principale pour calculer l'ancienneté
   calculateSeniorityBonus(employee: Employee): SeniorityInfo {
     // Utilisez une des deux méthodes ci-dessus
     return this.calculateSeniorityBonusForPeriod(employee, new Date());
@@ -175,9 +167,7 @@ export class CalculationsService {
     // return this.calculateSeniorityBonusForPeriodAlternative(employee, new Date());
   }
 
-  /**
-   *  Calcul précis des mois de service
-   */
+ // Calcule le nombre exact de mois entre deux dates
   private calculateExactMonthsOfService(hireDate: Date, currentDate: Date): number {
     const years = currentDate.getFullYear() - hireDate.getFullYear();
     const months = currentDate.getMonth() - hireDate.getMonth();
@@ -191,9 +181,7 @@ export class CalculationsService {
     return Math.max(0, totalMonths);
   }
 
-  /**
-   *  Calcule le salaire net
-   */
+  // Calcule le salaire détaillé
   calculateSalary(employee: Employee, seniorityInfo: SeniorityInfo): SalaryCalculation {
     const baseSalary = employee.salary || 2600;
     const transport = employee.transportAllowance || 0;
@@ -229,9 +217,7 @@ export class CalculationsService {
     };
   }
 
-  /**
-   *  IRPP Tunisie
-   */
+  // Calcule l'IRPP selon les tranches
   private calculateIRPP(taxableIncome: number): number {
     let irpp = 0;
 
@@ -250,9 +236,7 @@ export class CalculationsService {
     return irpp;
   }
 
-  /**
-   *  Ancienneté en années + mois
-   */
+  // Calcule l'ancienneté en années et mois
   calculateSeniorityYears(hireDate: Date): string {
     if (!hireDate) return 'Non définie';
 
@@ -279,9 +263,7 @@ export class CalculationsService {
     return `${years} an${years > 1 ? 's' : ''} et ${months} mois`;
   }
 
-  /**
-   *  Liste des années depuis l'embauche
-   */
+// Génère une liste d'années depuis la date d'embauche
   generateYearsFromHireDate(hireDate: Date): number[] {
     const currentYear = new Date().getFullYear();
     const years: number[] = [];

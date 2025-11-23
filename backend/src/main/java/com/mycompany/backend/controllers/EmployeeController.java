@@ -399,28 +399,5 @@ public class EmployeeController {
         }
     }
 
-    @GetMapping("/payslips/{payslipId}/download")
-    public ResponseEntity<byte[]> downloadHistoricalPayslip(@PathVariable String payslipId) {
-        try {
-            Optional<Payslip> payslipOpt = employeeService.getPayslipById(payslipId);
-            if (payslipOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
 
-            Payslip payslip = payslipOpt.get();
-
-            String message = "PDF généré côté frontend pour la période: " + payslip.getPeriod();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.TEXT_PLAIN);
-            headers.setContentDisposition(ContentDisposition.attachment()
-                    .filename("Fiche_Paie_" + payslip.getPeriod().replace(" ", "_") + ".txt").build());
-
-            return new ResponseEntity<>(message.getBytes(), headers, HttpStatus.OK);
-
-        } catch (Exception e) {
-            System.err.println("Erreur téléchargement fiche: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 }
