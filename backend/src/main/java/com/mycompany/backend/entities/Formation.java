@@ -25,7 +25,7 @@ public class Formation {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
-    // ✅ Stockage de l’ID GridFS du PDF de la formation
+    //  Stockage de l’ID GridFS du PDF de la formation
     private String certificateId;
 
     @DBRef

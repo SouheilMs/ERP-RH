@@ -37,6 +37,7 @@ export interface JwtResponse {
 export class AuthService {
   private apiUrl = 'http://localhost:8081/api/auth';
   private isLoggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
+  currentUser$: any;
 
   constructor(private http: HttpClient, private router: Router) {}
 
