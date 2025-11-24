@@ -1,9 +1,10 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.*;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Formation;
+import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.PayslipRepository;
@@ -21,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -45,13 +45,16 @@ public class EmployeeController {
 
     // -------------------- EMPLOYÉ --------------------
     @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
-        return ResponseEntity.ok(employeeService.getAllEmployees());
+    public ResponseEntity<List<EmployeeGetDTO>> getAllEmployees() {
+        List<Employee> employees = employeeService.getAllEmployees();
+        List<EmployeeGetDTO> response = EmployeeGetDTO.EmployeesToEmployeeDtos(employees);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
+    public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
         return employeeService.getEmployeeById(id)
+                .map(this::convertToDetailDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -63,8 +66,8 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String id,
-                                                   @RequestBody Employee employeeDetails) {
+    public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
+                                                            @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -90,8 +93,9 @@ public class EmployeeController {
         employee.setOtherBonuses(employeeDetails.getOtherBonuses());
 
         Employee updated = employeeService.saveEmployee(employee);
+        EmployeeDetailDTO response = convertToDetailDTO(updated);
 
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
@@ -102,8 +106,8 @@ public class EmployeeController {
 
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
-    public ResponseEntity<Employee> uploadPhoto(@PathVariable String id,
-                                                @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
+                                                         @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -115,7 +119,8 @@ public class EmployeeController {
             employee.setPhotoId(photoId);
             employeeRepository.save(employee);
 
-            return ResponseEntity.ok(employee);
+            EmployeeDetailDTO response = convertToDetailDTO(employee);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Erreur upload photo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -161,7 +166,7 @@ public class EmployeeController {
 
     // -------------------- FORMATION --------------------
     @PostMapping("/{id}/formations")
-    public ResponseEntity<Formation> addFormation(
+    public ResponseEntity<FormationDTO> addFormation(
             @PathVariable String id,
             @RequestParam("name") String name,
             @RequestParam("location") String location,
@@ -192,7 +197,8 @@ public class EmployeeController {
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
-        return ResponseEntity.ok(savedFormation);
+        FormationDTO response = convertToFormationDTO(savedFormation);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/formations/certificate/{id}")
@@ -422,5 +428,85 @@ public class EmployeeController {
             System.err.println("Erreur téléchargement fiche: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    // ================= HELPER METHODS =================
+    private EmployeeDetailDTO convertToDetailDTO(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+
+        EmployeeDetailDTO dto = new EmployeeDetailDTO();
+        dto.setId(employee.getId());
+        dto.setUsername(employee.getUsername());
+        dto.setEmail(employee.getEmail());
+        dto.setPhone(employee.getPhone());
+        dto.setSalary(employee.getSalary());
+        dto.setStatus(employee.getStatus());
+        dto.setHireDate(employee.getHireDate());
+        dto.setPhotoUrl(employee.getPhotoUrl());
+        dto.setPhotoId(employee.getPhotoId());
+
+        // Informations fiche de paie
+        dto.setCin(employee.getCin());
+        dto.setCnssNumber(employee.getCnssNumber());
+        dto.setPosition(employee.getPosition());
+        dto.setAddress(employee.getAddress());
+        dto.setCity(employee.getCity());
+        dto.setMatricule(employee.getMatricule());
+        dto.setRib(employee.getRib());
+        dto.setBankName(employee.getBankName());
+        dto.setWorkingDays(employee.getWorkingDays());
+        dto.setActualWorkingDays(employee.getActualWorkingDays());
+        dto.setTransportAllowance(employee.getTransportAllowance());
+        dto.setFamilyAllowance(employee.getFamilyAllowance());
+        dto.setOtherBonuses(employee.getOtherBonuses());
+
+        // Ancienneté
+        dto.setYearsOfService(employee.getYearsOfService());
+        dto.setMonthsOfService(employee.getMonthsOfService());
+        dto.setBonusPeriods(employee.getBonusPeriods());
+        dto.setSeniorityBonus(employee.getSeniorityBonus());
+        dto.setTraditionalSeniorityBonus(employee.getTraditionalSeniorityBonus());
+        dto.setNineDinarsBonus(employee.getNineDinarsBonus());
+        dto.setSeniorityBlocks(employee.getSeniorityBlocks());
+
+        // Extract role names safely
+        List<String> roleNames = new ArrayList<>();
+        if (employee.getRoles() != null) {
+            for (Role role : employee.getRoles()) {
+                if (role != null && role.getRoleName() != null) {
+                    roleNames.add(role.getRoleName());
+                }
+            }
+        }
+        dto.setRoleNames(roleNames);
+
+        // Convert formations to DTOs
+        List<FormationDTO> formationDTOs = new ArrayList<>();
+        if (employee.getFormations() != null) {
+            for (Formation formation : employee.getFormations()) {
+                formationDTOs.add(convertToFormationDTO(formation));
+            }
+        }
+        dto.setFormations(formationDTOs);
+
+        return dto;
+    }
+
+    private FormationDTO convertToFormationDTO(Formation formation) {
+        if (formation == null) {
+            return null;
+        }
+
+        FormationDTO dto = new FormationDTO();
+        dto.setId(formation.getId());
+        dto.setName(formation.getName());
+        dto.setLocation(formation.getLocation());
+        dto.setStartDate(formation.getStartDate());
+        dto.setEndDate(formation.getEndDate());
+        dto.setCertificateId(formation.getCertificateId());
+
+        return dto;
     }
 }

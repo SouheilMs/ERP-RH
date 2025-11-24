@@ -7,33 +7,48 @@ import { EmployeeListComponent } from './components/employee-list/employee-list.
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { RoleListComponent } from './components/role-list/role-list';
 import { PayslipHistoryComponent } from './components/payslip-history/payslip-history.component';
-import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
-import {SubmitCongeComponent} from './components/submit-conge/submit-conge';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { SubmitCongeComponent } from './components/submit-conge/submit-conge';
+import { authGuard } from './services/guards/auth-guard';
+import { JobListComponent } from './components/job-list.component/job-list.component';
+import { JobFormComponent } from './components/job-form.component/job-form.component';
+
+
 
 export const routes: Routes = [
-  // Routes publiques (sans layout)
+  // Public routes (no authentication required)
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'conge', component: SubmitCongeComponent},
 
- // Routes protégées (avec layout)
+  // Protected routes (with authentication)
   {
     path: '',
     component: DashboardComponent,
+    canActivate: [authGuard],
     children: [
+      // Dashboard
       { path: 'dashboard', redirectTo: 'employees', pathMatch: 'full' },
+
+      // Employee management
       { path: 'employees', component: EmployeeListComponent },
       { path: 'employees/:id', component: EmployeeDetailComponent },
+      { path: 'employees/:id/payslip-history', component: PayslipHistoryComponent },
+
+      // Role management
       { path: 'roles', component: RoleListComponent },
-      
-      // Redirection par défaut pour les routes protégées
+      { path: 'jobs', component: JobListComponent },
+      { path: 'jobs/new', component: JobFormComponent },
+      { path: 'jobs/edit/:id', component: JobFormComponent },
+
+      // Default protected route
       { path: '', redirectTo: 'employees', pathMatch: 'full' }
     ]
   },
 
-  // Redirection par défaut
+  // Default redirects
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];
