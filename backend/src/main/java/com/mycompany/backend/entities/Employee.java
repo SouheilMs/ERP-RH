@@ -48,7 +48,7 @@ public class Employee {
     private Integer seniorityBlocks; // Pour compatibilité
 
     @DBRef
-    private Set<formation> formations = new HashSet<>();
+    private Set<Formation> formations = new HashSet<>();
 
     @DBRef
     private Set<Role> roles = new HashSet<>();
@@ -153,8 +153,8 @@ public class Employee {
     public Integer getSeniorityBlocks() { return seniorityBlocks; }
     public void setSeniorityBlocks(Integer seniorityBlocks) { this.seniorityBlocks = seniorityBlocks; }
 
-    public Set<formation> getFormations() { return formations; }
-    public void setFormations(Set<formation> formations) { this.formations = formations; }
+    public Set<Formation> getFormations() { return formations; }
+    public void setFormations(Set<Formation> formations) { this.formations = formations; }
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }

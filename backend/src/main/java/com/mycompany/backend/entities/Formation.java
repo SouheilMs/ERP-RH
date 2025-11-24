@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @Document(collection = "formations")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class formation {
+public class Formation {
 
     @Id
     private String id;
@@ -25,12 +25,12 @@ public class formation {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
-    // ✅ Stockage de l’ID GridFS du PDF de la formation
+    //  Stockage de l’ID GridFS du PDF de la formation
     private String certificateId;
 
     @DBRef
     @JsonIgnoreProperties("formations")
     private Employee employee;
 
-    public formation() {}
+    public Formation() {}
 }

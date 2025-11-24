@@ -10,7 +10,7 @@
     <h2>Payslip History - {{ employeeName }}</h2>
     <p class="employee-info">
       <span>Employee ID: {{ employeeMatricule }}</span>
-      <span>Hire Date: {{ currentEmployee?.hireDate ? (currentEmployee.hireDate | date:'dd/MM/yyyy') : 'Not defined' }}</span>
+      <span>Hire Date: {{ currentEmployee.hireDate ? (currentEmployee.hireDate | date:'dd/MM/yyyy') : 'Not defined' }}</span>
       <span>Seniority: {{ calculateSeniorityYears() }}</span>
     </p>
   </div>

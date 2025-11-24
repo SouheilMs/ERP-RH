@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { EmployeeServices, Employee, Formation } from '../../services/employee.services';
+import { EmployeeServices, Employee, Formation } from '../../services/employee.service';
 import jsPDF from 'jspdf';
 
 // Define pipe directly in component
