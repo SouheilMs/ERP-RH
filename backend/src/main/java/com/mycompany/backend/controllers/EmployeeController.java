@@ -178,11 +178,12 @@ public class EmployeeController {
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
         Formation f = new Formation();
-        f.setName(name);
+        f.setTitle(name);
         f.setLocation(location);
         f.setStartDate(LocalDate.parse(startDate));
         f.setEndDate(LocalDate.parse(endDate));
-        f.setEmployee(emp);
+        f.setCreatedBy(emp);
+        f.getParticipants().add(emp);
 
         if (certificate != null && !certificate.isEmpty()) {
             if(f.getCertificateId() != null) {
@@ -501,7 +502,7 @@ public class EmployeeController {
 
         FormationDTO dto = new FormationDTO();
         dto.setId(formation.getId());
-        dto.setName(formation.getName());
+        dto.setName(formation.getTitle());
         dto.setLocation(formation.getLocation());
         dto.setStartDate(formation.getStartDate());
         dto.setEndDate(formation.getEndDate());

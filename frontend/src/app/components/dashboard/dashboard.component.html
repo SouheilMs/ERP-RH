@@ -7,26 +7,33 @@
       <li>
         <a routerLink="/employees" routerLinkActive="active">
           <i class="fas fa-users me-2"></i>
-          Liste des employés
+          Employees List
         </a>
       </li>
       <li>
         <a routerLink="/roles" routerLinkActive="active">
           <i class="fas fa-bullseye me-2"></i>
-          Liste des rôles
+          Roles List
         </a>
       </li>
       <!-- Add Job Offers to sidebar -->
       <li>
         <a routerLink="/jobs" routerLinkActive="active">
           <i class="fas fa-briefcase me-2"></i>
-          Offres d'emploi
+          Job Offers
+        </a>
+      </li>
+      <!-- Add Formations to sidebar -->
+      <li>
+        <a routerLink="/formations" class="nav-link">
+          <i class="fas fa-chalkboard-teacher"></i>
+               Formations
         </a>
       </li>
     </ul>
   </aside>
 
-  <!-- Contenu principal -->
+  <!-- Main content -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>

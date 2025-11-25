@@ -44,4 +44,9 @@ public interface JobOfferService {
     void incrementViews(String id);
     void expireOldOffers();
     boolean isExpired(String id);
+
+    JobOfferDTO publishToLinkedIn(String jobOfferId);
+    JobOfferDTO publishToIndeed(String jobOfferId);
+    JobOfferDTO unpublishFromLinkedIn(String jobOfferId);
+    JobOfferDTO updateLinkedInPost(String jobOfferId);
 }
