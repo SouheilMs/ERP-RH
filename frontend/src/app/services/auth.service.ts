@@ -25,7 +25,7 @@ export interface LoginRequest {
 export interface JwtResponse {
   token: string;
   type: string;
-  id: number;
+  id: string;
   username: string;
   email: string;
   roles: string[];

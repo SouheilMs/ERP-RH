@@ -18,20 +18,21 @@ public class JwtResponse {
 		this.roles = roles;
 	}
 
-	public String getAccessToken() {
+	// Corrigez les getters pour qu'ils correspondent aux noms des champs
+	public String getToken() {
 		return token;
 	}
 
-	public void setAccessToken(String accessToken) {
-		this.token = accessToken;
+	public void setToken(String token) {
+		this.token = token;
 	}
 
-	public String getTokenType() {
+	public String getType() {
 		return type;
 	}
 
-	public void setTokenType(String tokenType) {
-		this.type = tokenType;
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	public String getId() {
@@ -60,5 +61,9 @@ public class JwtResponse {
 
 	public List<String> getRoles() {
 		return roles;
+	}
+
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
 	}
 }
