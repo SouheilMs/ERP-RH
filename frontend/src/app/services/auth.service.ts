@@ -48,23 +48,44 @@ export class AuthService {
       );
   }
 
+  // login(loginRequest: LoginRequest): Observable<JwtResponse> {
+  //   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+  //     .pipe(
+  //       tap((response: JwtResponse) => {
+  //         // Store token and user info
+  //         localStorage.setItem('authToken', response.token);
+  //         localStorage.setItem('user', JSON.stringify({
+  //           id: response.id,
+  //           username: response.username,
+  //           email: response.email,
+  //           roles: response.roles
+  //         }));
+  //         this.isLoggedInSubject.next(true);
+  //       }),
+  //       catchError(this.handleError)
+  //     );
+  // }
   login(loginRequest: LoginRequest): Observable<JwtResponse> {
-    return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
-      .pipe(
-        tap((response: JwtResponse) => {
-          // Store token and user info
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('user', JSON.stringify({
-            id: response.id,
-            username: response.username,
-            email: response.email,
-            roles: response.roles
-          }));
-          this.isLoggedInSubject.next(true);
-        }),
-        catchError(this.handleError)
-      );
-  }
+  return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+    .pipe(
+      tap((response: JwtResponse) => {
+      // Store token and user info
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.id, // Make sure this contains the actual user ID
+        username: response.username,
+        email: response.email,
+        roles: response.roles
+      }));
+      this.isLoggedInSubject.next(true);
+    }),
+    catchError(this.handleError)
+  );
+}
+getCurrentUserId(): string {
+  const user = this.getUser();
+  return user?.id;
+}
 
   resetPassword(resetRequest: LoginRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)

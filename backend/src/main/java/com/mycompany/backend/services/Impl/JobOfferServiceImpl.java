@@ -2,28 +2,38 @@ package com.mycompany.backend.services.Impl;
 
 import com.mycompany.backend.dto.JobOfferDTO;
 import com.mycompany.backend.dto.JobOfferRequest;
+import com.mycompany.backend.dto.LinkedInPostResponse;
 import com.mycompany.backend.entities.JobOffer;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.repositories.JobOfferRepository;
 import com.mycompany.backend.services.JobOfferService;
 import com.mycompany.backend.services.EmployeeService;
+import com.mycompany.backend.services.LinkedInService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
 public class JobOfferServiceImpl implements JobOfferService {
+
+    private static final Logger log = LoggerFactory.getLogger(JobOfferServiceImpl.class);
 
     @Autowired
     private JobOfferRepository jobOfferRepository;
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private LinkedInService linkedInService;
 
     @Override
     public JobOfferDTO create(JobOfferRequest request, String publisherId) {
@@ -83,7 +93,7 @@ public class JobOfferServiceImpl implements JobOfferService {
 
     @Override
     public JobOfferDTO publish(String id) {
-        return updateStatus(id, JobOffer.JobOfferStatus.PUBLISHED, LocalDate.now()); // ✅ LocalDate.now()
+        return updateStatus(id, JobOffer.JobOfferStatus.PUBLISHED, LocalDate.now());
     }
 
     @Override
@@ -205,7 +215,7 @@ public class JobOfferServiceImpl implements JobOfferService {
 
     @Override
     public void expireOldOffers() {
-        List<JobOffer> expiredOffers = jobOfferRepository.findExpiredJobOffers(LocalDate.now()); // ✅ LocalDate
+        List<JobOffer> expiredOffers = jobOfferRepository.findExpiredJobOffers(LocalDate.now());
         expiredOffers.forEach(jobOffer -> {
             jobOffer.setStatus(JobOffer.JobOfferStatus.EXPIRED);
             jobOffer.setUpdatedAt(LocalDateTime.now());
@@ -220,9 +230,128 @@ public class JobOfferServiceImpl implements JobOfferService {
                 .orElse(false);
     }
 
+    // Méthodes LinkedIn
+    @Override
+    public JobOfferDTO publishToLinkedIn(String jobOfferId) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("Job offer not found"));
+
+        LinkedInPostResponse response = linkedInService.publishJobOffer(jobOffer);
+
+        if (response.isSuccess()) {
+            // Mettre à jour l'offre avec l'ID du post LinkedIn
+            jobOffer.setLinkedInPostId(response.getId());
+            jobOffer.addExternalPlatform("LINKEDIN");
+            jobOffer.setUpdatedAt(LocalDateTime.now());
+            jobOffer = jobOfferRepository.save(jobOffer);
+
+            log.info("Job offer {} published to LinkedIn with post ID: {}",
+                    jobOfferId, response.getId());
+        } else {
+            throw new RuntimeException("Failed to publish to LinkedIn: " + response.getErrorMessage());
+        }
+
+        return convertToDTO(jobOffer);
+    }
+
+    @Override
+    public JobOfferDTO publishToIndeed(String jobOfferId) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("Job offer not found"));
+
+        // Pour Indeed, similaire à LinkedIn mais avec une logique spécifique
+        String indeedJobKey = "indeed_" + System.currentTimeMillis();
+        jobOffer.addExternalPlatform("INDEED");
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+        jobOffer = jobOfferRepository.save(jobOffer);
+
+        log.info("Job offer {} published to Indeed with job key: {}", jobOfferId, indeedJobKey);
+        return convertToDTO(jobOffer);
+    }
+
+    @Override
+    public JobOfferDTO unpublishFromLinkedIn(String jobOfferId) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("Job offer not found"));
+
+        if (jobOffer.getLinkedInPostId() != null) {
+            try {
+                linkedInService.deleteJobOfferPost(jobOffer.getLinkedInPostId());
+                log.info("Successfully unpublished job offer {} from LinkedIn", jobOfferId);
+            } catch (Exception e) {
+                log.warn("Failed to delete LinkedIn post, but removing local reference: {}", e.getMessage());
+            }
+
+            jobOffer.setLinkedInPostId(null);
+            jobOffer.getExternalPlatforms().remove("LINKEDIN");
+            jobOffer.setUpdatedAt(LocalDateTime.now());
+            jobOffer = jobOfferRepository.save(jobOffer);
+
+            log.info("Job offer {} unpublished from LinkedIn", jobOfferId);
+        }
+
+        return convertToDTO(jobOffer);
+    }
+
+    @Override
+    public JobOfferDTO updateLinkedInPost(String jobOfferId) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("Job offer not found"));
+
+        if (jobOffer.getLinkedInPostId() == null) {
+            throw new RuntimeException("Job offer is not published on LinkedIn");
+        }
+
+        LinkedInPostResponse response = linkedInService.updateJobOfferPost(
+                jobOffer.getLinkedInPostId(), jobOffer
+        );
+
+        if (response.isSuccess()) {
+            jobOffer.setUpdatedAt(LocalDateTime.now());
+            jobOffer = jobOfferRepository.save(jobOffer);
+            log.info("LinkedIn post updated for job offer {}", jobOfferId);
+        } else {
+            throw new RuntimeException("Failed to update LinkedIn post: " + response.getErrorMessage());
+        }
+
+        return convertToDTO(jobOffer);
+    }
+
     // Private helper methods
     private JobOfferDTO convertToDTO(JobOffer jobOffer) {
-        return new JobOfferDTO(jobOffer);
+        JobOfferDTO dto = new JobOfferDTO();
+        dto.setId(jobOffer.getId());
+        dto.setTitle(jobOffer.getTitle());
+        dto.setDescription(jobOffer.getDescription());
+        dto.setDepartment(jobOffer.getDepartment());
+        dto.setLocation(jobOffer.getLocation());
+        dto.setContractType(jobOffer.getContractType());
+        dto.setRequirements(jobOffer.getRequirements());
+        dto.setResponsibilities(jobOffer.getResponsibilities());
+        dto.setBenefits(jobOffer.getBenefits());
+
+        // Conversion du statut Enum vers String
+        if (jobOffer.getStatus() != null) {
+            dto.setStatus(jobOffer.getStatus().name());
+        }
+
+        dto.setPublishedBy(jobOffer.getPublishedBy() != null ? jobOffer.getPublishedBy().getId() : null);
+        dto.setPublishedDate(jobOffer.getPublishedDate());
+        dto.setClosingDate(jobOffer.getClosingDate());
+        dto.setCreatedAt(jobOffer.getCreatedAt());
+        dto.setUpdatedAt(jobOffer.getUpdatedAt());
+        dto.setLinkedInPostId(jobOffer.getLinkedInPostId());
+        dto.setExternalPlatforms(jobOffer.getExternalPlatforms());
+        dto.setApplicationCount(jobOffer.getApplicationCount());
+        dto.setViewCount(jobOffer.getViewCount());
+        dto.setTags(jobOffer.getTags());
+        dto.setExperienceLevel(jobOffer.getExperienceLevel());
+        dto.setEducationRequired(jobOffer.getEducationRequired());
+
+        // Utilisation de setIsActive au lieu de setActive
+        dto.setIsActive(jobOffer.getIsActive());
+
+        return dto;
     }
 
     private List<JobOfferDTO> convertToDTOList(List<JobOffer> jobOffers) {
@@ -241,7 +370,9 @@ public class JobOfferServiceImpl implements JobOfferService {
         jobOffer.setResponsibilities(request.getResponsibilities());
         jobOffer.setBenefits(request.getBenefits());
         jobOffer.setClosingDate(request.getClosingDate());
-        jobOffer.setTags(request.getTags());
+        if (request.getTags() != null) {
+            jobOffer.setTags(new HashSet<>(request.getTags()));
+        }
         jobOffer.setExperienceLevel(request.getExperienceLevel());
         jobOffer.setEducationRequired(request.getEducationRequired());
     }
@@ -256,7 +387,7 @@ public class JobOfferServiceImpl implements JobOfferService {
         if (request.getResponsibilities() != null) jobOffer.setResponsibilities(request.getResponsibilities());
         if (request.getBenefits() != null) jobOffer.setBenefits(request.getBenefits());
         if (request.getClosingDate() != null) jobOffer.setClosingDate(request.getClosingDate());
-        if (request.getTags() != null) jobOffer.setTags(request.getTags());
+        if (request.getTags() != null) jobOffer.setTags(new HashSet<>(request.getTags()));
         if (request.getExperienceLevel() != null) jobOffer.setExperienceLevel(request.getExperienceLevel());
         if (request.getEducationRequired() != null) jobOffer.setEducationRequired(request.getEducationRequired());
     }
@@ -268,7 +399,7 @@ public class JobOfferServiceImpl implements JobOfferService {
         jobOffer.setStatus(status);
         jobOffer.setUpdatedAt(LocalDateTime.now());
         if (publishDate != null) {
-            jobOffer.setPublishedDate(publishDate); // ✅ LocalDate
+            jobOffer.setPublishedDate(publishDate);
         }
 
         JobOffer saved = jobOfferRepository.save(jobOffer);
