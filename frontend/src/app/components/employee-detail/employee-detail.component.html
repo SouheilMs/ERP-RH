@@ -35,7 +35,7 @@
   </div>
 
   <!-- Modification form -->
-  <div class="employee-form">
+  <div class="employee-form" *ngIf="canSeeUpdateForm()">
     <h3>Update Information</h3>
     <form (ngSubmit)="onUpdateSubmit($event)">
       <div class="form-row">
@@ -44,15 +44,16 @@
           <input id="matricule" type="text" [(ngModel)]="employee.matricule" name="matricule">
         </div>
         <div class="form-group">
-          <label for="username">Name:</label>
-          <input id="username" type="text" [(ngModel)]="employee.username" name="username" required>
+          <label for="email">Email:</label>
+          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
         </div>
+
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="email">Email:</label>
-          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
+          <label for="address">Address:</label>
+          <input id="address" type="text" [(ngModel)]="employee.address" name="address" required>
         </div>
         <div class="form-group">
           <label for="salary">Salary:</label>
@@ -82,16 +83,7 @@
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="cin">CIN:</label>
-          <input id="cin" type="text" [(ngModel)]="employee.cin" name="cin">
-        </div>
-        <div class="form-group">
-          <label for="cnssNumber">CNSS Number:</label>
-          <input id="cnssNumber" type="text" [(ngModel)]="employee.cnssNumber" name="cnssNumber">
-        </div>
-      </div>
+
 
       <!-- Change photo section in form -->
       <div class="photo-upload-section">

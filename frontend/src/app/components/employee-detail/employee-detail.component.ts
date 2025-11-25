@@ -3,10 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { EmployeeServices, Employee, Formation } from '../../services/employee.services';
-import jsPDF from 'jspdf';
+import { EmployeeServices, Employee, Formation } from '../../services/employee.service';
+import { AuthService } from '../../services/auth.service';
 
-// Define pipe directly in component
 @Pipe({
   name: 'safeUrl',
   standalone: true
@@ -31,6 +30,13 @@ export class EmployeeDetailComponent implements OnInit {
   loading = true;
   errorMessage = '';
   successMessage = '';
+
+  // Permissions
+  canViewAllInfo: boolean = false;
+  canEdit: boolean = false;
+  isViewingOwnProfile: boolean = false;
+  showUnauthorizedMessage: boolean = false;
+  isMyProfilePage: boolean = false; // NOUVEAU: pour savoir si c'est la page "Mon Profil"
 
   // Formation modal
   showFormationModal = false;
@@ -71,15 +77,86 @@ export class EmployeeDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    public employeeService: EmployeeServices
+    public employeeService: EmployeeServices,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.getEmployee(id);
+    // Vérifier si c'est la page "Mon Profil"
+    this.isMyProfilePage = this.route.snapshot.data['isMyProfile'] || false;
+
+    if (this.isMyProfilePage) {
+      // Page "Mon Profil" - charger l'employé connecté
+      const currentUser = this.authService.getUser();
+      if (currentUser?.id) {
+        this.getEmployee(currentUser.id);
+        this.checkPermissions(currentUser.id);
+      }
+    } else {
+      // Page détail classique - charger via l'ID URL
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.getEmployee(id);
+        this.checkPermissions(id);
+      }
+    }
+  }
+
+  // MÉTHODE PERMISSIONS D'ACCÈS SELON RÔLE
+  private checkPermissions(employeeId: string) {
+    const currentUser = this.authService.getUser();
+
+    // L'utilisateur voit-il son propre profil ?
+    this.isViewingOwnProfile = currentUser?.id === employeeId;
+
+    // HR et HR Manager peuvent tout voir et modifier
+    this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
+
+    // Peut éditer ? UNIQUEMENT les RH (les employés ne peuvent RIEN modifier sauf formations)
+    this.canEdit = this.canViewAllInfo;
+
+    console.log('🎯 Permissions vérifiées:');
+    console.log('👤 ID profil demandé:', employeeId);
+    console.log('👤 ID utilisateur connecté:', currentUser?.id);
+    console.log('👀 Vue propre profil:', this.isViewingOwnProfile);
+    console.log('🔓 Peut voir toutes infos:', this.canViewAllInfo);
+    console.log('✏️ Peut éditer (RH seulement):', this.canEdit);
+    console.log('📄 Page "Mon Profil":', this.isMyProfilePage);
+    console.log('🎯 Rôle utilisateur:', this.authService.getUserRole());
+
+    // Si un employé essaie de voir un profil qui n'est pas le sien, bloquer l'accès
+    if (this.authService.isEmployee() && !this.isViewingOwnProfile && !this.isMyProfilePage) {
+      console.log('🚫 Accès refusé: Employé essaie de voir un autre profil');
+      this.showUnauthorizedMessage = true;
+      this.loading = false;
+
+      // Rediriger vers "Mon Profil" après 2 secondes
+      setTimeout(() => {
+        this.router.navigate(['/my-profile']);
+      }, 3000);
+    }
+  }
+
+  // MÉTHODE POUR SAVOIR SI ON PEUT VOIR LE FORMULAIRE DE MODIFICATION
+  canSeeUpdateForm(): boolean {
+    return this.canViewAllInfo && !this.isMyProfilePage; // Seulement les RH sur les pages détail
+  }
+
+  // MÉTHODE POUR SAVOIR SI ON PEUT UPLOADER UNE PHOTO
+  canUploadPhoto(): boolean {
+    return this.canViewAllInfo && !this.isMyProfilePage; // Seulement les RH sur les pages détail
+  }
+
+  // MÉTHODE POUR SAVOIR SI ON PEUT VOIR LES INFORMATIONS EN LECTURE SEULE
+  canSeeReadonlyInfo(): boolean {
+    return this.isMyProfilePage || !this.canViewAllInfo; // "Mon Profil" ou employé regardant son profil
   }
 
   getEmployee(id: string) {
+    if (this.showUnauthorizedMessage) {
+      return;
+    }
+
     this.loading = true;
     this.employeeService.getEmployeeById(id).subscribe({
       next: (data: Employee) => {
@@ -101,16 +178,23 @@ export class EmployeeDetailComponent implements OnInit {
     return 'assets/default-profile.png';
   }
 
-  // ================= UPDATE EMPLOYEE WITH CONFIRMATION =================
+  // ================= UPDATE EMPLOYEE (RH SEULEMENT) =================
   onUpdateSubmit(event: Event) {
     event.preventDefault();
+
+    if (!this.canEdit) {
+      this.errorMessage = "You don't have permission to edit this profile";
+      this.showErrorModal = true;
+      return;
+    }
+
     this.showUpdateConfirmation = true;
   }
 
   confirmUpdate() {
     this.showUpdateConfirmation = false;
 
-    if (!this.employee?.id) return;
+    if (!this.employee?.id || !this.canEdit) return;
 
     const updatedData: Employee = {
       username: this.employee.username,
@@ -153,8 +237,14 @@ export class EmployeeDetailComponent implements OnInit {
     this.showUpdateConfirmation = false;
   }
 
-  // ================= PHOTO UPLOAD =================
+  // ================= PHOTO UPLOAD (RH SEULEMENT) =================
   onPhotoSelected(event: any) {
+    if (!this.canUploadPhoto()) {
+      this.errorMessage = "You don't have permission to upload photos";
+      this.showErrorModal = true;
+      return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
     this.selectedPhoto = file;
@@ -164,7 +254,7 @@ export class EmployeeDetailComponent implements OnInit {
   }
 
   uploadPhoto() {
-    if (!this.employee?.id || !this.selectedPhoto) return;
+    if (!this.employee?.id || !this.selectedPhoto || !this.canUploadPhoto()) return;
 
     const formData = new FormData();
     formData.append('file', this.selectedPhoto);
@@ -183,8 +273,7 @@ export class EmployeeDetailComponent implements OnInit {
     });
   }
 
-  // ================= FORMATION MANAGEMENT =================
-  // ================= DATE VALIDATION METHODS =================
+  // ================= FORMATION MANAGEMENT (TOUS LES UTILISATEURS) =================
   isValidFormationDates(): boolean {
     if (!this.newFormation.startDate || !this.newFormation.endDate) {
       return false;
@@ -194,16 +283,13 @@ export class EmployeeDetailComponent implements OnInit {
     const endDate = new Date(this.newFormation.endDate);
     const today = new Date();
 
-    // Reset hours for accurate comparison
     today.setHours(0, 0, 0, 0);
 
-    // Check if start date is not in future
     if (startDate > today) {
       this.formationErrorMessage = 'Start date cannot be in the future';
       return false;
     }
 
-    // Check if start date is before or equal to end date
     if (startDate > endDate) {
       this.formationErrorMessage = 'Start date must be before or equal to end date';
       return false;
@@ -225,9 +311,9 @@ export class EmployeeDetailComponent implements OnInit {
     }
   }
 
-// Modifiez la méthode addFormation pour inclure la validation
   addFormation(event?: Event) {
     if (event) event.preventDefault();
+
     if (!this.employee?.id) return;
 
     // Validate dates before submitting
@@ -256,6 +342,7 @@ export class EmployeeDetailComponent implements OnInit {
       }
     });
   }
+
   onCertificateSelected(event: any) {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
@@ -271,6 +358,7 @@ export class EmployeeDetailComponent implements OnInit {
     const today = new Date();
     return today.toISOString().split('T')[0];
   }
+
   resetFormationModal() {
     this.newFormation = { name: '', location: '', startDate: '', endDate: '' };
     this.selectedCertificate = null;
@@ -283,7 +371,7 @@ export class EmployeeDetailComponent implements OnInit {
     this.resetFormationModal();
   }
 
-  // ================= DELETE FORMATION WITH CONFIRMATION =================
+  // ================= DELETE FORMATION (TOUS LES UTILISATEURS) =================
   deleteFormation(formationId: string | undefined) {
     if (!formationId || !this.employee?.id) return;
 
@@ -377,21 +465,19 @@ export class EmployeeDetailComponent implements OnInit {
   }
 
   // ================= PAYSLIP HISTORY =================
+
+// Dans employee-detail.component.ts
   viewPayslipHistory() {
     if (this.employee?.id) {
-      this.router.navigate(['/employees', this.employee.id, 'payslip-history']);
+      // Vérifier les permissions
+      if (this.canViewAllInfo || this.isViewingOwnProfile) {
+        this.router.navigate(['/employees', this.employee.id, 'payslips']);
+      } else {
+        this.errorMessage = "You don't have permission to view payslips";
+        this.showErrorModal = true;
+      }
     }
   }
-
-
-
-
-
-
-
-
-
-
   // ================= SUCCESS MODAL METHODS =================
   closeDeleteSuccess() {
     this.showDeleteSuccess = false;

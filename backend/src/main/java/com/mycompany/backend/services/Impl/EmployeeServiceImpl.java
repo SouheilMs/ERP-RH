@@ -21,6 +21,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,18 +60,72 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private SalaryCalculationService salaryCalculationService;
 
+    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS
+    private boolean hasHRRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority ->
+                        grantedAuthority.getAuthority().equals("ROLE_HR") ||
+                                grantedAuthority.getAuthority().equals("ROLE_HRMANAGER"));
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        return authentication.getName();
+    }
+
+    private boolean isViewingOwnProfile(String employeeId) {
+        String currentUsername = getCurrentUsername();
+        if (currentUsername == null) return false;
+
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isPresent()) {
+            Employee employee = employeeOpt.get();
+            return employee.getEmail().equals(currentUsername);
+        }
+        return false;
+    }
+
+    private void checkHRPermission() {
+        if (!hasHRRole()) {
+            throw new AccessDeniedException("Access denied: HR role required");
+        }
+    }
+
+    private void checkEmployeeAccessPermission(String employeeId) {
+        if (!hasHRRole() && !isViewingOwnProfile(employeeId)) {
+            throw new AccessDeniedException("Access denied: You can only access your own profile");
+        }
+    }
+
+    private void checkFormationPermission(String employeeId) {
+        if (!hasHRRole() && !isViewingOwnProfile(employeeId)) {
+            throw new AccessDeniedException("Access denied: You can only manage your own formations");
+        }
+    }
     @Override
     public List<Employee> getAllEmployees() {
+
         return employeeRepository.findAll();
     }
 
     @Override
     public Optional<Employee> getEmployeeById(String id) {
+
         return employeeRepository.findById(id);
     }
 
+
+
     @Override
     public void deleteEmployee(String id) {
+        checkHRPermission();
         employeeRepository.deleteById(id);
     }
 
@@ -94,6 +151,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, HttpServletRequest request) {
+        checkHRPermission();
+
         if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
             return ResponseEntity.badRequest().body("Employee with provided email already exists!");
         }
@@ -150,9 +209,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return ResponseEntity.ok("Employee registered successfully!");
     }
 
-
     @Override
     public void ImportFromExcel(MultipartFile file) throws IOException {
+        checkHRPermission();
+
         Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
 
@@ -190,6 +250,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
+        checkHRPermission();
+
         List<Employee> employees = employeeRepository.findAll();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Employees");
@@ -236,6 +298,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
+        checkHRPermission();
+
         try {
             Optional<Employee> employeeOpt = employeeRepository.findById(id);
             if (employeeOpt.isEmpty()) {
@@ -263,11 +327,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    // CORRECTION : Implémentation complète de la méthode generatePaySlipPDF sans paramètres
     @Override
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
-        return generatePaySlipPDF(employeeId, null, null);
+        try {
+            Employee emp = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
+
+            Calendar cal = Calendar.getInstance();
+            int month = cal.get(Calendar.MONTH) + 1;
+            int year = cal.get(Calendar.YEAR);
+
+            return generatePaySlipPDF(employeeId, month, year);
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération fiche: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la génération de la fiche de paie: " + e.getMessage());
+        }
     }
-//  Méthode pour récupérer la dernière fiche
+
+    // Méthode pour récupérer la dernière fiche
     @Override
     public Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month) {
         try {
@@ -302,9 +382,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             return Optional.empty();
         }
     }
-//  Récupération des années disponibles pour un employé
+
+    // Récupération des années disponibles pour un employé
     @Override
     public List<Integer> getAvailableYears(String employeeId) {
+        checkEmployeeAccessPermission(employeeId);
+
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) return Collections.emptyList();
 
@@ -364,9 +447,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         System.out.println("Années de travail générées: " + years);
         return years;
     }
-//  Génération de fiche de paie avec gestion des nulls
+
+    // Génération de fiche de paie avec gestion des nulls
     @Override
     public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
+        checkHRPermission();
+
         try {
             Employee emp = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
@@ -454,7 +540,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Erreur lors de la génération de la fiche de paie: " + e.getMessage());
         }
     }
-//  Méthode pour vérifier la disponibilité selon l'embauche
+
+    // Méthode pour vérifier la disponibilité selon l'embauche
     @Override
     public boolean isMonthAvailableForEmployee(Employee employee, int year, int month) {
         if (employee.getHireDate() == null) {
@@ -479,6 +566,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
+        checkEmployeeAccessPermission(employeeId);
+
         try {
             if (!employeeRepository.existsById(employeeId)) {
                 System.err.println("Employé non trouvé: " + employeeId);
@@ -510,9 +599,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             return Collections.emptyList();
         }
     }
-//  Historique des fiches de paie
+
+    // Historique des fiches de paie
     @Override
     public List<Payslip> getEmployeePayslips(String employeeId) {
+        checkEmployeeAccessPermission(employeeId);
+
         try {
             if (!employeeRepository.existsById(employeeId)) {
                 System.err.println("Employé non trouvé: " + employeeId);
@@ -527,7 +619,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             return Collections.emptyList();
         }
     }
-//  Méthode pour vérifier si un mois est dans le futur
+
+    // Méthode pour vérifier si un mois est dans le futur
     @Override
     public boolean isMonthInFuture(int year, int month) {
         Calendar currentDate = Calendar.getInstance();
@@ -567,9 +660,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Optional<Payslip> getPayslipById(String payslipId) {
         return payslipRepository.findById(payslipId);
     }
-//  Génération annuelle avec vérification des mois futurs
+
+    // Génération annuelle avec vérification des mois futurs
     @Override
     public Map<String, Object> generatePayslipsForYear(String employeeId, int year) {
+        checkHRPermission();
+
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
             throw new RuntimeException("Employee not found with id: " + employeeId);
@@ -633,9 +729,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return result;
     }
+
     // Génération de fiches de test avec vérification des mois futurs
     @Override
     public Map<String, Object> generateTestPayslips(String employeeId) {
+        checkHRPermission();
+
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
             throw new RuntimeException("Employee not found with id: " + employeeId);

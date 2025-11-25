@@ -1333,4 +1333,66 @@
   .error-modal .modal-actions {
     justify-content: center;
   }
+  /* Ajouter dans employee-detail.component.css */
+  .employee-info-readonly {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+  }
+
+  .employee-info-readonly h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+  }
+
+  .info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 20px;
+  }
+
+  .info-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+  }
+
+  .info-value {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #2c3e50;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .info-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-group {
+      width: 100%;
+    }
+  }
 }

@@ -1,108 +1,117 @@
-<div class="rh-container">
-  <div class="page-title">
+<div class="employee-list-container">
+  <!-- En-tête avec boutons d'action -->
+  <div class="header-actions">
     <h2>Gestion des Employés</h2>
+
+    <div class="action-buttons">
+      <!-- Bouton Ajouter -->
+      <button class="btn btn-primary" (click)="openAddModal()">
+        + Ajouter un employé
+      </button>
+
+      <!-- Import Excel -->
+      <div class="file-upload-wrapper">
+        <label for="excel-import" class="btn btn-secondary">
+          📊 Importer Excel
+        </label>
+        <input
+          id="excel-import"
+          type="file"
+          accept=".xlsx, .xls"
+          (change)="importExcel($event)"
+          style="display: none;">
+      </div>
+
+      <!-- Export Excel -->
+      <button class="btn btn-success" (click)="exportExcel()">
+        ⬇️ Exporter Excel
+      </button>
+    </div>
   </div>
 
-  <!-- Grille de cartes statistiques -->
-  <div class="stats-grid">
-    <div class="stat-card employee-count">
-      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-      <div class="stat-number">{{ employees.length }}</div>
-      <div class="stat-label">Employees</div>
-    </div>
-
-    <div class="stat-card empty-card">
-      <div class="empty-card-content"><i class="bi bi-graph-up"></i>
-        <div class="stat-number">{{ filteredEmployees.length }}</div>
-        <span>Employees Number by search</span></div>
-
-    </div>
-
-    <div class="stat-card empty-card">
-      <div class="empty-card-content"><i class="bi bi-calendar-check"></i><span>Statistique 3</span></div>
-    </div>
+  <!-- Messages de statut -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
   </div>
-  <!-- Champ de recherche -->
-  <div class="search-container" style="margin-bottom: 2rem;">
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-bar">
     <input
       type="text"
       [(ngModel)]="searchTerm"
       (input)="filterEmployees()"
-      placeholder="Rechercher par nom, email, téléphone ou statut..."
-      class="form-control"
-      style="max-width: 400px; padding: 0.75rem; border-radius: 10px; border: 2px solid #e9ecef;">
-  </div>
-  <!-- Boutons d'action -->
-  <div class="action-buttons-container">
-    <label class="action-btn import-btn">
-      <i class="bi bi-upload"></i> Importer
-      <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
-    </label>
-    <button class="action-btn export-btn" (click)="exportExcel()">
-      <i class="bi bi-download"></i> Exporter
-    </button>
-    <!-- Ajoutez la classe action-btn ici -->
-    <button class="action-btn add-btn" (click)="showAdd = true">
-      <i class="bi bi-plus-circle"></i> Add Employee
-    </button>
-
-    <app-add-employee *ngIf="showAdd" (closeModalEvent)="showAdd = false"></app-add-employee>
+      placeholder="Rechercher un employé..."
+      class="search-input">
   </div>
 
-
-    <!-- État de chargement -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <div>Loading Employees...</div>
-  </div>
-
-  <!-- Messages -->
-  <div *ngIf="errorMessage && !loading" class="error-message">
-    <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !loading" class="success-message">
-    <i class="bi bi-check-circle"></i> {{ successMessage }}
-  </div>
-
-  <div *ngIf="!loading && (employees.length > 0 || (searchTerm && filteredEmployees.length > 0))" class="table-container">
-  <!-- Tableau -->
-  <div *ngIf="!loading && employees.length > 0" class="table-container">
-    <table class="employee-table">
+  <!-- Tableau des employés -->
+  <div class="table-container">
+    <table class="employees-table">
       <thead>
       <tr>
-        <th>Employees Name</th>
+        <th>Nom</th>
         <th>Email</th>
-        <th>Status</th>
+        <th>Téléphone</th>
+        <th>Statut</th>
         <th>Actions</th>
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let emp of (searchTerm ? filteredEmployees : employees)">
-        <td>{{ emp.username }}</td>
-        <td>{{ emp.email }}</td>
-        <td [class]="'status status-' + (emp.status?.toLowerCase() || 'na')">
-          {{ emp.status || 'N/A' }}
+      <!-- État de chargement -->
+      <tr *ngIf="loading">
+        <td colspan="5" class="loading-cell">
+          <div class="loading-spinner">Chargement...</div>
         </td>
-        <td>
-          <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary me-2">
-            <i class="bi bi-eye"></i> Details
-          </button>
-          <button (click)="deleteEmployee(emp.id)" class="btn btn-sm btn-danger">
-            <i class="bi bi-trash"></i> Delete
-          </button>
-        </td>
-
       </tr>
 
+      <!-- Aucun résultat -->
+      <tr *ngIf="!loading && filteredEmployees.length === 0">
+        <td colspan="5" class="no-data">
+          Aucun employé trouvé
+        </td>
+      </tr>
+
+      <!-- Liste des employés -->
+      <tr *ngFor="let employee of filteredEmployees; trackBy: trackByEmployeeId">
+        <td>
+          <strong>{{ employee.username }}</strong>
+        </td>
+        <td>{{ employee.email }}</td>
+        <td>{{ employee.phone || 'Non renseigné' }}</td>
+        <td>
+            <span [class]="'status-badge ' + (employee.status?.toLowerCase() || 'inactive')">
+              {{ employee.status || 'Inactive' }}
+            </span>
+        </td>
+        <td class="actions-cell">
+          <!-- Bouton Voir détails -->
+          <a
+            [routerLink]="['/employees', employee.id]"
+            class="btn btn-info btn-sm">
+            👁️ Voir
+          </a>
+
+          <!-- Bouton Supprimer -->
+          <button
+            (click)="deleteEmployee(employee.id)"
+            class="btn btn-danger btn-sm"
+            [disabled]="loading">
+            🗑️ Supprimer
+          </button>
+        </td>
+      </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- État vide -->
-  <div *ngIf="!loading && employees.length === 0" class="empty-state">
-    <i class="bi bi-people"></i>
-    <h3>Aucun employé trouvé</h3>
-    <p>Commencez par importer un fichier Excel pour ajouter des employés.</p>
-  </div>
-</div>
+  <!-- Modal d'ajout d'employé -->
+  <app-add-employee
+    *ngIf="showAddModal"
+    (closeModalEvent)="closeAddModal()"
+    (employeeAdded)="onEmployeeAdded()">
+  </app-add-employee>
 </div>

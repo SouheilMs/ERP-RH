@@ -4,7 +4,18 @@
   background: #f7fafc;
   margin-top: 70px; /* Compensation pour la navbar fixe */
 }
+/* dashboard.component.css */
+.user-info {
+  padding: 10px 20px;
+  background-color: #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
 
+.user-info strong {
+  color: #495057;
+}
 /* Sidebar */
 .sidebar {
   width: 280px;
@@ -142,7 +153,7 @@
   .sidebar {
     width: 240px;
   }
-  
+
   .main-content {
     margin-left: 240px;
     padding: 1.5rem;
@@ -153,7 +164,7 @@
   .dashboard-layout {
     flex-direction: column;
   }
-  
+
   .sidebar {
     position: relative;
     width: 100%;
@@ -161,39 +172,39 @@
     height: auto;
     padding: 1rem 0;
   }
-  
+
   .sidebar h2 {
     margin-bottom: 1rem;
     font-size: 20px;
   }
-  
+
   .sidebar ul {
     display: flex;
     overflow-x: auto;
     padding: 0 1rem;
   }
-  
+
   .sidebar li {
     margin: 0;
     padding: 0 0.25rem;
   }
-  
+
   .sidebar a {
     white-space: nowrap;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 14px;
   }
-  
+
   .sidebar a:hover {
     transform: translateY(-2px);
   }
-  
+
   .main-content {
     margin-left: 0;
     padding: 1rem;
   }
-  
+
   .page-header h1 {
     font-size: 2rem;
   }
@@ -203,21 +214,21 @@
   .sidebar {
     padding: 0.75rem 0;
   }
-  
+
   .sidebar a {
     padding: 0.5rem 0.75rem;
     font-size: 13px;
   }
-  
+
   .main-content {
     padding: 0.75rem;
   }
-  
+
   .content-card {
     padding: 1.5rem;
     border-radius: 12px;
   }
-  
+
   .page-header h1 {
     font-size: 1.75rem;
   }

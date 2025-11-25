@@ -3,7 +3,7 @@ package com.mycompany.backend.controllers;
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
-import com.mycompany.backend.entities.formation;
+import com.mycompany.backend.entities.Formation;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.PayslipRepository;
@@ -12,6 +12,7 @@ import com.mycompany.backend.services.GridFsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,6 +46,7 @@ public class EmployeeController {
 
     // -------------------- EMPLOYÉ --------------------
     @GetMapping
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<List<Employee>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
@@ -57,12 +59,14 @@ public class EmployeeController {
     }
 
     @PostMapping("/Add-employee")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<?> registerNewEmployee(@RequestBody @Valid EmployeeDTO employeeDTO,
                                                  final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<Employee> updateEmployee(@PathVariable String id,
                                                    @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
@@ -95,6 +99,7 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<String> deleteEmployee(@PathVariable String id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employé supprimé avec succès");
@@ -102,6 +107,7 @@ public class EmployeeController {
 
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<Employee> uploadPhoto(@PathVariable String id,
                                                 @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
@@ -139,6 +145,7 @@ public class EmployeeController {
 
     // -------------------- EXPORT / IMPORT --------------------
     @GetMapping("/export")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<byte[]> exportEmployees() throws IOException {
         ByteArrayOutputStream out = employeeService.exportToExcel();
         HttpHeaders headers = new HttpHeaders();
@@ -149,6 +156,7 @@ public class EmployeeController {
     }
 
     @PostMapping("/import")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<String> importEmployees(@RequestParam("file") MultipartFile file) {
         try {
             employeeService.ImportFromExcel(file);
@@ -161,7 +169,7 @@ public class EmployeeController {
 
     // -------------------- FORMATION --------------------
     @PostMapping("/{id}/formations")
-    public ResponseEntity<formation> addFormation(
+    public ResponseEntity<Formation> addFormation(
             @PathVariable String id,
             @RequestParam("name") String name,
             @RequestParam("location") String location,
@@ -172,7 +180,7 @@ public class EmployeeController {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
-        formation f = new formation();
+        Formation f = new Formation();
         f.setName(name);
         f.setLocation(location);
         f.setStartDate(LocalDate.parse(startDate));
@@ -188,7 +196,11 @@ public class EmployeeController {
             f.setCertificateId(fileId);
         }
 
-        formation savedFormation = formationRepository.save(f);
+        Formation savedFormation = formationRepository.save(f);
+
+        if (emp.getFormations() == null) {
+            emp.setFormations(new HashSet<>());
+        }
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
@@ -221,11 +233,11 @@ public class EmployeeController {
         }
         Employee employee = employeeOpt.get();
 
-        Optional<formation> formationOpt = formationRepository.findById(formationId);
+        Optional<Formation> formationOpt = formationRepository.findById(formationId);
         if (formationOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Formation not found");
         }
-        formation f = formationOpt.get();
+        Formation f = formationOpt.get();
 
         if (f.getCertificateId() != null) {
             try {
@@ -235,8 +247,11 @@ public class EmployeeController {
             }
         }
 
-        employee.getFormations().removeIf(form -> form.getId().equals(formationId));
-        employeeRepository.save(employee);
+        if (employee.getFormations() != null) {
+            employee.getFormations().removeIf(form -> form.getId().equals(formationId));
+            employeeRepository.save(employee);
+        }
+
         formationRepository.deleteById(formationId);
 
         return ResponseEntity.ok("Formation supprimée avec succès");
@@ -285,6 +300,7 @@ public class EmployeeController {
     }
 
     @PostMapping("/{employeeId}/payslip/generate")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<?> generatePayslipForMonth(
             @PathVariable String employeeId,
             @RequestParam Integer month,
@@ -335,6 +351,7 @@ public class EmployeeController {
     }
 
     @PostMapping("/{id}/payslips/generate-test")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<Map<String, Object>> generateTestPayslips(@PathVariable String id) {
         try {
             System.out.println("Génération fiches de test pour: " + id);
@@ -352,6 +369,7 @@ public class EmployeeController {
     }
 
     @PostMapping("/{id}/payslips/generate-year")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<Map<String, Object>> generatePayslipsForYear(
             @PathVariable String id,
             @RequestParam int year) {
@@ -398,6 +416,4 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-
 }
