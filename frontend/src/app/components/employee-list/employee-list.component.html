@@ -28,7 +28,7 @@
       type="text"
       [(ngModel)]="searchTerm"
       (input)="filterEmployees()"
-      placeholder="Rechercher par nom, email, téléphone ou statut..."
+      placeholder="Search by name, email or phone number.."
       class="form-control"
       style="max-width: 400px; padding: 0.75rem; border-radius: 10px; border: 2px solid #e9ecef;">
   </div>
@@ -101,8 +101,8 @@
   <!-- État vide -->
   <div *ngIf="!loading && employees.length === 0" class="empty-state">
     <i class="bi bi-people"></i>
-    <h3>Aucun employé trouvé</h3>
-    <p>Commencez par importer un fichier Excel pour ajouter des employés.</p>
+    <h3>No employees found</h3>
+    <p>Start by importing an Excel file to add employees.</p>
   </div>
 </div>
 </div>

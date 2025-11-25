@@ -1,6 +1,7 @@
 package com.mycompany.backend.controllers;
 
 import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.LeaveBalanceDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.formation;
 import com.mycompany.backend.repositories.EmployeeRepository;
@@ -288,6 +289,31 @@ public class EmployeeController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    @GetMapping("/{employeeId}/leave-balances")
+    public ResponseEntity<?> getEmployeeLeaveBalances(@PathVariable String employeeId) {
+        try {
+            List<LeaveBalanceDTO> leaveBalances = employeeService.getEmployeeLeaveBalances(employeeId);
+            return ResponseEntity.ok(leaveBalances);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving leave balances");
+        }
+    }
+
+    @GetMapping("/{employeeId}/leave-balances/{leaveType}")
+    public ResponseEntity<?> getEmployeeLeaveBalanceByType(
+            @PathVariable String employeeId,
+            @PathVariable String leaveType) {
+        try {
+            LeaveBalanceDTO leaveBalance = employeeService.getEmployeeLeaveBalanceByType(employeeId, leaveType);
+            return ResponseEntity.ok(leaveBalance);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving leave balance");
         }
     }
 

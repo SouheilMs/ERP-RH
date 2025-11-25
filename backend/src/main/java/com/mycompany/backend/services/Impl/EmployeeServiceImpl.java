@@ -1,9 +1,12 @@
 package com.mycompany.backend.services.Impl;
 
 import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.LeaveBalanceDTO;
+import com.mycompany.backend.entities.Conge;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.entities.ERole;
+import com.mycompany.backend.repositories.CongeRepository;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.RoleRepository;
@@ -32,10 +35,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
-
+    private final CongeRepository congeRepository;
+    @Autowired
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository,
+                               CongeRepository congeRepository) {
+        this.employeeRepository = employeeRepository;
+        this.congeRepository = congeRepository;
+    }
     @Autowired
     private EmployeeRepository employeeRepository;
 
@@ -103,6 +113,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setHireDate(employeeDTO.getHireDate());
         employee.setSalary(employeeDTO.getSalary());
         employee.setStatus(employeeDTO.getStatus());
+        if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
+            String gender = employeeDTO.getGender().toUpperCase();
+            if (!isValidGender(gender)) {
+                return ResponseEntity.badRequest().body("Invalid gender value. Use: MALE, FEMALE, or OTHER");
+            }
+        }
 
         // Nouveaux champs
         employee.setCin(employeeDTO.getCin());
@@ -118,7 +134,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setTransportAllowance(employeeDTO.getTransportAllowance());
         employee.setFamilyAllowance(employeeDTO.getFamilyAllowance());
         employee.setOtherBonuses(employeeDTO.getOtherBonuses());
-
+        if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
+            employee.setGender(employeeDTO.getGender().toUpperCase());
+        }
         Set<Role> roles = new HashSet<>();
         Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
                 .orElseThrow(() -> new RuntimeException("Error: Role not found."));
@@ -138,6 +156,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         return ResponseEntity.ok("Employee registered successfully!");
+
     }
 
     @Override
@@ -447,4 +466,163 @@ public class EmployeeServiceImpl implements EmployeeService {
             return (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (taxableIncome - 50000) * 0.35;
         }
     }
-}
+    @Override
+    public List<LeaveBalanceDTO> getEmployeeLeaveBalances(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + employeeId));
+
+        List<LeaveBalanceDTO> result = new ArrayList<>();
+
+        // BASIC LEAVE TYPES (Available to all employees)
+        Map<String, Double> totalDays = new HashMap<>();
+        totalDays.put("ANNUAL", 22.0);          // 22 standard annual days
+        totalDays.put("SICK", 18.0);            // 18 sick days
+        totalDays.put("UNPAID", 15.0);          // 15 max unpaid days
+        totalDays.put("MARRIAGE", 7.0);         // Employee marriage
+        totalDays.put("CHILD_MARRIAGE", 2.0);   // Child marriage
+        totalDays.put("BIRTH", 1.0);            // Child birth
+        totalDays.put("DEATH_SPOUSE", 7.0);     // Spouse death
+        totalDays.put("DEATH_PARENT", 7.0);     // Parent death
+        totalDays.put("TRAINING", 10.0);        // Professional training
+
+        Map<String, String> labels = new HashMap<>();
+        labels.put("ANNUAL", "Annual Leave");
+        labels.put("SICK", "Sick Leave");
+        labels.put("UNPAID", "Unpaid Leave");
+        labels.put("MARRIAGE", "Employee Marriage");
+        labels.put("CHILD_MARRIAGE", "Child's Marriage");
+        labels.put("BIRTH", "Child Birth");
+        labels.put("DEATH_SPOUSE", "Spouse Death");
+        labels.put("DEATH_PARENT", "Parent Death");
+        labels.put("TRAINING", "Training Leave");
+
+        // GENDER-SPECIFIC LEAVES
+        String gender = employee.getGender(); // Assuming you have gender field
+
+        if ("FEMALE".equalsIgnoreCase(gender)) {
+            totalDays.put("MATERNITY", 30.0);       // Only for female employees
+            labels.put("MATERNITY", "Maternity Leave");
+        }
+
+        if ("MALE".equalsIgnoreCase(gender)) {
+            totalDays.put("PATERNITY", 3.0);        // Only for male employees
+            labels.put("PATERNITY", "Paternity Leave");
+        }
+
+        // Calculate for each leave type
+        for (Map.Entry<String, Double> entry : totalDays.entrySet()) {
+            String leaveType = entry.getKey();
+            Double total = entry.getValue();
+            Double usedDays = calculateUsedLeaveDays(employeeId, leaveType);
+            Double remainingDays = total - usedDays;
+
+            result.add(new LeaveBalanceDTO(
+                    leaveType,
+                    labels.get(leaveType),
+                    total,
+                    usedDays,
+                    Math.max(0, remainingDays)
+            ));
+        }
+
+        return result;
+    }
+
+    @Override
+    public LeaveBalanceDTO getEmployeeLeaveBalanceByType(String employeeId, String leaveType) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + employeeId));
+
+        // Check gender restrictions
+        if ("MATERNITY".equalsIgnoreCase(leaveType) && !"FEMALE".equalsIgnoreCase(employee.getGender())) {
+            throw new RuntimeException("Maternity leave is only available for female employees");
+        }
+
+        if ("PATERNITY".equalsIgnoreCase(leaveType) && !"MALE".equalsIgnoreCase(employee.getGender())) {
+            throw new RuntimeException("Paternity leave is only available for male employees");
+        }
+
+        Map<String, Double> totalDays = new HashMap<>();
+        Map<String, String> labels = new HashMap<>();
+
+        // Common leaves
+        totalDays.put("ANNUAL", 22.0);
+        totalDays.put("SICK", 18.0);
+        totalDays.put("UNPAID", 15.0);
+
+
+        // Gender-specific leaves
+        if ("FEMALE".equalsIgnoreCase(employee.getGender())) {
+            totalDays.put("MATERNITY", 30.0);
+        }
+        if ("MALE".equalsIgnoreCase(employee.getGender())) {
+            totalDays.put("PATERNITY", 3.0);
+        }
+
+        // Labels mapping
+        labels.put("ANNUAL", "Annual Leave");
+        labels.put("SICK", "Sick Leave");
+        labels.put("UNPAID", "Unpaid Leave");
+        labels.put("MATERNITY", "Maternity Leave");
+        labels.put("PATERNITY", "Paternity Leave");
+
+        String leaveTypeUpper = leaveType.toUpperCase();
+        Double total = totalDays.getOrDefault(leaveTypeUpper, 0.0);
+        Double usedDays = calculateUsedLeaveDays(employeeId, leaveTypeUpper);
+        Double remainingDays = total - usedDays;
+        String label = labels.getOrDefault(leaveTypeUpper, leaveType);
+
+        return new LeaveBalanceDTO(leaveTypeUpper, label, total, usedDays, Math.max(0, remainingDays));
+    }
+    @Override
+    public double calculateUsedLeaveDays(String employeeId, String leaveType) {
+        try {
+            // Utilisation correcte du repository injecté
+            List<Conge> conges = congeRepository.findByEmployeeIdAndTypeAndStatus(
+                    employeeId,
+                    leaveType.toUpperCase(),
+                    "APPROVED" // ou "APPROUVE" selon votre système
+            );
+
+            if (conges == null || conges.isEmpty()) {
+                return 0.0;
+            }
+
+            return conges.stream()
+                    .mapToDouble(this::calculateLeaveDays)
+                    .sum();
+
+        } catch (Exception e) {
+            System.err.println("Error calculating used leave days: " + e.getMessage());
+            return 0.0;
+        }
+    }
+
+    @Override
+    public double calculateRemainingLeaveDays(String employeeId, String leaveType) {
+        Map<String, Double> totalDays = new HashMap<>();
+        totalDays.put("ANNUAL", 22.0);
+        totalDays.put("SICK", 18.0);
+        totalDays.put("MATERNITY", 30.0);
+        totalDays.put("PATERNITY", 3.0);
+        totalDays.put("UNPAID", 0.0);
+
+        Double total = totalDays.getOrDefault(leaveType.toUpperCase(), 0.0);
+        Double usedDays = calculateUsedLeaveDays(employeeId, leaveType);
+
+        return Math.max(0, total - usedDays);
+    }
+
+    private double calculateLeaveDays(Conge conge) {
+        if (conge.getStartDate() != null && conge.getEndDate() != null) {
+            long diffInMillies = Math.abs(conge.getEndDate().getTime() - conge.getStartDate().getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+            return diff + 1;
+        }
+        return 0.0;
+    }
+        private boolean isValidGender(String gender) {
+            return gender != null &&
+                    (gender.equals("MALE") || gender.equals("FEMALE") || gender.equals("OTHER"));
+        }
+    }

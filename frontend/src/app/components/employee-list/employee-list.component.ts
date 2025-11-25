@@ -23,10 +23,12 @@ export class EmployeeListComponent implements OnInit {
   filteredEmployees: any[] = [];
   showAdd = false;
 
+
   constructor(
     private employeeService: EmployeeServices,
     private cdr: ChangeDetectorRef
   ) {}
+
 
   ngOnInit(): void {
     this.loadEmployees();

@@ -23,6 +23,7 @@ public class Employee {
     private String email;
     private String phone;
     private String password;
+    private String gender;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date hireDate;
@@ -213,4 +214,6 @@ public class Employee {
     public void setFormations(List<formation> formations) {
         this.formations = formations;
     }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 }

@@ -36,6 +36,7 @@ public class EmployeeDTO {
     private Double transportAllowance;
     private Double familyAllowance;
     private Double otherBonuses;
+    private String gender;
 
     // Keep other getters and setters as they are
     public String getUsername() {
@@ -92,4 +93,7 @@ public class EmployeeDTO {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public String getGender() {return gender;}
+    public void setGender(String gender) {this.gender = gender;}
 }

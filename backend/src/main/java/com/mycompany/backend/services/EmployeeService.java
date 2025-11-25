@@ -1,5 +1,6 @@
 package com.mycompany.backend.services;
 import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.LeaveBalanceDTO;
 import com.mycompany.backend.entities.Employee;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,6 +41,10 @@ public interface EmployeeService {
     String storeEmployeePhoto(String id, MultipartFile file); // retourne photoId
     String storeFormationFile(MultipartFile file);           // retourne URL ou ID du PDF
     byte[] generatePaySlipPDF(String employeeId) throws Exception; // génère un PDF de bulletin de salaire
-
+    // NOUVELLES MÉTHODES POUR LES CONGÉS
+    List<LeaveBalanceDTO> getEmployeeLeaveBalances(String employeeId);
+    LeaveBalanceDTO getEmployeeLeaveBalanceByType(String employeeId, String leaveType);
+    double calculateUsedLeaveDays(String employeeId, String leaveType);
+    double calculateRemainingLeaveDays(String employeeId, String leaveType);
 }
 

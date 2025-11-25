@@ -7,12 +7,14 @@ import { EmployeeListComponent } from './components/employee-list/employee-list.
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
 import { RoleListComponent } from './components/role-list/role-list';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
+import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'mes-conges', component: LeaveBalanceComponent },
 
   // Dashboard layout avec children
   {
@@ -22,13 +24,12 @@ export const routes: Routes = [
       { path: '', component: EmployeeListComponent },       // Liste des employés
       { path: ':id', component: EmployeeDetailComponent },  // Détail d'un employé
       { path: 'roles', component: RoleListComponent },      // Liste des rôles
+      { path: 'mes-conges', component: LeaveBalanceComponent }
     ]
   },
 
   // Route directe pour les rôles (si nécessaire)
   { path: 'roles', component: RoleListComponent },
 
-  // Redirection par défaut
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: '**', redirectTo: '/login' }
+
 ];
