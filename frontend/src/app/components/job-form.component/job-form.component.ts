@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { JobOfferService, JobOfferRequest } from '../../services/job-offer.service';
+import { AuthService } from '../../services/auth.service'; 
 
 @Component({
-  selector: 'app-job-form.component',
- imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  selector: 'app-job-form',
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './job-form.component.html',
   styleUrl: './job-form.component.css',
 })
-
 export class JobFormComponent implements OnInit {
   jobForm: FormGroup;
   isEdit = false;
@@ -23,10 +23,14 @@ export class JobFormComponent implements OnInit {
   experienceLevels = ['JUNIOR', 'MID', 'SENIOR'];
   educationLevels = ['BAC', 'BAC+2', 'BAC+3', 'BAC+5', 'DOCTORATE'];
 
+  currentTags: string[] = [];
+  tagInput: string = '';
+
   constructor(
     private fb: FormBuilder,
     private jobService: JobOfferService,
     private route: ActivatedRoute,
+     private authService: AuthService,
     private router: Router
   ) {
     this.jobForm = this.createForm();
@@ -36,37 +40,21 @@ export class JobFormComponent implements OnInit {
     this.jobId = this.route.snapshot.paramMap.get('id');
     this.isEdit = !!this.jobId;
 
-    // Test de connexion au backend
-    this.testBackendConnection();
-
     if (this.isEdit && this.jobId) {
       this.loadJobOffer();
     }
   }
 
-  testBackendConnection(): void {
-    console.log('Testing backend connection...');
-    this.jobService.testBackendConnection().subscribe({
-      next: (response) => {
-        console.log(' Backend connection successful:', response);
-      },
-      error: (error) => {
-        console.error(' Backend connection failed:', error);
-        this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur le port 8081.';
-      }
-    });
-  }
-
   createForm(): FormGroup {
     return this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(5)]],
-      description: ['', [Validators.required, Validators.minLength(20)]],
-      department: ['', Validators.required],
-      location: ['', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(3)]],
+      description: ['', [Validators.required, Validators.minLength(10)]],
+      department: ['', [Validators.required, Validators.minLength(2)]],
+      location: ['', [Validators.required, Validators.minLength(2)]],
       contractType: ['', Validators.required],
-      requirements: ['', [Validators.required, Validators.minLength(20)]],
-      responsibilities: ['', [Validators.required, Validators.minLength(20)]],
-      benefits: ['', [Validators.required, Validators.minLength(20)]],
+      requirements: ['', [Validators.required, Validators.minLength(10)]],
+      responsibilities: ['', [Validators.required, Validators.minLength(10)]],
+      benefits: ['', [Validators.required, Validators.minLength(10)]],
       closingDate: ['', [Validators.required, this.futureDateValidator]],
       experienceLevel: ['', Validators.required],
       educationRequired: ['', Validators.required],
@@ -74,7 +62,6 @@ export class JobFormComponent implements OnInit {
     });
   }
 
-  // Validateur pour s'assurer que la date est dans le futur
   private futureDateValidator(control: any) {
     if (!control.value) return null;
     
@@ -93,8 +80,8 @@ export class JobFormComponent implements OnInit {
     
     this.jobService.getJobOfferById(this.jobId).subscribe({
       next: (job) => {
-        // Convertit la date du backend (LocalDateTime) en format date simple pour l'input
         const closingDate = job.closingDate ? job.closingDate.split('T')[0] : '';
+        this.currentTags = job.tags || []; 
         
         this.jobForm.patchValue({
           title: job.title,
@@ -110,6 +97,7 @@ export class JobFormComponent implements OnInit {
           educationRequired: job.educationRequired,
           tags: job.tags?.join(', ') || ''
         });
+        
         this.loading = false;
       },
       error: (error) => {
@@ -121,18 +109,16 @@ export class JobFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    console.log('Form validation status:', this.jobForm.valid);
+    
     if (this.jobForm.valid) {
       this.submitting = true;
       this.errorMessage = '';
 
       const formValue = this.jobForm.value;
       
-      // Nettoyer les tags
-      const tags = formValue.tags 
-        ? formValue.tags.split(',')
-            .map((tag: string) => tag.trim())
-            .filter((tag: string) => tag.length > 0)
-        : [];
+      const tags = this.currentTags.length > 0 ? this.currentTags : 
+                  (formValue.tags ? formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : []);
 
       const request: JobOfferRequest = {
         title: formValue.title,
@@ -143,66 +129,84 @@ export class JobFormComponent implements OnInit {
         requirements: formValue.requirements,
         responsibilities: formValue.responsibilities,
         benefits: formValue.benefits,
-        closingDate: formValue.closingDate, // Le service formatera cette date
+        closingDate: formValue.closingDate,
         experienceLevel: formValue.experienceLevel,
         educationRequired: formValue.educationRequired,
         tags: tags,
         isActive: true
       };
 
-      console.log('Submitting job offer request:', request);
-
-      // Utiliser un ID réel - à remplacer par votre logique d'authentification
-      const publisherId = this.getCurrentUserId();
+      console.log('Submitting request:', request);
 
       if (this.isEdit && this.jobId) {
         this.jobService.updateJobOffer(this.jobId, request).subscribe({
           next: (response) => {
-            // console.log(' Job offer updated successfully:', response);
+            console.log('Job offer updated successfully:', response);
             this.submitting = false;
             alert('Offre mise à jour avec succès!');
             this.router.navigate(['/jobs']);
           },
           error: (error) => {
-            // console.error(' Error updating job offer:', error);
+            console.error('Error updating job offer:', error);
             this.errorMessage = `Erreur lors de la mise à jour: ${error.message}`;
             this.submitting = false;
           }
         });
       } else {
+        const publisherId = this.getCurrentUserId();
         this.jobService.createJobOffer(request, publisherId).subscribe({
           next: (response) => {
-            console.log(' Job offer created successfully:', response);
+            console.log('Job offer created successfully:', response);
             this.submitting = false;
             alert('Offre créée avec succès!');
             this.router.navigate(['/jobs']);
           },
           error: (error) => {
-            // console.error(' Error creating job offer:', error);
+            console.error('Error creating job offer:', error);
             this.errorMessage = `Erreur lors de la création: ${error.message}`;
             this.submitting = false;
           }
         });
       }
     } else {
+      console.log('Form is invalid');
       this.markFormGroupTouched();
       this.errorMessage = 'Veuillez corriger les erreurs dans le formulaire';
-      
-      // Afficher les erreurs de validation spécifiques
-      const closingDateError = this.jobForm.get('closingDate')?.errors;
-      if (closingDateError?.['pastDate']) {
-        this.errorMessage += ' - La date de clôture doit être dans le futur';
-      }
+      this.checkFormValidity();
     }
   }
 
-  private getCurrentUserId(): string {
-    // À REMPLACER par votre logique d'authentification réelle
-    // Pour le moment, utilisez un ID valide pour votre base de données
-    // Vérifiez dans votre base MongoDB quel ID d'employé existe
-    return '65a1b2c3d4e5f6a7b8c9d0e1'; // Remplacez par un ID réel
+  checkFormValidity(): void {
+    Object.keys(this.jobForm.controls).forEach(key => {
+      const control = this.jobForm.get(key);
+      if (control?.invalid) {
+        console.log(`Invalid field: ${key}`, {
+          errors: control.errors,
+          value: control.value
+        });
+      }
+    });
   }
 
+  private getCurrentUserId(): string {
+    const currentUser = this.authService.getUser();
+  
+  if (currentUser && currentUser.id) {
+    console.log('Using current user ID:', currentUser.id);
+    return currentUser.id;
+  }
+  
+  // Fallback: try to get from localStorage directly
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    const user = JSON.parse(userData);
+    console.log('Using user ID from localStorage:', user.id);
+    return user.id;
+  }
+  
+  // If no user is found, throw a clear error
+  throw new Error('No user logged in. Please log in first.');
+}
   markFormGroupTouched(): void {
     Object.keys(this.jobForm.controls).forEach(key => {
       this.jobForm.get(key)?.markAsTouched();
@@ -221,5 +225,44 @@ export class JobFormComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/jobs']);
+  }
+
+  // Méthodes pour gérer les tags
+  addTag(tag: string): void {
+    const trimmedTag = tag.trim();
+    if (trimmedTag && !this.currentTags.includes(trimmedTag)) {
+      this.currentTags.push(trimmedTag);
+      this.updateTagsFormControl();
+    }
+  }
+
+  removeTag(tag: string): void {
+    this.currentTags = this.currentTags.filter(t => t !== tag);
+    this.updateTagsFormControl();
+  }
+
+  onTagKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.addCurrentTag();
+    }
+  }
+
+  onTagInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.tagInput = input.value;
+  }
+
+  addCurrentTag(): void {
+    if (this.tagInput.trim()) {
+      this.addTag(this.tagInput.trim());
+      this.tagInput = '';
+    }
+  }
+
+  updateTagsFormControl(): void {
+    this.jobForm.patchValue({
+      tags: this.currentTags.join(', ')
+    });
   }
 }

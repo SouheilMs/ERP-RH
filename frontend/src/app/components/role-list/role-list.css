@@ -2,20 +2,21 @@
 .roles-container {
   min-height: 100vh;
   background: white;
-  padding: 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 30px 20px;
+  font-family: inherit;
 }
 
 /* Header des rôles */
 .roles-header {
-  margin-bottom: 2rem;
+  margin-bottom: 30px;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 2rem;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .title-section {
@@ -23,59 +24,64 @@
 }
 
 .roles-title {
-  color: #333;
-  font-size: 2.2rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .roles-subtitle {
-  color: #6c757d;
-  font-size: 1.1rem;
+  color: #718096;
+  font-size: 16px;
   margin: 0;
   font-weight: 400;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
+  gap: 15px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 /* Boutons d'action */
 .add-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   white-space: nowrap;
 }
 
 .add-btn:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .search-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: 8px;
+  padding: 12px 24px;
   background: white;
   color: #667eea;
   border: 2px solid #667eea;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -87,14 +93,14 @@
 .search-btn:hover {
   background: #667eea;
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 /* Actions avec icônes */
 .actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 8px;
   align-items: center;
   justify-content: center;
 }
@@ -103,29 +109,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
   position: relative;
-  background: transparent; /* Background transparent */
+  background: transparent;
 }
 
 .action-btn::before {
   content: attr(title);
   position: absolute;
-  bottom: -40px;
+  bottom: -35px;
   left: 50%;
   transform: translateX(-50%);
   background: #333;
   color: white;
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 12px;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -138,53 +144,47 @@
 .action-btn:hover::before {
   opacity: 1;
   visibility: visible;
-  bottom: -35px;
+  bottom: -30px;
 }
 
 .edit-btn {
-  color:  #667eea;
+  color: #667eea;
 }
 
 .edit-btn:hover {
-  color:  #667eea;
+  color: #667eea;
   transform: translateY(-2px);
 }
 
 .delete-btn {
-  /* background: rgba(220, 53, 69, 0.1); ← SUPPRIMÉ */
-  color: #dc3545;
-  /* border: 2px solid rgba(220, 53, 69, 0.3); ← SUPPRIMÉ */
+  color: #e53e3e;
 }
 
 .delete-btn:hover {
-  color: #dc3545;
+  color: #e53e3e;
   transform: translateY(-2px);
 }
 
-
-
-
-
-/* Bulk delete button avec icône */
+/* Bulk delete button */
 .bulk-delete-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  background: #dc3545;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #e53e3e;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .bulk-delete-btn:hover {
-  background: #c82333;
+  background: #c53030;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
 }
 
 /* Actions groupées */
@@ -192,28 +192,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e9ecef;
+  padding: 20px;
+  background: #f7fafc;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
 }
 
 .bulk-actions-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 15px;
 }
 
 .bulk-actions-right {
   display: flex;
-  gap: 1rem;
+  gap: 15px;
 }
 
 .selected-count {
   color: #667eea;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 /* Checkbox personnalisée */
@@ -221,8 +221,8 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #333;
+  font-size: 14px;
+  color: #4a5568;
   user-select: none;
 }
 
@@ -236,9 +236,9 @@
   width: 20px;
   height: 20px;
   background: white;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  margin-right: 0.5rem;
+  border: 2px solid #cbd5e0;
+  border-radius: 6px;
+  margin-right: 8px;
   position: relative;
   transition: all 0.3s ease;
 }
@@ -280,44 +280,47 @@
   background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  padding: 25px 30px;
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .table-title {
-  color: #333;
-  font-size: 1.4rem;
-  font-weight: 600;
+  color: #1a202c;
+  font-size: 20px;
+  font-weight: 700;
   margin: 0;
 }
 
 .table-count {
-  color: #6c757d;
-  font-size: 0.95rem;
+  color: #718096;
+  font-size: 14px;
   font-weight: 500;
   background: white;
-  padding: 0.4rem 1rem;
+  padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e2e8f0;
 }
-
-/* Container du tableau */
-.table-container {
-  background: white;
-}
-
-/* .table-wrapper {
-  overflow-x: auto;
-} */
 
 /* Tableau des rôles */
 .roles-table {
@@ -328,15 +331,15 @@
 }
 
 .roles-table thead tr {
-  background: #f8f9fa;
+  background: #f7fafc;
 }
 
 .roles-table th {
-  color: #333;
+  color: #4a5568;
   font-weight: 700;
   text-align: left;
-  padding: 1.25rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 20px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
   border-bottom: 2px solid #667eea;
@@ -357,12 +360,12 @@
 
 .roles-table tbody tr {
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #e2e8f0;
   transition: all 0.3s ease;
 }
 
 .roles-table tbody tr:hover {
-  background: #f8f9fa;
+  background: #f7fafc;
 }
 
 .roles-table tbody tr.selected {
@@ -375,26 +378,29 @@
 }
 
 .roles-table td {
-  padding: 1.25rem 1.5rem;
-  color: #333;
-  font-size: 0.95rem;
+  padding: 20px;
+  color: #4a5568;
+  font-size: 14px;
 }
 
 /* Informations du rôle */
 .role-name {
   font-weight: 600;
+  color: #1a202c;
 }
 
 .role-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 15px;
 }
 
 .role-badge {
-  color: black;
-  padding: 0.5rem 1.2rem;
-  font-size: 0.9rem;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -405,15 +411,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 3rem;
+  gap: 15px;
+  padding: 60px 20px;
   text-align: center;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
   border-top: 4px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -426,49 +432,49 @@
 }
 
 .loading-spinner span {
-  color: #333;
-  font-size: 1.1rem;
+  color: #718096;
+  font-size: 16px;
   font-weight: 500;
 }
 
 /* État vide */
 .no-data {
-  padding: 3rem;
+  padding: 60px 20px;
   text-align: center;
   background: white;
 }
 
 .no-data-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  color: #6c757d;
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #a0aec0;
 }
 
 .no-data h3 {
-  color: #333;
-  margin-bottom: 0.5rem;
+  color: #4a5568;
+  margin-bottom: 8px;
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 20px;
 }
 
 .no-data p {
-  color: #6c757d;
+  color: #718096;
   margin: 0;
-  font-size: 1rem;
+  font-size: 16px;
 }
 
 /* Messages d'erreur */
 .error-message {
   background: white;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
-  color: #dc3545;
+  padding: 16px 20px;
+  color: #e53e3e;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #dc3545;
-  margin-bottom: 1.5rem;
+  border-left: 4px solid #e53e3e;
+  margin-bottom: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -479,7 +485,7 @@
 }
 
 .error-icon {
-  font-size: 1.2rem;
+  font-size: 18px;
 }
 
 /* Modals */
@@ -494,13 +500,13 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 20px;
 }
 
 .modal-content {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
@@ -523,8 +529,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: 30px 30px 20px 30px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-title-section {
@@ -532,23 +538,23 @@
 }
 
 .modal-title {
-  color: #333;
-  font-size: 1.6rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  color: #1a202c;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
 }
 
 .modal-subtitle {
-  color: #6c757d;
-  font-size: 1rem;
+  color: #718096;
+  font-size: 16px;
   margin: 0;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #6c757d;
+  font-size: 20px;
+  color: #718096;
   cursor: pointer;
   padding: 0;
   width: 40px;
@@ -561,90 +567,92 @@
 }
 
 .close-btn:hover {
-  background: #f8f9fa;
-  color: #333;
+  background: #f7fafc;
+  color: #4a5568;
 }
 
 .modal-body {
-  padding: 1rem 2rem 2rem 2rem;
+  padding: 20px 30px 30px 30px;
 }
 
 .modal-error {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 /* Formulaire */
 .role-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 8px;
 }
 
 .form-label {
-  color: #333;
+  color: #4a5568;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 14px;
 }
 
 .required {
-  color: #dc3545;
+  color: #e53e3e;
 }
 
 .form-input {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e9ecef;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 15px;
   transition: all 0.3s ease;
-  background: white;
+  background: #f7fafc;
+  color: #2d3748;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .form-hint {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #6c757d;
-  font-size: 0.85rem;
+  gap: 8px;
+  color: #718096;
+  font-size: 13px;
   font-style: italic;
 }
 
 .hint-icon {
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 .form-actions {
   display: flex;
-  gap: 1rem;
+  gap: 15px;
   justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 20px;
 }
 
 .cancel-btn {
-  padding: 0.75rem 1.5rem;
+  padding: 12px 24px;
   background: white;
-  color: #6c757d;
-  border: 2px solid #6c757d;
+  color: #718096;
+  border: 2px solid #718096;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .cancel-btn:hover:not(:disabled) {
-  background: #6c757d;
+  background: #718096;
   color: white;
 }
 
@@ -656,13 +664,13 @@
 .submit-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: 8px;
+  padding: 12px 24px;
   background: #667eea;
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -701,14 +709,14 @@
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 1rem;
+  padding: 20px;
   animation: fadeIn 0.3s ease-out;
 }
 
 .confirmation-modal {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 450px;
   animation: modalAppear 0.3s ease-out;
@@ -716,31 +724,31 @@
 }
 
 .confirmation-header {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
   color: white;
-  padding: 2rem;
+  padding: 30px;
   text-align: center;
 }
 
 .confirmation-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 48px;
+  margin-bottom: 16px;
 }
 
 .confirmation-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
 }
 
 .confirmation-subtitle {
-  font-size: 1rem;
+  font-size: 16px;
   opacity: 0.9;
   margin: 0;
 }
 
 .confirmation-body {
-  padding: 2rem;
+  padding: 30px;
   text-align: center;
 }
 
@@ -748,16 +756,16 @@
   background: #fff5f5;
   border: 2px solid #fed7d7;
   border-radius: 12px;
-  padding: 1rem;
-  margin: 1.5rem 0;
+  padding: 20px;
+  margin: 20px 0;
 }
 
 .role-to-delete-badge {
-  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
   color: white;
-  padding: 0.5rem 1.2rem;
+  padding: 8px 16px;
   border-radius: 20px;
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -765,17 +773,17 @@
 }
 
 .role-to-delete-badge.small {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.8rem;
-  margin: 0.2rem;
+  font-size: 12px;
+  padding: 6px 12px;
+  margin: 4px;
 }
 
 .selected-roles-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
   justify-content: center;
-  margin: 1rem 0;
+  margin: 16px 0;
   max-height: 120px;
   overflow-y: auto;
 }
@@ -783,27 +791,27 @@
 .warning-text {
   color: #e53e3e;
   font-weight: 500;
-  margin: 1rem 0;
+  margin: 16px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .confirmation-actions {
   display: flex;
-  gap: 1rem;
+  gap: 15px;
   justify-content: center;
-  margin-top: 1.5rem;
+  margin-top: 24px;
 }
 
 .cancel-delete-btn {
-  padding: 0.75rem 2rem;
+  padding: 12px 24px;
   background: white;
-  color: #6c757d;
-  border: 2px solid #6c757d;
+  color: #718096;
+  border: 2px solid #718096;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -811,22 +819,22 @@
 }
 
 .cancel-delete-btn:hover {
-  background: #6c757d;
+  background: #718096;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  box-shadow: 0 4px 12px rgba(113, 128, 150, 0.3);
 }
 
 .confirm-delete-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
+  gap: 8px;
+  padding: 12px 24px;
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -849,7 +857,7 @@
 .delete-loading {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .delete-spinner {
@@ -865,15 +873,15 @@
 .search-bulk-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 /* Search container */
 .search-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .search-input-wrapper {
@@ -885,38 +893,39 @@
 
 .search-icon {
   position: absolute;
-  left: 1rem;
-  font-size: 1.1rem;
-  color: #6c757d;
+  left: 15px;
+  color: #a0aec0;
   z-index: 2;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 2px solid #e9ecef;
+  padding: 12px 16px 12px 45px;
+  border: 2px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 15px;
   transition: all 0.3s ease;
-  background: white;
+  background: #f7fafc;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #2d3748;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .clear-search {
   position: absolute;
-  right: 0.75rem;
+  right: 12px;
   background: none;
   border: none;
-  font-size: 1.2rem;
-  color: #6c757d;
+  font-size: 16px;
+  color: #a0aec0;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 4px;
   border-radius: 50%;
   transition: all 0.3s ease;
   display: flex;
@@ -927,27 +936,27 @@
 }
 
 .clear-search:hover {
-  background: #f8f9fa;
-  color: #333;
+  background: #edf2f7;
+  color: #4a5568;
 }
 
 .search-results-info {
-  color: #6c757d;
-  font-size: 0.9rem;
+  color: #718096;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .clear-search-btn {
-  padding: 0.5rem 1rem;
+  padding: 10px 16px;
   background: #667eea;
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 0.5rem;
+  margin-top: 8px;
 }
 
 .clear-search-btn:hover {
@@ -978,13 +987,13 @@
 /* Responsive */
 @media (max-width: 768px) {
   .roles-container {
-    padding: 1rem;
+    padding: 20px 15px;
   }
 
   .header-content {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
+    gap: 15px;
   }
 
   .header-actions {
@@ -993,69 +1002,69 @@
   }
 
   .roles-title {
-    font-size: 1.8rem;
+    font-size: 26px;
   }
 
   .roles-subtitle {
-    font-size: 1rem;
+    font-size: 14px;
   }
 
   .bulk-actions {
     flex-direction: column;
-    gap: 1rem;
+    gap: 15px;
     align-items: flex-start;
   }
 
   .bulk-actions-left {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 8px;
   }
 
   .table-header {
-    padding: 1rem 1.5rem;
+    padding: 20px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 15px;
   }
 
   .table-title {
-    font-size: 1.2rem;
+    font-size: 18px;
   }
 
   .roles-table th,
   .roles-table td {
-    padding: 1rem;
-    font-size: 0.85rem;
+    padding: 15px;
+    font-size: 13px;
   }
 
   .role-info {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 8px;
   }
 
   .actions {
-    gap: 0.5rem;
+    gap: 6px;
   }
 
   .action-btn {
-    width: 38px;
-    height: 38px;
-    font-size: 0.9rem;
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
   }
 
   .modal-content {
-    margin: 1rem;
+    margin: 20px;
     max-width: none;
   }
 
   .modal-header {
-    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    padding: 25px 25px 20px 25px;
   }
 
   .modal-body {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    padding: 20px 25px 25px 25px;
   }
 
   .form-actions {
@@ -1069,16 +1078,16 @@
   }
 
   .confirmation-modal {
-    margin: 1rem;
+    margin: 20px;
     max-width: none;
   }
 
   .confirmation-header {
-    padding: 1.5rem;
+    padding: 25px;
   }
 
   .confirmation-body {
-    padding: 1.5rem;
+    padding: 25px;
   }
 
   .confirmation-actions {
@@ -1094,23 +1103,23 @@
 
 @media (max-width: 480px) {
   .roles-table {
-    font-size: 0.8rem;
+    font-size: 12px;
   }
 
   .role-badge {
-    font-size: 0.8rem;
-    padding: 0.4rem 1rem;
+    font-size: 11px;
+    padding: 6px 12px;
   }
 
   .action-btn {
-    width: 35px;
-    height: 35px;
-    font-size: 0.85rem;
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
   }
 
   .add-btn,
   .search-btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
+    padding: 10px 20px;
+    font-size: 14px;
   }
 }

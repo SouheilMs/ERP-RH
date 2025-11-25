@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 export interface JobOffer {
   id: string;
@@ -15,8 +15,8 @@ export interface JobOffer {
   benefits: string;
   status: string;
   publishedBy: string;
-  publishedDate: string; // Format: "2025-11-06"
-  closingDate: string;   // Format: "2025-11-06"
+  publishedDate: string; 
+  closingDate: string;
   createdAt: string;
   updatedAt: string;
   linkedInPostId: string;
@@ -38,7 +38,7 @@ export interface JobOfferRequest {
   requirements: string;
   responsibilities: string;
   benefits: string;
-  closingDate: string; // Format: "2025-11-06T23:59:59"
+  closingDate: string;
   tags: string[];
   experienceLevel: string;
   educationRequired: string;
@@ -54,7 +54,7 @@ export class JobOfferService {
   constructor(private http: HttpClient) { }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('API Error:', error);
+    console.error('🔴 API Error:', error);
     let errorMessage = 'Une erreur est survenue';
     
     if (error.error instanceof ErrorEvent) {
@@ -69,27 +69,16 @@ export class JobOfferService {
     return throwError(() => new Error(errorMessage));
   }
 
-  // Méthode utilitaire pour formater la date
-  private formatDateForBackend(dateString: string): string {
-    if (!dateString) return '';
-    // Ajoute l'heure de fin de journée (23:59:59) pour la date de clôture
-    return `${dateString}T23:59:59`;
-  }
-
   createJobOffer(request: JobOfferRequest, publisherId: string): Observable<JobOffer> {
     const params = new HttpParams().set('publisherId', publisherId);
     
-    // Formatte la date pour le backend
-    const formattedRequest = {
-      ...request,
-      closingDate: this.formatDateForBackend(request.closingDate)
-    };
+    console.log('🟡 Creating job offer:', request);
     
-    console.log('Creating job offer:', formattedRequest);
-    console.log('With publisherId:', publisherId);
-    
-    return this.http.post<JobOffer>(this.apiUrl, formattedRequest, { params })
-      .pipe(catchError(this.handleError));
+    return this.http.post<JobOffer>(this.apiUrl, request, { params })
+      .pipe(
+        tap(response => console.log('🟢 Create successful:', response)),
+        catchError(this.handleError)
+      );
   }
 
   getJobOfferById(id: string): Observable<JobOffer> {
@@ -103,14 +92,13 @@ export class JobOfferService {
   }
 
   updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
-    // Formatte la date pour le backend
-    const formattedRequest = {
-      ...request,
-      closingDate: this.formatDateForBackend(request.closingDate)
-    };
+    console.log('🟡 Updating job offer:', { id, request });
     
-    return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, formattedRequest)
-      .pipe(catchError(this.handleError));
+    return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request)
+      .pipe(
+        tap(response => console.log('🟢 Update successful:', response)),
+        catchError(this.handleError)
+      );
   }
 
   deleteJobOffer(id: string): Observable<void> {
@@ -144,7 +132,6 @@ export class JobOfferService {
       .pipe(catchError(this.handleError));
   }
 
-  // Méthode pour tester la connexion au backend
   testBackendConnection(): Observable<any> {
     return this.http.get(this.apiUrl)
       .pipe(catchError(this.handleError));
