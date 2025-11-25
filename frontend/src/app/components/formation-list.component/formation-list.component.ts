@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormationService, Formation } from '../../services/formation.service';
 import { FormsModule } from '@angular/forms';
-import { StatisticsCardComponent, StatCard } from '../statistics-card.component/statistics-card.component';
+import {  StatCard } from '../statistics-card.component/statistics-card.component';
 
 @Component({
   selector: 'app-formation-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatisticsCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './formation-list.component.html',
   styleUrls: ['./formation-list.component.css']
 })
