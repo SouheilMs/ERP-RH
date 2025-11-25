@@ -1,0 +1,277 @@
+package com.mycompany.backend.services.Impl;
+
+import com.mycompany.backend.dto.JobOfferDTO;
+import com.mycompany.backend.dto.JobOfferRequest;
+import com.mycompany.backend.entities.JobOffer;
+import com.mycompany.backend.entities.Employee;
+import com.mycompany.backend.repositories.JobOfferRepository;
+import com.mycompany.backend.services.JobOfferService;
+import com.mycompany.backend.services.EmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class JobOfferServiceImpl implements JobOfferService {
+
+    @Autowired
+    private JobOfferRepository jobOfferRepository;
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    @Override
+    public JobOfferDTO create(JobOfferRequest request, String publisherId) {
+        Employee publisher = employeeService.getEmployeeById(publisherId)
+                .orElseThrow(() -> new RuntimeException("Publisher not found"));
+
+        JobOffer jobOffer = new JobOffer();
+        mapRequestToEntity(request, jobOffer);
+
+        jobOffer.setPublishedBy(publisher);
+        jobOffer.setStatus(JobOffer.JobOfferStatus.DRAFT);
+        jobOffer.setIsActive(true);
+
+        JobOffer saved = jobOfferRepository.save(jobOffer);
+        return convertToDTO(saved);
+    }
+
+    @Override
+    public Optional<JobOfferDTO> getById(String id) {
+        Optional<JobOffer> jobOffer = jobOfferRepository.findById(id);
+        if (jobOffer.isPresent() && jobOffer.get().getIsActive()) {
+            incrementViews(id);
+            return jobOffer.map(this::convertToDTO);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<JobOfferDTO> getAll() {
+        List<JobOffer> jobOffers = jobOfferRepository.findByIsActiveOrderByCreatedAtDesc(true,
+                org.springframework.data.domain.Pageable.unpaged());
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public JobOfferDTO update(String id, JobOfferRequest request) {
+        JobOffer jobOffer = jobOfferRepository.findById(id)
+                .filter(JobOffer::getIsActive)
+                .orElseThrow(() -> new RuntimeException("JobOffer not found"));
+
+        updateEntityFromRequest(request, jobOffer);
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+
+        JobOffer updated = jobOfferRepository.save(jobOffer);
+        return convertToDTO(updated);
+    }
+
+    @Override
+    public void delete(String id) {
+        JobOffer jobOffer = jobOfferRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("JobOffer not found"));
+
+        jobOffer.setIsActive(false);
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+        jobOfferRepository.save(jobOffer);
+    }
+
+    @Override
+    public JobOfferDTO publish(String id) {
+        return updateStatus(id, JobOffer.JobOfferStatus.PUBLISHED, LocalDate.now()); // ✅ LocalDate.now()
+    }
+
+    @Override
+    public JobOfferDTO close(String id) {
+        return updateStatus(id, JobOffer.JobOfferStatus.CLOSED, null);
+    }
+
+    @Override
+    public JobOfferDTO draft(String id) {
+        return updateStatus(id, JobOffer.JobOfferStatus.DRAFT, null);
+    }
+
+    @Override
+    public void archive(String id) {
+        updateStatus(id, JobOffer.JobOfferStatus.ARCHIVED, null);
+    }
+
+    @Override
+    public List<JobOfferDTO> search(String keyword) {
+        List<JobOffer> jobOffers = jobOfferRepository.searchByKeyword(keyword);
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public List<JobOfferDTO> getByStatus(JobOffer.JobOfferStatus status) {
+        List<JobOffer> jobOffers = jobOfferRepository.findByStatusAndIsActive(status, true);
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public List<JobOfferDTO> getByDepartment(String department) {
+        List<JobOffer> jobOffers = jobOfferRepository.findByDepartment(department);
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public List<JobOfferDTO> getByLocation(String location) {
+        List<JobOffer> jobOffers = jobOfferRepository.findByLocation(location);
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public List<JobOfferDTO> getActive() {
+        List<JobOffer> jobOffers = jobOfferRepository.findActiveJobOffers();
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public List<JobOfferDTO> getPublished() {
+        return getByStatus(JobOffer.JobOfferStatus.PUBLISHED);
+    }
+
+    @Override
+    public List<JobOfferDTO> getByPublisher(String publisherId) {
+        List<JobOffer> allOffers = jobOfferRepository.findByIsActiveOrderByCreatedAtDesc(true,
+                org.springframework.data.domain.Pageable.unpaged());
+
+        return allOffers.stream()
+                .filter(offer -> offer.getPublishedBy() != null &&
+                        offer.getPublishedBy().getId().equals(publisherId))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public long getCount() {
+        return jobOfferRepository.count();
+    }
+
+    @Override
+    public long getCountByStatus(JobOffer.JobOfferStatus status) {
+        return jobOfferRepository.countByStatus(status);
+    }
+
+    @Override
+    public List<JobOfferDTO> getRecent(int days) {
+        LocalDateTime date = LocalDateTime.now().minusDays(days);
+        List<JobOffer> jobOffers = jobOfferRepository.findRecentJobOffers(date);
+        return convertToDTOList(jobOffers);
+    }
+
+    @Override
+    public JobOfferDTO postToLinkedIn(String jobOfferId) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("JobOffer not found"));
+
+        String linkedInPostId = "linkedin_" + System.currentTimeMillis();
+        jobOffer.setLinkedInPostId(linkedInPostId);
+        jobOffer.addExternalPlatform("LINKEDIN");
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+
+        JobOffer saved = jobOfferRepository.save(jobOffer);
+        return convertToDTO(saved);
+    }
+
+    @Override
+    public JobOfferDTO removeFromPlatform(String jobOfferId, String platform) {
+        JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
+                .orElseThrow(() -> new RuntimeException("JobOffer not found"));
+
+        if ("LINKEDIN".equalsIgnoreCase(platform)) {
+            jobOffer.setLinkedInPostId(null);
+        }
+
+        jobOffer.getExternalPlatforms().remove(platform.toUpperCase());
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+
+        JobOffer saved = jobOfferRepository.save(jobOffer);
+        return convertToDTO(saved);
+    }
+
+    @Override
+    public void incrementViews(String id) {
+        jobOfferRepository.findById(id).ifPresent(jobOffer -> {
+            jobOffer.incrementViewCount();
+            jobOfferRepository.save(jobOffer);
+        });
+    }
+
+    @Override
+    public void expireOldOffers() {
+        List<JobOffer> expiredOffers = jobOfferRepository.findExpiredJobOffers(LocalDate.now()); // ✅ LocalDate
+        expiredOffers.forEach(jobOffer -> {
+            jobOffer.setStatus(JobOffer.JobOfferStatus.EXPIRED);
+            jobOffer.setUpdatedAt(LocalDateTime.now());
+        });
+        jobOfferRepository.saveAll(expiredOffers);
+    }
+
+    @Override
+    public boolean isExpired(String id) {
+        return jobOfferRepository.findById(id)
+                .map(JobOffer::isExpired)
+                .orElse(false);
+    }
+
+    // Private helper methods
+    private JobOfferDTO convertToDTO(JobOffer jobOffer) {
+        return new JobOfferDTO(jobOffer);
+    }
+
+    private List<JobOfferDTO> convertToDTOList(List<JobOffer> jobOffers) {
+        return jobOffers.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private void mapRequestToEntity(JobOfferRequest request, JobOffer jobOffer) {
+        jobOffer.setTitle(request.getTitle());
+        jobOffer.setDescription(request.getDescription());
+        jobOffer.setDepartment(request.getDepartment());
+        jobOffer.setLocation(request.getLocation());
+        jobOffer.setContractType(request.getContractType());
+        jobOffer.setRequirements(request.getRequirements());
+        jobOffer.setResponsibilities(request.getResponsibilities());
+        jobOffer.setBenefits(request.getBenefits());
+        jobOffer.setClosingDate(request.getClosingDate());
+        jobOffer.setTags(request.getTags());
+        jobOffer.setExperienceLevel(request.getExperienceLevel());
+        jobOffer.setEducationRequired(request.getEducationRequired());
+    }
+
+    private void updateEntityFromRequest(JobOfferRequest request, JobOffer jobOffer) {
+        if (request.getTitle() != null) jobOffer.setTitle(request.getTitle());
+        if (request.getDescription() != null) jobOffer.setDescription(request.getDescription());
+        if (request.getDepartment() != null) jobOffer.setDepartment(request.getDepartment());
+        if (request.getLocation() != null) jobOffer.setLocation(request.getLocation());
+        if (request.getContractType() != null) jobOffer.setContractType(request.getContractType());
+        if (request.getRequirements() != null) jobOffer.setRequirements(request.getRequirements());
+        if (request.getResponsibilities() != null) jobOffer.setResponsibilities(request.getResponsibilities());
+        if (request.getBenefits() != null) jobOffer.setBenefits(request.getBenefits());
+        if (request.getClosingDate() != null) jobOffer.setClosingDate(request.getClosingDate());
+        if (request.getTags() != null) jobOffer.setTags(request.getTags());
+        if (request.getExperienceLevel() != null) jobOffer.setExperienceLevel(request.getExperienceLevel());
+        if (request.getEducationRequired() != null) jobOffer.setEducationRequired(request.getEducationRequired());
+    }
+
+    private JobOfferDTO updateStatus(String id, JobOffer.JobOfferStatus status, LocalDate publishDate) {
+        JobOffer jobOffer = jobOfferRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("JobOffer not found"));
+
+        jobOffer.setStatus(status);
+        jobOffer.setUpdatedAt(LocalDateTime.now());
+        if (publishDate != null) {
+            jobOffer.setPublishedDate(publishDate); // ✅ LocalDate
+        }
+
+        JobOffer saved = jobOfferRepository.save(jobOffer);
+        return convertToDTO(saved);
+    }
+}

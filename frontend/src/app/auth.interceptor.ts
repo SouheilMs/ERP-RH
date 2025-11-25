@@ -1,31 +1,31 @@
-// src/app/auth.interceptor.ts
-import { HttpInterceptorFn } from '@angular/common/http';
-
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  console.log('🔄 INTERCEPTOR TRIGGERED for URL:', req.url);
-
-  // Exclure les URLs de photos de l'authentification
-  if (req.url.includes('/photo')) {
-    console.log('📸 Photo URL detected - skipping auth header');
+// src/app/interceptors/auth.interceptor.ts
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
+import { Observable } from 'rxjs';
+export const authInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<any>,
+  next: HttpHandlerFn
+): Observable<HttpEvent<any>> => {
+  
+  console.log('🔄 AuthInterceptor for:', req.url);
+  
+  // Ne pas ajouter le header pour les URLs d'authentification
+  if (req.url.includes('/api/auth/')) {
+    console.log('🚫 Skipping auth for authentication URL');
     return next(req);
   }
 
   const token = localStorage.getItem('authToken');
-
-  console.log('🔐 Token from localStorage:', token ? 'PRESENT' : 'NULL');
-
+  
   if (token) {
-    console.log('✅ Adding Authorization header with Bearer token');
-
+    console.log('✅ Adding Authorization header');
+    
     const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: req.headers.set('Authorization', `Bearer ${token}`)
     });
-
+    
     return next(authReq);
   }
-
-  console.log('❌ No token found, proceeding without auth');
+  
+  console.log('❌ No token found for protected route');
   return next(req);
 };

@@ -19,13 +19,11 @@
     <h2>Payslip History - {{ employeeName }}</h2>
     <p class="employee-info">
       <span>Employee ID: {{ employeeMatricule }}</span>
-      <span>Hire Date: {{ currentEmployee?.hireDate ? (currentEmployee.hireDate | date:'dd/MM/yyyy') : 'Not defined' }}</span>
+      <span>Hire Date: {{ currentEmployee.hireDate ? (currentEmployee.hireDate | date:'dd/MM/yyyy') : 'Not defined' }}</span>
       <span>Seniority: {{ calculateSeniorityYears() }}</span>
     </p>
     <!-- Indicateur de permissions -->
-    <div class="permission-indicator" *ngIf="!isViewingOwnProfile">
-      <span class="badge badge-info">Viewing as: {{ userRole }}</span>
-    </div>
+    
     <div class="permission-indicator" *ngIf="isViewingOwnProfile">
       <span class="badge badge-success">Your own profile</span>
     </div>

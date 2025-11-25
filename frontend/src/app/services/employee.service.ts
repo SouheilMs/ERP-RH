@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import {map, Observable, of, throwError} from 'rxjs';
+import { map, Observable, of, throwError } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { catchError, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 export interface Formation {
   id?: string;
@@ -75,53 +76,112 @@ export interface Payslip {
 export class EmployeeServices {
   private apiUrl = 'http://localhost:8081/api/employees';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   // Méthode utilitaire pour créer les headers avec le token
-  private getAuthHeaders(): { [header: string]: string } {
-    const token = localStorage.getItem('authToken');
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
     console.log('🔐 Creating auth headers with token:', token ? 'PRESENT' : 'NULL');
 
     if (token) {
-      return {
-        'Authorization': `Bearer ${token}`
-      };
+      return new HttpHeaders({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      });
+    } else {
+      console.warn('⚠️ No token found for authenticated request');
+      return new HttpHeaders({
+        'Content-Type': 'application/json'
+      });
     }
-    return {};
+  }
+
+  // Méthode pour les requêtes avec FormData
+  private getAuthHeadersFormData(): HttpHeaders {
+    const token = this.authService.getToken();
+    console.log('🔐 Creating FormData auth headers with token:', token ? 'PRESENT' : 'NULL');
+
+    if (token) {
+      return new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+      });
+    } else {
+      console.warn('⚠️ No token found for FormData request');
+      return new HttpHeaders();
+    }
+  }
+
+  // Headers pour les requêtes blob - VERSION CORRIGÉE
+  private getAuthHeadersBlob(): HttpHeaders {
+    const token = this.authService.getToken();
+    console.log('🔐 Creating blob auth headers with token:', token ? 'PRESENT' : 'NULL');
+
+    if (token) {
+      return new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+        // Note: Ne pas mettre 'Content-Type' pour les requêtes blob
+      });
+    } else {
+      console.warn('⚠️ No token found for blob request');
+      return new HttpHeaders();
+    }
   }
 
   // ================= EMPLOYEE =================
   getAllEmployees(): Observable<Employee[]> {
-    console.log('🔄 getAllEmployees - Adding manual auth headers');
+    console.log('🔄 getAllEmployees - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get<Employee[]>(this.apiUrl, { headers }).pipe(
-      tap((employees) => console.log('✅ getAllEmployees SUCCESS with manual auth - Count:', employees?.length || 0)),
+      tap((employees) => console.log('✅ getAllEmployees SUCCESS - Count:', employees?.length || 0)),
       catchError(error => {
         console.error('❌ getAllEmployees FAILED:', error);
         return throwError(() => error);
       })
     );
   }
+getEmployeeById(id: string): Observable<Employee> {
+    console.log('🔄 getEmployeeById - ID:', id);
 
-  getEmployeeById(id: string): Observable<Employee> {
-    console.log('🔄 getEmployeeById - Adding manual auth headers for ID:', id);
-    const headers = this.getAuthHeaders();
+    const token = this.authService.getToken();
+    if (!token) {
+        console.error('❌ No token available');
+        return throwError(() => new Error('No authentication token'));
+    }
+
+    const headers = new HttpHeaders({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    });
 
     return this.http.get<Employee>(`${this.apiUrl}/${id}`, { headers }).pipe(
-      tap((employee) => console.log('✅ getEmployeeById SUCCESS with manual auth - Employee:', employee?.username)),
-      catchError(error => {
-        console.error('❌ getEmployeeById FAILED:', error);
-        return throwError(() => error);
-      })
+        tap((employee) => {
+            console.log('✅ getEmployeeById SUCCESS - Employee:', employee?.username);
+        }),
+        catchError(error => {
+            console.error('❌ getEmployeeById FAILED - Status:', error.status);
+            
+            if (error.status === 401 || error.status === 403) {
+                console.error('🔐 Authentication error, redirecting to login');
+                this.authService.logout();
+            }
+            
+            return throwError(() => error);
+        })
     );
-  }
+}
+
+
+
 
   /**
    * Génère les fiches de paie pour toute une année
    */
   generatePayslipsForYear(employeeId: string, year: number): Observable<any> {
-    console.log('🔄 generatePayslipsForYear - Adding manual auth headers');
+    console.log('🔄 generatePayslipsForYear - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.post<any>(
@@ -134,14 +194,13 @@ export class EmployeeServices {
       }),
       catchError(error => {
         console.error('❌ generatePayslipsForYear FAILED:', error);
-        return of({ successCount: 0, errorCount: 12, error: error.message });
+        return throwError(() => error);
       })
     );
   }
 
-  // CORRECTION : Méthode pour générer des fiches de test
   generateTestPayslips(employeeId: string): Observable<any> {
-    console.log('🔄 generateTestPayslips - Adding manual auth headers');
+    console.log('🔄 generateTestPayslips - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.post<any>(
@@ -154,21 +213,17 @@ export class EmployeeServices {
       }),
       catchError(error => {
         console.error('❌ generateTestPayslips FAILED:', error);
-        return of({
-          count: 0,
-          message: 'Erreur lors de la génération des fiches de test',
-          error: error.message
-        });
+        return throwError(() => error);
       })
     );
   }
 
   createEmployee(employee: Employee): Observable<Employee> {
-    console.log('🔄 createEmployee - Adding manual auth headers');
+    console.log('🔄 createEmployee - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.post<Employee>(`${this.apiUrl}/Add-employee`, employee, { headers }).pipe(
-      tap((newEmployee) => console.log('✅ createEmployee SUCCESS with manual auth - New ID:', newEmployee?.id)),
+      tap((newEmployee) => console.log('✅ createEmployee SUCCESS - New ID:', newEmployee?.id)),
       catchError(error => {
         console.error('❌ createEmployee FAILED:', error);
         return throwError(() => error);
@@ -177,11 +232,11 @@ export class EmployeeServices {
   }
 
   updateEmployeeById(id: string, data: Employee): Observable<Employee> {
-    console.log('🔄 updateEmployeeById - Adding manual auth headers');
+    console.log('🔄 updateEmployeeById - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.put<Employee>(`${this.apiUrl}/${id}`, data, { headers }).pipe(
-      tap((updatedEmployee) => console.log('✅ updateEmployeeById SUCCESS with manual auth - Updated:', updatedEmployee?.username)),
+      tap((updatedEmployee) => console.log('✅ updateEmployeeById SUCCESS - Updated:', updatedEmployee?.username)),
       catchError(error => {
         console.error('❌ updateEmployeeById FAILED:', error);
         return throwError(() => error);
@@ -190,14 +245,14 @@ export class EmployeeServices {
   }
 
   deleteEmployee(id: string): Observable<any> {
-    console.log('🔄 deleteEmployee - Adding manual auth headers');
+    console.log('🔄 deleteEmployee - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.delete(`${this.apiUrl}/${id}`, {
       responseType: 'text',
       headers
     }).pipe(
-      tap(() => console.log('✅ deleteEmployee SUCCESS with manual auth')),
+      tap(() => console.log('✅ deleteEmployee SUCCESS')),
       catchError(error => {
         console.error('❌ deleteEmployee FAILED:', error);
         return throwError(() => error);
@@ -206,72 +261,70 @@ export class EmployeeServices {
   }
 
   // ================= PHOTO =================
-  getEmployeePhoto(id: string): string {
-    const photoUrl = `${this.apiUrl}/${id}/photo`;
-    console.log('📸 Generated photo URL (NO AUTH):', photoUrl);
-    return photoUrl;
-  }
-
-  // Méthode pour récupérer la photo avec authentification (si nécessaire)
-  getEmployeePhotoBlob(id: string): Observable<Blob> {
-    console.log('🔄 getEmployeePhotoBlob - Trying with auth headers');
-    const headers = this.getAuthHeaders();
-
+getEmployeePhotoBlob(id: string): Observable<Blob> {
+    const headers = this.getAuthHeadersBlob();
+    const timestamp = new Date().getTime();
+    
     return this.http.get(`${this.apiUrl}/${id}/photo`, {
       responseType: 'blob',
-      headers
+      headers: headers,
+      params: new HttpParams().set('t', timestamp.toString())
     }).pipe(
-      tap(() => console.log('✅ getEmployeePhotoBlob SUCCESS with auth')),
       catchError(error => {
-        console.log('🔄 getEmployeePhotoBlob with auth failed, trying without auth...');
-        // Si l'authentification échoue, essayer sans auth
-        return this.http.get(`${this.apiUrl}/${id}/photo`, {
-          responseType: 'blob'
-        }).pipe(
-          tap(() => console.log('✅ getEmployeePhotoBlob SUCCESS without auth')),
-          catchError(error2 => {
-            console.error('❌ getEmployeePhotoBlob FAILED both with and without auth:', error2);
-            // Retourner une image par défaut
-            return this.getDefaultProfileImage();
-          })
-        );
+        return this.getDefaultProfileImage();
       })
     );
   }
 
-  // Méthode pour obtenir une image par défaut
+  getEmployeePhoto(id: string): string {
+    const timestamp = new Date().getTime();
+    return `${this.apiUrl}/${id}/photo?t=${timestamp}`;
+  }
+
   private getDefaultProfileImage(): Observable<Blob> {
-    return this.http.get('assets/default-profile.png', {
-      responseType: 'blob'
-    }).pipe(
+    const svgString = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#f0f0f0"/>
+        <circle cx="100" cy="80" r="40" fill="#cccccc"/>
+        <circle cx="100" cy="60" r="30" fill="#cccccc"/>
+        <text x="100" y="140" font-size="14" text-anchor="middle" fill="#666666">No Image</text>
+    </svg>`;
+    
+    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+    return of(blob);
+  }
+
+  getEmployeePhotoUrl(id: string): Observable<string> {
+    return this.getEmployeePhotoBlob(id).pipe(
+      map(blob => {
+        if (blob && blob.size > 0) {
+          return URL.createObjectURL(blob);
+        } else {
+          return '/assets/default-profile.png';
+        }
+      }),
       catchError(error => {
-        console.error('❌ Even default image failed:', error);
-        // Créer un blob vide comme fallback ultime
-        return of(new Blob());
+        return of('/assets/default-profile.png');
       })
     );
   }
 
   uploadPhoto(id: string, formData: FormData): Observable<Employee> {
-    console.log('🔄 uploadPhoto - Adding manual auth headers');
-    const headers = this.getAuthHeaders();
-
+    const headers = this.getAuthHeadersFormData();
     return this.http.post<Employee>(`${this.apiUrl}/${id}/upload-photo`, formData, { headers }).pipe(
-      tap((employee) => console.log('✅ uploadPhoto SUCCESS with manual auth - Photo updated for:', employee?.username)),
       catchError(error => {
-        console.error('❌ uploadPhoto FAILED:', error);
         return throwError(() => error);
       })
     );
   }
 
+
   // ================= FORMATION =================
   addFormation(employeeId: string, formData: FormData): Observable<Formation> {
-    console.log('🔄 addFormation - Adding manual auth headers');
-    const headers = this.getAuthHeaders();
+    console.log('🔄 addFormation - Adding FormData auth headers');
+    const headers = this.getAuthHeadersFormData();
 
     return this.http.post<Formation>(`${this.apiUrl}/${employeeId}/formations`, formData, { headers }).pipe(
-      tap((formation) => console.log('✅ addFormation SUCCESS with manual auth - New formation:', formation?.name)),
+      tap((formation) => console.log('✅ addFormation SUCCESS - New formation:', formation?.name)),
       catchError(error => {
         console.error('❌ addFormation FAILED:', error);
         return throwError(() => error);
@@ -286,14 +339,14 @@ export class EmployeeServices {
   }
 
   deleteFormation(employeeId: string, formationId: string): Observable<any> {
-    console.log('🔄 deleteFormation - Adding manual auth headers');
+    console.log('🔄 deleteFormation - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.delete(`${this.apiUrl}/${employeeId}/formations/${formationId}`, {
       responseType: 'text',
       headers
     }).pipe(
-      tap(() => console.log('✅ deleteFormation SUCCESS with manual auth')),
+      tap(() => console.log('✅ deleteFormation SUCCESS')),
       catchError(error => {
         console.error('❌ deleteFormation FAILED:', error);
         return throwError(() => error);
@@ -302,17 +355,20 @@ export class EmployeeServices {
   }
 
   getFormationCertificateBlob(certificateId: string): Observable<Blob> {
-    console.log('🔄 getFormationCertificateBlob - Adding manual auth headers');
+    console.log('🔄 getFormationCertificateBlob - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get(`${this.apiUrl}/formations/certificate/${certificateId}`, {
       responseType: 'blob',
       headers: {
         'Accept': 'application/pdf',
-        ...headers
+        ...headers.keys().reduce((acc, key) => {
+          acc[key] = headers.get(key);
+          return acc;
+        }, {} as any)
       }
     }).pipe(
-      tap(() => console.log('✅ getFormationCertificateBlob SUCCESS with manual auth')),
+      tap(() => console.log('✅ getFormationCertificateBlob SUCCESS')),
       catchError(error => {
         console.error('❌ getFormationCertificateBlob FAILED:', error);
         return throwError(() => error);
@@ -322,17 +378,20 @@ export class EmployeeServices {
 
   // ================= PAYSLIP =================
   getPayslipPDF(employeeId: string): Observable<Blob> {
-    console.log('🔄 getPayslipPDF - Adding manual auth headers');
+    console.log('🔄 getPayslipPDF - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get(`${this.apiUrl}/${employeeId}/payslip`, {
       responseType: 'blob',
       headers: {
         'Accept': 'application/pdf',
-        ...headers
+        ...headers.keys().reduce((acc, key) => {
+          acc[key] = headers.get(key);
+          return acc;
+        }, {} as any)
       }
     }).pipe(
-      tap(() => console.log('✅ getPayslipPDF SUCCESS with manual auth')),
+      tap(() => console.log('✅ getPayslipPDF SUCCESS')),
       catchError(error => {
         console.error('❌ getPayslipPDF FAILED:', error);
         return throwError(() => error);
@@ -342,7 +401,7 @@ export class EmployeeServices {
 
   // ================= HISTORIQUE FICHES DE PAIE =================
   getEmployeePayslipsByYear(employeeId: string, year: number): Observable<Payslip[]> {
-    console.log('🔄 getEmployeePayslipsByYear - Adding manual auth headers');
+    console.log('🔄 getEmployeePayslipsByYear - Adding auth headers');
     const headers = this.getAuthHeaders();
     const params = new HttpParams().set('year', year.toString());
 
@@ -352,7 +411,6 @@ export class EmployeeServices {
       }),
       catchError(error => {
         console.error(`❌ getEmployeePayslipsByYear FAILED:`, error);
-        // Fallback : récupérer toutes les fiches et filtrer côté client
         return this.getEmployeePayslips(employeeId).pipe(
           map(allPayslips => {
             const filtered = allPayslips.filter(p => p.year === year);
@@ -364,9 +422,8 @@ export class EmployeeServices {
     );
   }
 
-  // Méthode pour récupérer toutes les fiches
   getEmployeePayslips(employeeId: string): Observable<Payslip[]> {
-    console.log('🔄 getEmployeePayslips - Adding manual auth headers');
+    console.log('🔄 getEmployeePayslips - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get<Payslip[]>(`${this.apiUrl}/${employeeId}/payslips`, { headers }).pipe(
@@ -380,9 +437,8 @@ export class EmployeeServices {
     );
   }
 
-  // Méthode pour le téléchargement
   downloadHistoricalPayslip(payslipId: string): Observable<Blob> {
-    console.log('🔄 downloadHistoricalPayslip - Adding manual auth headers');
+    console.log('🔄 downloadHistoricalPayslip - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get(`${this.apiUrl}/payslips/${payslipId}/download`, {
@@ -392,14 +448,14 @@ export class EmployeeServices {
       tap(() => console.log(`✅ downloadHistoricalPayslip SUCCESS for ID: ${payslipId}`)),
       catchError(error => {
         console.error('❌ downloadHistoricalPayslip FAILED:', error);
-        return of(new Blob());
+        return throwError(() => error);
       })
     );
   }
 
   // ================= GÉNÉRATION FICHE DE PAIE =================
   generatePayslipForMonth(employeeId: string, month: number, year: number): Observable<Payslip> {
-    console.log('🔄 generatePayslipForMonth - Adding manual auth headers');
+    console.log('🔄 generatePayslipForMonth - Adding auth headers');
     const headers = this.getAuthHeaders();
     const params = new HttpParams()
       .set('month', month.toString())
@@ -411,13 +467,13 @@ export class EmployeeServices {
       }),
       catchError(error => {
         console.error('❌ generatePayslipForMonth FAILED:', error);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   getAvailableYears(employeeId: string): Observable<number[]> {
-    console.log('🔄 getAvailableYears - Adding manual auth headers');
+    console.log('🔄 getAvailableYears - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get<number[]>(`${this.apiUrl}/${employeeId}/payslips/years`, { headers }).pipe(
@@ -432,14 +488,14 @@ export class EmployeeServices {
 
   // ================= EXPORT / IMPORT EXCEL =================
   exportEmployees(): Observable<Blob> {
-    console.log('🔄 exportEmployees - Adding manual auth headers');
+    console.log('🔄 exportEmployees - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.get(`${this.apiUrl}/export`, {
       responseType: 'blob',
       headers
     }).pipe(
-      tap(() => console.log('✅ exportEmployees SUCCESS with manual auth')),
+      tap(() => console.log('✅ exportEmployees SUCCESS')),
       catchError(error => {
         console.error('❌ exportEmployees FAILED:', error);
         return throwError(() => error);
@@ -460,13 +516,13 @@ export class EmployeeServices {
   }
 
   importEmployees(file: File): Observable<any> {
-    console.log('🔄 importEmployees - Adding manual auth headers');
-    const headers = this.getAuthHeaders();
+    console.log('🔄 importEmployees - Adding FormData auth headers');
+    const headers = this.getAuthHeadersFormData();
     const formData = new FormData();
     formData.append('file', file);
 
     return this.http.post(`${this.apiUrl}/import`, formData, { headers }).pipe(
-      tap(() => console.log('✅ importEmployees SUCCESS with manual auth')),
+      tap(() => console.log('✅ importEmployees SUCCESS')),
       catchError(error => {
         console.error('❌ importEmployees FAILED:', error);
         return throwError(() => error);
@@ -475,8 +531,6 @@ export class EmployeeServices {
   }
 
   // ================= UTILITY METHODS =================
-
-  // Méthode pour tester la connexion
   testConnection(): Observable<any> {
     console.log('🧪 Testing API connection...');
     const headers = this.getAuthHeaders();
@@ -490,24 +544,35 @@ export class EmployeeServices {
     );
   }
 
-  // Méthode pour vérifier l'état de l'authentification
   checkAuthStatus(): void {
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
+    const token = this.authService.getToken();
+    const user = this.authService.getUser();
 
     console.log('🔐 Auth Status Check:');
     console.log('  - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
     console.log('  - User:', user ? 'PRESENT' : 'NULL');
 
     if (user) {
-      try {
-        const userObj = JSON.parse(user);
-        console.log('  - User ID:', userObj.id);
-        console.log('  - Username:', userObj.username);
-        console.log('  - Roles:', userObj.roles);
-      } catch (e) {
-        console.log('  - User data malformed');
-      }
+      console.log('  - User ID:', user.id);
+      console.log('  - Username:', user.username);
+      console.log('  - Roles:', user.roles);
     }
+  }
+
+  // 🔥 NOUVELLE MÉTHODE POUR TESTER LES HEADERS
+  testPhotoRequest(id: string): void {
+    const headers = this.getAuthHeadersBlob();
+    console.log('🧪 TEST Headers structure:', headers);
+    console.log('🧪 TEST Headers keys:', headers.keys());
+    console.log('🧪 TEST Authorization header:', headers.get('Authorization'));
+
+    this.getEmployeePhotoBlob(id).subscribe({
+      next: (blob) => {
+        console.log('🧪 TEST SUCCESS - Blob received:', blob.size);
+      },
+      error: (error) => {
+        console.error('🧪 TEST FAILED:', error);
+      }
+    });
   }
 }

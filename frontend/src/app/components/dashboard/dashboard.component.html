@@ -3,25 +3,43 @@
 <div class="dashboard-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-
     <ul>
       <!-- Afficher "Liste des employés" seulement pour HR et HR Manager -->
       <li *ngIf="canViewEmployees">
         <a routerLink="/employees" routerLinkActive="active">
-          👥 Liste des employés
+          <i class="fas fa-users me-2"></i>
+          Liste des employés
         </a>
       </li>
 
       <li *ngIf="canViewEmployees">
         <a routerLink="/roles" routerLinkActive="active">
-          🎯 Liste des rôles
+          <i class="fas fa-bullseye me-2"></i>
+          Liste des rôles
+        </a>
+      </li>
+
+      <!-- Add Job Offers to sidebar (RH seulement) -->
+      <li *ngIf="canViewJobs"> <!-- ✅ UTILISER canViewJobs AU LIEU DE canViewEmployees -->
+        <a routerLink="/jobs" routerLinkActive="active">
+          <i class="fas fa-briefcase me-2"></i>
+          Offres d'emploi
         </a>
       </li>
 
       <!-- Lien "Mon Profil" pour tous les utilisateurs -->
       <li>
         <a routerLink="/my-profile" routerLinkActive="active">
-          👤 Mon Profil
+          <i class="fas fa-user me-2"></i>
+          Mon Profil
+        </a>
+      </li>
+
+      <!-- Bouton Déconnexion -->
+      <li>
+        <a (click)="logout()" class="logout-link">
+          <i class="fas fa-sign-out-alt me-2"></i>
+          Déconnexion
         </a>
       </li>
     </ul>

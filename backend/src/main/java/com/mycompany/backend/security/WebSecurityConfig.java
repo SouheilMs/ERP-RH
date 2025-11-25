@@ -6,6 +6,7 @@ import com.mycompany.backend.services.EmployeeDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -56,10 +57,39 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // ORIGINES AUTORISÉES
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:4200", 
+            "http://localhost:5173", 
+            "http://localhost:5174"
+        ));
+        
+        // MÉTHODES AUTORISÉES
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        
+        // HEADERS AUTORISÉS
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Cache-Control"
+        ));
+        
+        // HEADERS EXPOSÉS
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Disposition",
+            "Content-Type",
+            "Content-Length",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
+        ));
+        
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -68,46 +98,27 @@ public class WebSecurityConfig {
         return source;
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Routes publiques
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/test/public").permitAll()
-                        .requestMatchers("/api/debug/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/error").permitAll()
+  @Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(authz -> authz
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/test/**").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .exceptionHandling(exception -> exception
+                    .authenticationEntryPoint(unauthorizedHandler)
+            )
+            .sessionManagement(session -> session
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
-                        // PHOTOS PUBLIQUES
-                        .requestMatchers("/api/employees/*/photo").permitAll()
-
-                        // Routes protégées - RÔLES (accessible seulement aux HR et HRMANAGER)
-                        .requestMatchers("/api/roles").hasAnyRole("HR", "HRMANAGER")
-                        .requestMatchers("/api/roles/**").hasAnyRole("HR", "HRMANAGER")
-
-                        // Autres routes protégées
-                        .requestMatchers("/api/employees/Add-employee").hasAnyRole("HR", "HRMANAGER")
-                        .requestMatchers("/api/employees/export").hasAnyRole("HR", "HRMANAGER")
-                        .requestMatchers("/api/employees/import").hasAnyRole("HR", "HRMANAGER")
-                        .requestMatchers("/api/employees/*/upload-photo").hasAnyRole("HR", "HRMANAGER")
-                        .requestMatchers("/api/employees/*/payslip/generate").hasAnyRole("HR", "HRMANAGER")
-
-                        // GET /api/employees accessible à tous les utilisateurs authentifiés
-                        .requestMatchers("/api/employees").authenticated()
-                        .requestMatchers("/api/employees/**").authenticated()
-
-                        .anyRequest().authenticated()
-                );
-
-        http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
+    return http.build();
+}
 }

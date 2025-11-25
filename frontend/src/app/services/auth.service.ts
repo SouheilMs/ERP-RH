@@ -64,24 +64,26 @@ export class AuthService {
         tap((response: JwtResponse) => {
           console.log('✅ Réponse login reçue:', response);
 
-          // Stocker le token et les infos utilisateur
-          localStorage.setItem('authToken', response.accessToken);
-          const userData = {
-            id: response.id,
-            username: response.username,
-            email: response.email,
-            roles: response.roles
-          };
-          localStorage.setItem('user', JSON.stringify(userData));
+          if (response.accessToken) {
+            // ✅ Stocker le token correctement
+            localStorage.setItem('authToken', response.accessToken);
+            
+            const userData = {
+              id: response.id,
+              username: response.username,
+              email: response.email,
+              roles: response.roles
+            };
+            localStorage.setItem('user', JSON.stringify(userData));
 
-          console.log('💾 Données stockées dans localStorage');
-          console.log('🔐 Token stocké:', response.accessToken ? 'OUI' : 'NON');
+            this.isLoggedInSubject.next(true);
+            this.userRolesSubject.next(response.roles);
 
-          this.isLoggedInSubject.next(true);
-          this.userRolesSubject.next(response.roles);
-
-          console.log('🔓 Nouvel état isLoggedIn:', true);
-          console.log('🎯 Nouveaux rôles:', response.roles);
+            console.log('🔐 Token stocké avec succès');
+          } else {
+            console.error('❌ Pas de token dans la réponse');
+            throw new Error('No token received');
+          }
         }),
         catchError(this.handleError)
       );
@@ -108,7 +110,8 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  // Méthodes pour gérer les rôles
+  // ================= MÉTHODES POUR GÉRER LES RÔLES ET PERMISSIONS =================
+
   getUserRole(): string {
     const user = this.getUser();
     return user?.roles?.[0] || '';
@@ -119,17 +122,45 @@ export class AuthService {
     return user?.roles || [];
   }
 
+  // Méthode pour obtenir l'ID de l'utilisateur connecté
+  getCurrentUserId(): string | null {
+    const user = this.getUser();
+    return user?.id || null;
+  }
+
+  // ✅ CORRECTION : Méthodes de vérification de rôle plus précises
   isHR(): boolean {
     const roles = this.getUserRoles();
-    return roles.includes('ROLE_HR') || roles.includes('ROLE_HRMANAGER');
+    return roles.includes('ROLE_HR');
+  }
+
+  isHRManager(): boolean {
+    const roles = this.getUserRoles();
+    return roles.includes('ROLE_HRMANAGER');
   }
 
   isEmployee(): boolean {
     return this.getUserRoles().includes('ROLE_EMPLOYEE');
   }
 
-  isHRManager(): boolean {
-    return this.getUserRoles().includes('ROLE_HRMANAGER');
+  // ✅ NOUVELLE MÉTHODE : Vérifier si c'est RH ou Manager
+  isHRorManager(): boolean {
+    return this.isHR() || this.isHRManager();
+  }
+
+  // Vérifier si l'utilisateur peut accéder au dashboard
+  canAccessDashboard(): boolean {
+    return this.isHRorManager();
+  }
+
+  // Vérifier si l'utilisateur peut voir la liste des employés
+  canViewEmployeeList(): boolean {
+    return this.isHRorManager();
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut voir les offres d'emploi
+  canViewJobs(): boolean {
+    return this.isHRorManager();
   }
 
   hasAnyRole(requiredRoles: string[]): boolean {
@@ -142,23 +173,101 @@ export class AuthService {
     return requiredRoles.every(role => userRoles.includes(role));
   }
 
-  // Méthode utilitaire pour le dashboard
-  canViewEmployeeList(): boolean {
-    return this.isHR() || this.isHRManager();
+  // ================= MÉTHODES POUR LA GESTION DES PERMISSIONS =================
+
+  canAccessEmployeeProfile(employeeId: string): boolean {
+    const currentUserId = this.getCurrentUserId();
+    const isHRorManager = this.isHRorManager();
+    const isOwnProfile = currentUserId === employeeId;
+
+    console.log('🔐 canAccessEmployeeProfile check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is HR/Manager:', isHRorManager);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', isHRorManager || isOwnProfile);
+
+    return isHRorManager || isOwnProfile;
   }
 
-  // Getters basiques - CORRIGÉ (pas de duplication)
+  // Vérifier si l'utilisateur peut voir l'historique des fiches de paie
+  canViewPayslipHistory(employeeId: string): boolean {
+    const currentUserId = this.getCurrentUserId();
+    const isHRorManager = this.isHRorManager();
+    const isOwnProfile = currentUserId === employeeId;
+
+    console.log('🔐 canViewPayslipHistory Check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - isHR/Manager:', isHRorManager);
+    console.log('   - isOwnProfile:', isOwnProfile);
+    console.log('   - Result:', isHRorManager || isOwnProfile);
+
+    return isHRorManager || isOwnProfile;
+  }
+
+  // Vérifier si l'utilisateur peut générer des fiches de paie
+  canGeneratePayslip(employeeId: string): boolean {
+    const currentUserId = this.getCurrentUserId();
+    const isHRorManager = this.isHRorManager();
+    const isOwnProfile = currentUserId === employeeId;
+
+    // Les RH peuvent générer pour tous, les employés seulement pour eux-mêmes
+    return isHRorManager || isOwnProfile;
+  }
+
+  canEditEmployeeProfile(employeeId: string): boolean {
+    // SEULS LES RH PEUVENT ÉDITER LES PROFILS (pas leur propre profil via l'interface admin)
+    const currentUserId = this.getCurrentUserId();
+    const isHRorManager = this.isHRorManager();
+    const isOwnProfile = currentUserId === employeeId;
+
+    // Les RH peuvent éditer tous les profils sauf le leur via l'interface admin
+    // Les employés ne peuvent éditer que leur propre profil via "Mon Profil"
+    const canEdit = isHRorManager && !isOwnProfile;
+
+    console.log('🔐 canEditEmployeeProfile:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is HR/Manager:', isHRorManager);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', canEdit);
+
+    return canEdit;
+  }
+
+  canUploadEmployeePhoto(employeeId: string): boolean {
+    // SEULS LES RH PEUVENT UPLOADER DES PHOTOS
+    const currentUserId = this.getCurrentUserId();
+    const isHRorManager = this.isHRorManager();
+    const isOwnProfile = currentUserId === employeeId;
+
+    const canUpload = isHRorManager && !isOwnProfile;
+
+    console.log('🔐 canUploadEmployeePhoto:', canUpload);
+    return canUpload;
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut créer/modifier des offres d'emploi
+  canManageJobs(): boolean {
+    return this.isHRorManager();
+  }
+
+  // ================= GETTERS BASIQUES =================
+
   getToken(): string | null {
     const token = localStorage.getItem('authToken');
-    console.log('🔍 AuthService.getToken():', token ? 'PRÉSENT' : 'NULL');
     return token;
   }
 
   getUser(): any {
     const user = localStorage.getItem('user');
-    const parsedUser = user ? JSON.parse(user) : null;
-    console.log('🔍 AuthService.getUser():', parsedUser);
-    return parsedUser;
+    try {
+      return user ? JSON.parse(user) : null;
+    } catch (error) {
+      console.error('❌ Erreur parsing user data:', error);
+      return null;
+    }
   }
 
   isLoggedIn(): boolean {
@@ -173,7 +282,8 @@ export class AuthService {
     return this.userRolesSubject.asObservable();
   }
 
-  // Méthode de debug
+  // ================= MÉTHODES DE DEBUG =================
+
   debugAuth(): void {
     console.log('🐛 DEBUG AUTH SERVICE:');
     console.log('🔐 Token:', this.getToken());
@@ -185,8 +295,26 @@ export class AuthService {
     console.log('👑 isHR:', this.isHR());
     console.log('👨‍💼 isHRManager:', this.isHRManager());
     console.log('👤 isEmployee:', this.isEmployee());
+    console.log('👥 isHRorManager:', this.isHRorManager());
     console.log('📋 canViewEmployeeList:', this.canViewEmployeeList());
+    console.log('💼 canViewJobs:', this.canViewJobs());
+    console.log('🛠️ canManageJobs:', this.canManageJobs());
   }
+
+  decodeToken(): void {
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('🔓 Token payload:', payload);
+        console.log('⏰ Token expiration:', new Date(payload.exp * 1000));
+      } catch (error) {
+        console.error('❌ Error decoding token:', error);
+      }
+    }
+  }
+
+  // ================= MÉTHODES PRIVÉES =================
 
   private hasToken(): boolean {
     return !!localStorage.getItem('authToken');
@@ -203,8 +331,12 @@ export class AuthService {
 
     if (error.status === 401) {
       errorMessage = 'Email ou mot de passe incorrect.';
+    } else if (error.status === 403) {
+      errorMessage = 'Accès refusé. Permissions insuffisantes.';
     } else if (error.status === 0) {
       errorMessage = 'Impossible de se connecter au serveur.';
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
     }
 
     return throwError(() => errorMessage);

@@ -2,7 +2,7 @@
   display: flex;
   min-height: 100vh;
   background: #f7fafc;
-  margin-top: 70px; /* Compensation pour la navbar fixe */
+  margin-top: 70px;
 }
 /* dashboard.component.css */
 .user-info {
@@ -25,21 +25,10 @@
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
   position: fixed;
   left: 0;
-  top: 70px; /* Sous la navbar */
+  top: 70px;
   height: calc(100vh - 70px);
   overflow-y: auto;
   z-index: 999;
-  transition: all 0.3s ease;
-}
-
-.sidebar h2 {
-  font-size: 24px;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 0 1.5rem;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar ul {
@@ -62,29 +51,12 @@
   border-radius: 12px;
   transition: all 0.3s ease;
   font-weight: 500;
-  position: relative;
-  overflow: hidden;
-}
-
-.sidebar a::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  transition: left 0.3s ease;
 }
 
 .sidebar a:hover {
   color: white;
   background: rgba(255, 255, 255, 0.15);
   transform: translateX(8px);
-}
-
-.sidebar a:hover::before {
-  left: 0;
 }
 
 .sidebar a.active {
@@ -94,58 +66,32 @@
   font-weight: 600;
 }
 
-.sidebar a.active::after {
-  content: '';
-  position: absolute;
-  right: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+/* Icônes avec couleur plus foncée */
+.sidebar .fas {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8); /* Couleur plus foncée */
+  transition: all 0.3s ease;
+}
+
+.sidebar a:hover .fas,
+.sidebar a.active .fas {
+  color: white; /* Blanc pur au survol/actif */
+  transform: scale(1.1);
+}
+
+.me-2 {
+  margin-right: 8px;
 }
 
 /* Contenu principal */
 .main-content {
   flex: 1;
-  margin-left: 280px; /* Largeur de la sidebar */
+  margin-left: 280px;
   padding: 2rem;
   background: #f7fafc;
   min-height: calc(100vh - 70px);
-}
-
-/* Cartes de contenu */
-.content-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-/* En-têtes de page */
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.page-header p {
-  color: #718096;
-  font-size: 1.1rem;
-  margin: 0;
 }
 
 /* Responsive Design */
@@ -178,6 +124,7 @@
     font-size: 20px;
   }
 
+  
   .sidebar ul {
     display: flex;
     overflow-x: auto;
@@ -187,13 +134,16 @@
   .sidebar li {
     margin: 0;
     padding: 0 0.25rem;
+    flex: 1;
+    min-width: 120px;
   }
 
   .sidebar a {
-    white-space: nowrap;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+    flex-direction: column;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
     font-size: 14px;
+    border-radius: 8px;
   }
 
   .sidebar a:hover {
@@ -207,6 +157,14 @@
 
   .page-header h1 {
     font-size: 2rem;
+  
+  .sidebar .fas {
+    margin-bottom: 5px;
+    margin-right: 0;
+  }
+  
+  .me-2 {
+    margin-right: 0;
   }
 }
 
@@ -216,7 +174,7 @@
   }
 
   .sidebar a {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.25rem;
     font-size: 13px;
   }
 
@@ -267,4 +225,45 @@
 
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+/* =========================== */
+/* Styles simplifiés pour les messages d'erreur */
+/* =========================== */
+
+.error-message {
+  color: #e53e3e;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-message::before {
+  content: "⚠";
+  font-size: 10px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styles pour les champs invalides */
+.form-group input.invalid {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+.form-group input.valid {
+  border-color: #48bb78;
+}
 }

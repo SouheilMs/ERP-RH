@@ -1,48 +1,41 @@
-// src/app/guards/auth.guard.ts
-import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { Injectable, inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthGuard implements CanActivate {
+// ✅ CHANGEMENT : Utiliser CanActivateFn au lieu de class
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    if (this.authService.isLoggedIn()) {
-      // Si déjà connecté et essaye d'accéder à login, rediriger selon le rôle
-      if (state.url === '/login' || state.url === '/') {
-        this.redirectBasedOnRole();
-        return false;
-      }
-      return true;
+  if (authService.isLoggedIn()) {
+    // Si déjà connecté et essaye d'accéder à login, rediriger selon le rôle
+    if (state.url === '/login' || state.url === '/') {
+      redirectBasedOnRole(authService, router);
+      return false;
     }
-
-    // Si non connecté, rediriger vers login
-    this.router.navigate(['/login']);
-    return false;
+    return true;
   }
 
-  private redirectBasedOnRole(): void {
-    const userRoles = this.authService.getUserRoles();
-    const userId = this.authService.getUser()?.id;
+  // Si non connecté, rediriger vers login
+  router.navigate(['/login']);
+  return false;
+};
 
-    console.log('🔄 Redirection automatique selon rôle:', userRoles);
+// ✅ Fonction helper séparée
+function redirectBasedOnRole(authService: AuthService, router: Router): void {
+  const userRoles = authService.getUserRoles();
+  const userId = authService.getUser()?.id;
 
-    if (this.authService.isHR() || this.authService.isHRManager()) {
-      console.log('🎯 Redirection RH vers /employees');
-      this.router.navigate(['/employees']);
-    } else if (this.authService.isEmployee()) {
-      console.log('🎯 Redirection Employé vers son profil:', `/employees/${userId}`);
-      this.router.navigate(['/employees', userId]);
-    } else {
-      console.log('🎯 Redirection par défaut vers /dashboard');
-      this.router.navigate(['/dashboard']);
-    }
+  console.log('🔄 Redirection automatique selon rôle:', userRoles);
+
+  if (authService.isHR() || authService.isHRManager()) {
+    console.log('🎯 Redirection RH vers /employees');
+    router.navigate(['/employees']);
+  } else if (authService.isEmployee()) {
+    console.log('🎯 Redirection Employé vers son profil:', `/employees/${userId}`);
+    router.navigate(['/employees', userId]);
+  } else {
+    console.log('🎯 Redirection par défaut vers /dashboard');
+    router.navigate(['/dashboard']);
   }
 }

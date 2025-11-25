@@ -60,35 +60,85 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private SalaryCalculationService salaryCalculationService;
 
-    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS
+    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS - CORRIGÉES
     private boolean hasHRRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("❌ hasHRRole: No authentication or not authenticated");
             return false;
         }
-        return authentication.getAuthorities().stream()
+        
+        boolean isHR = authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority ->
                         grantedAuthority.getAuthority().equals("ROLE_HR") ||
                                 grantedAuthority.getAuthority().equals("ROLE_HRMANAGER"));
+        
+        System.out.println("🔍 hasHRRole check: " + isHR);
+        System.out.println("🎯 Authorities: " + authentication.getAuthorities());
+        return isHR;
     }
 
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("❌ getCurrentUsername: No authentication or not authenticated");
             return null;
         }
-        return authentication.getName();
+        String username = authentication.getName();
+        System.out.println("🔍 getCurrentUsername returning: " + username);
+        return username;
     }
 
-    private boolean isViewingOwnProfile(String employeeId) {
+    // CORRECTION : Méthode pour obtenir l'email de l'utilisateur connecté
+    private String getCurrentUserEmail() {
         String currentUsername = getCurrentUsername();
-        if (currentUsername == null) return false;
+        if (currentUsername == null) {
+            return null;
+        }
+        
+        // Rechercher l'employé par username pour obtenir son email
+        Optional<Employee> currentEmployee = employeeRepository.findByUsername(currentUsername);
+        if (currentEmployee.isPresent()) {
+            String email = currentEmployee.get().getEmail();
+            System.out.println("🔍 getCurrentUserEmail: " + email);
+            return email;
+        }
+        
+        // Fallback: si pas trouvé par username, essayer par email
+        Optional<Employee> currentEmployeeByEmail = employeeRepository.findByEmail(currentUsername);
+        if (currentEmployeeByEmail.isPresent()) {
+            String email = currentEmployeeByEmail.get().getEmail();
+            System.out.println("🔍 getCurrentUserEmail (fallback): " + email);
+            return email;
+        }
+        
+        System.out.println("❌ getCurrentUserEmail: Employee not found for username: " + currentUsername);
+        return null;
+    }
+
+    // CORRECTION : Méthode améliorée pour vérifier si c'est son propre profil
+    private boolean isViewingOwnProfile(String employeeId) {
+        String currentUserEmail = getCurrentUserEmail();
+        if (currentUserEmail == null) {
+            System.out.println("❌ isViewingOwnProfile: Current user email is null");
+            return false;
+        }
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isPresent()) {
             Employee employee = employeeOpt.get();
-            return employee.getEmail().equals(currentUsername);
+            boolean isOwnProfile = employee.getEmail().equals(currentUserEmail);
+            
+            System.out.println("🔍 isViewingOwnProfile DETAILED CHECK:");
+            System.out.println("   - Employee ID: " + employeeId);
+            System.out.println("   - Employee email: " + employee.getEmail());
+            System.out.println("   - Current user email: " + currentUserEmail);
+            System.out.println("   - Result: " + isOwnProfile);
+            
+            return isOwnProfile;
         }
+        
+        System.out.println("❌ isViewingOwnProfile: Employee not found with ID: " + employeeId);
         return false;
     }
 
@@ -97,11 +147,65 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccessDeniedException("Access denied: HR role required");
         }
     }
+    
+    // CORRECTION : Méthode améliorée pour vérifier l'accès au profil
+    private void checkEmployeeProfileAccess(String employeeId) {
+        System.out.println("=== VÉRIFICATION PERMISSION ACCÈS PROFIL EMPLOYÉ ===");
+        System.out.println("Employee ID demandé: " + employeeId);
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            System.out.println("👤 Utilisateur authentifié: " + authentication.getName());
+            System.out.println("🎯 Authorities: " + authentication.getAuthorities());
+            System.out.println("🔐 Principal: " + authentication.getPrincipal());
+            System.out.println("✅ Is authenticated: " + authentication.isAuthenticated());
+        } else {
+            System.out.println("❌ Aucune authentification trouvée!");
+            throw new AccessDeniedException("Non authentifié");
+        }
 
-    private void checkEmployeeAccessPermission(String employeeId) {
-        if (!hasHRRole() && !isViewingOwnProfile(employeeId)) {
+        boolean isHR = hasHRRole();
+        boolean isOwnProfile = isViewingOwnProfile(employeeId);
+
+        System.out.println("👑 Est HR ou RH Manager: " + isHR);
+        System.out.println("👤 Est son propre profil: " + isOwnProfile);
+
+        // LOGIQUE : Autoriser si c'est son propre profil OU si c'est un RH
+        if (!isHR && !isOwnProfile) {
+            System.out.println("❌ ACCÈS REFUSÉ: Ni HR ni propre profil");
             throw new AccessDeniedException("Access denied: You can only access your own profile");
         }
+
+        System.out.println("✅ ACCÈS AUTORISÉ AU PROFIL");
+        System.out.println("=== FIN VÉRIFICATION ===");
+    }
+
+    private void checkPayslipGenerationPermission(String employeeId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        System.out.println("=== VÉRIFICATION PERMISSION FICHE DE PAIE ===");
+        System.out.println("Employee ID demandé: " + employeeId);
+
+        if (authentication != null) {
+            System.out.println("Utilisateur authentifié: " + authentication.getName());
+            System.out.println("Authorities: " + authentication.getAuthorities());
+        } else {
+            System.out.println("❌ Aucune authentification trouvée!");
+        }
+
+        boolean isHR = hasHRRole();
+        boolean isOwnProfile = isViewingOwnProfile(employeeId);
+
+        System.out.println("Est HR: " + isHR);
+        System.out.println("Est son propre profil: " + isOwnProfile);
+
+        if (!isHR && !isOwnProfile) {
+            System.out.println("❌ ACCÈS REFUSÉ: Ni HR ni propre profil");
+            throw new AccessDeniedException("Access denied: You can only generate your own payslips");
+        }
+
+        System.out.println("✅ ACCÈS AUTORISÉ");
+        System.out.println("=== FIN VÉRIFICATION ===");
     }
 
     private void checkFormationPermission(String employeeId) {
@@ -109,22 +213,33 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccessDeniedException("Access denied: You can only manage your own formations");
         }
     }
+
     @Override
     public List<Employee> getAllEmployees() {
-
+        // SEULS LES RH PEUVENT VOIR TOUS LES EMPLOYÉS
+        checkHRPermission();
         return employeeRepository.findAll();
     }
 
     @Override
     public Optional<Employee> getEmployeeById(String id) {
-
-        return employeeRepository.findById(id);
+        System.out.println("🔄 EmployeeServiceImpl.getEmployeeById called for ID: " + id);
+        
+        // NOUVELLE VÉRIFICATION : Autoriser l'accès si c'est son propre profil ou si c'est un RH
+        checkEmployeeProfileAccess(id);
+        
+        Optional<Employee> employee = employeeRepository.findById(id);
+        if (employee.isPresent()) {
+            System.out.println("✅ Employee found: " + employee.get().getUsername());
+        } else {
+            System.out.println("❌ Employee not found with ID: " + id);
+        }
+        return employee;
     }
-
-
 
     @Override
     public void deleteEmployee(String id) {
+        // SEULS LES RH PEUVENT SUPPRIMER
         checkHRPermission();
         employeeRepository.deleteById(id);
     }
@@ -151,6 +266,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, HttpServletRequest request) {
+        // SEULS LES RH PEUVENT CRÉER DES EMPLOYÉS
         checkHRPermission();
 
         if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
@@ -209,25 +325,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return ResponseEntity.ok("Employee registered successfully!");
     }
 
-    @Override
-    public void ImportFromExcel(MultipartFile file) throws IOException {
-        checkHRPermission();
-
-        Workbook workbook = new XSSFWorkbook(file.getInputStream());
-        Sheet sheet = workbook.getSheetAt(0);
-
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-            Row row = sheet.getRow(i);
-            if (row == null) continue;
-
-            Employee emp = new Employee();
-            emp.setEmail(getCellValue(row.getCell(1)));
-            emp.setUsername(getCellValue(row.getCell(2)));
-            employeeRepository.save(emp);
-        }
-        workbook.close();
-    }
-
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
         switch (cell.getCellType()) {
@@ -249,7 +346,28 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public void ImportFromExcel(MultipartFile file) throws IOException {
+        // SEULS LES RH PEUVENT IMPORTER
+        checkHRPermission();
+
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        Sheet sheet = workbook.getSheetAt(0);
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            Employee emp = new Employee();
+            emp.setEmail(getCellValue(row.getCell(1)));
+            emp.setUsername(getCellValue(row.getCell(2)));
+            employeeRepository.save(emp);
+        }
+        workbook.close();
+    }
+
+    @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
+        // SEULS LES RH PEUVENT EXPORTER
         checkHRPermission();
 
         List<Employee> employees = employeeRepository.findAll();
@@ -298,6 +416,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
+        // SEULS LES RH PEUVENT UPLOADER DES PHOTOS
         checkHRPermission();
 
         try {
@@ -327,10 +446,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // CORRECTION : Implémentation complète de la méthode generatePaySlipPDF sans paramètres
     @Override
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
         try {
+            checkPayslipGenerationPermission(employeeId);
+            
             Employee emp = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
@@ -347,111 +467,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // Méthode pour récupérer la dernière fiche
-    @Override
-    public Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month) {
-        try {
-            System.out.println("Recherche dernière fiche pour employé: " + employeeId);
-
-            if (year != null && month != null) {
-                System.out.println("Recherche fiche spécifique: " + month + "/" + year);
-                Optional<Payslip> payslip = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
-
-                if (payslip.isPresent()) {
-                    System.out.println("Fiche spécifique trouvée: " + payslip.get().getPeriod());
-                } else {
-                    System.out.println("Aucune fiche trouvée pour " + month + "/" + year);
-                }
-
-                return payslip;
-            } else {
-                System.out.println("Recherche dernière fiche créée");
-                List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
-
-                if (payslips.isEmpty()) {
-                    System.out.println("Aucune fiche existante pour cet employé");
-                    return Optional.empty();
-                }
-
-                Payslip latest = payslips.get(0);
-                System.out.println("Dernière fiche: " + latest.getPeriod() + " (ID: " + latest.getId() + ")");
-                return Optional.of(latest);
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la recherche de fiche: " + e.getMessage());
-            return Optional.empty();
-        }
-    }
-
-    // Récupération des années disponibles pour un employé
-    @Override
-    public List<Integer> getAvailableYears(String employeeId) {
-        checkEmployeeAccessPermission(employeeId);
-
-        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (employeeOpt.isEmpty()) return Collections.emptyList();
-
-        Employee employee = employeeOpt.get();
-
-        System.out.println("CALCUL DES ANNÉES DISPONIBLES");
-        System.out.println("Employé: " + employee.getUsername());
-        System.out.println("Date d'embauche: " + employee.getHireDate());
-
-        List<Integer> yearsFromPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId)
-                .stream()
-                .map(Payslip::getYear)
-                .filter(Objects::nonNull)
-                .distinct()
-                .sorted(Comparator.reverseOrder())
-                .collect(Collectors.toList());
-
-        System.out.println("Années depuis les fiches existantes: " + yearsFromPayslips);
-
-        List<Integer> yearsFromHireDate = this.generateAllYearsSinceHireDate(employee);
-        System.out.println("Toutes les années depuis l'embauche: " + yearsFromHireDate);
-
-        Set<Integer> allYears = new TreeSet<>(Comparator.reverseOrder());
-        allYears.addAll(yearsFromHireDate);
-        allYears.addAll(yearsFromPayslips);
-
-        List<Integer> finalYears = new ArrayList<>(allYears);
-        System.out.println("Années finales disponibles: " + finalYears);
-        System.out.println("FIN CALCUL ANNÉES");
-
-        return finalYears;
-    }
-
-    private List<Integer> generateAllYearsSinceHireDate(Employee employee) {
-        List<Integer> years = new ArrayList<>();
-
-        if (employee.getHireDate() == null) {
-            System.out.println("Pas de date d'embauche, utilisation de l'année courante");
-            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-            years.add(currentYear);
-            return years;
-        }
-
-        Calendar hireDate = Calendar.getInstance();
-        hireDate.setTime(employee.getHireDate());
-        int hireYear = hireDate.get(Calendar.YEAR);
-
-        Calendar currentDate = Calendar.getInstance();
-        int currentYear = currentDate.get(Calendar.YEAR);
-
-        System.out.println("Période de travail: " + hireYear + " à " + currentYear);
-
-        for (int year = hireYear; year <= currentYear; year++) {
-            years.add(year);
-        }
-
-        System.out.println("Années de travail générées: " + years);
-        return years;
-    }
-
-    // Génération de fiche de paie avec gestion des nulls
     @Override
     public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
-        checkHRPermission();
+        checkPayslipGenerationPermission(employeeId);
 
         try {
             Employee emp = employeeRepository.findById(employeeId)
@@ -541,7 +559,105 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // Méthode pour vérifier la disponibilité selon l'embauche
+    @Override
+    public Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month) {
+        try {
+            System.out.println("Recherche dernière fiche pour employé: " + employeeId);
+
+            if (year != null && month != null) {
+                System.out.println("Recherche fiche spécifique: " + month + "/" + year);
+                Optional<Payslip> payslip = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
+
+                if (payslip.isPresent()) {
+                    System.out.println("Fiche spécifique trouvée: " + payslip.get().getPeriod());
+                } else {
+                    System.out.println("Aucune fiche trouvée pour " + month + "/" + year);
+                }
+
+                return payslip;
+            } else {
+                System.out.println("Recherche dernière fiche créée");
+                List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
+
+                if (payslips.isEmpty()) {
+                    System.out.println("Aucune fiche existante pour cet employé");
+                    return Optional.empty();
+                }
+
+                Payslip latest = payslips.get(0);
+                System.out.println("Dernière fiche: " + latest.getPeriod() + " (ID: " + latest.getId() + ")");
+                return Optional.of(latest);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la recherche de fiche: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<Integer> getAvailableYears(String employeeId) {
+        checkEmployeeProfileAccess(employeeId);
+
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isEmpty()) return Collections.emptyList();
+
+        Employee employee = employeeOpt.get();
+
+        System.out.println("CALCUL DES ANNÉES DISPONIBLES");
+        System.out.println("Employé: " + employee.getUsername());
+        System.out.println("Date d'embauche: " + employee.getHireDate());
+
+        List<Integer> yearsFromPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId)
+                .stream()
+                .map(Payslip::getYear)
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+
+        System.out.println("Années depuis les fiches existantes: " + yearsFromPayslips);
+
+        List<Integer> yearsFromHireDate = this.generateAllYearsSinceHireDate(employee);
+        System.out.println("Toutes les années depuis l'embauche: " + yearsFromHireDate);
+
+        Set<Integer> allYears = new TreeSet<>(Comparator.reverseOrder());
+        allYears.addAll(yearsFromHireDate);
+        allYears.addAll(yearsFromPayslips);
+
+        List<Integer> finalYears = new ArrayList<>(allYears);
+        System.out.println("Années finales disponibles: " + finalYears);
+        System.out.println("FIN CALCUL ANNÉES");
+
+        return finalYears;
+    }
+
+    private List<Integer> generateAllYearsSinceHireDate(Employee employee) {
+        List<Integer> years = new ArrayList<>();
+
+        if (employee.getHireDate() == null) {
+            System.out.println("Pas de date d'embauche, utilisation de l'année courante");
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+            years.add(currentYear);
+            return years;
+        }
+
+        Calendar hireDate = Calendar.getInstance();
+        hireDate.setTime(employee.getHireDate());
+        int hireYear = hireDate.get(Calendar.YEAR);
+
+        Calendar currentDate = Calendar.getInstance();
+        int currentYear = currentDate.get(Calendar.YEAR);
+
+        System.out.println("Période de travail: " + hireYear + " à " + currentYear);
+
+        for (int year = hireYear; year <= currentYear; year++) {
+            years.add(year);
+        }
+
+        System.out.println("Années de travail générées: " + years);
+        return years;
+    }
+
     @Override
     public boolean isMonthAvailableForEmployee(Employee employee, int year, int month) {
         if (employee.getHireDate() == null) {
@@ -566,7 +682,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
-        checkEmployeeAccessPermission(employeeId);
+        checkEmployeeProfileAccess(employeeId);
 
         try {
             if (!employeeRepository.existsById(employeeId)) {
@@ -600,10 +716,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // Historique des fiches de paie
     @Override
     public List<Payslip> getEmployeePayslips(String employeeId) {
-        checkEmployeeAccessPermission(employeeId);
+        checkEmployeeProfileAccess(employeeId);
 
         try {
             if (!employeeRepository.existsById(employeeId)) {
@@ -620,7 +735,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // Méthode pour vérifier si un mois est dans le futur
     @Override
     public boolean isMonthInFuture(int year, int month) {
         Calendar currentDate = Calendar.getInstance();
@@ -661,10 +775,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         return payslipRepository.findById(payslipId);
     }
 
-    // Génération annuelle avec vérification des mois futurs
     @Override
     public Map<String, Object> generatePayslipsForYear(String employeeId, int year) {
-        checkHRPermission();
+        checkPayslipGenerationPermission(employeeId);
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
@@ -730,10 +843,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         return result;
     }
 
-    // Génération de fiches de test avec vérification des mois futurs
     @Override
     public Map<String, Object> generateTestPayslips(String employeeId) {
-        checkHRPermission();
+        checkPayslipGenerationPermission(employeeId);
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
