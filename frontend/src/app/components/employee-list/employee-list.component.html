@@ -1,108 +1,177 @@
-<div class="rh-container">
-  <div class="page-title">
-    <h2>Gestion des Employés</h2>
+<div class="employees-container">
+  <!-- Header principal -->
+  <div class="employees-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="employees-title">Employee Management</h1>
+        <p class="employees-subtitle">Manage your team members and their information</p>
+      </div>
+      
+      <div class="header-actions">
+        <!-- Add Button -->
+        <button class="add-btn" (click)="openAddModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          Add Employee
+        </button>
+
+        <!-- Excel Import -->
+        <div class="file-upload-wrapper">
+          <label for="excel-import" class="search-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Import Excel
+          </label>
+          <input
+            id="excel-import"
+            type="file"
+            accept=".xlsx, .xls"
+            (change)="importExcel($event)"
+            style="display: none;">
+        </div>
+
+        <!-- Excel Export -->
+        <button class="search-btn" (click)="exportExcel()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+          Export Excel
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Grille de cartes statistiques -->
-  <div class="stats-grid">
-    <div class="stat-card employee-count">
-      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-      <div class="stat-number">{{ employees.length }}</div>
-      <div class="stat-label">Employees</div>
+  <!-- Status messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <div class="alert-content">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    <div class="alert-content">
+      <span class="alert-icon">⚠</span>
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Search container -->
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="filterEmployees()"
+        placeholder="Search employees by name, email, or position..."
+        class="search-input">
+      <button *ngIf="searchTerm" class="clear-search" (click)="searchTerm = ''; filterEmployees()">
+        ✕
+      </button>
+    </div>
+    <div *ngIf="searchTerm" class="search-results-info">
+      Showing {{ filteredEmployees.length }} of {{ employees.length }} employees
+      <button class="clear-search-btn" (click)="searchTerm = ''; filterEmployees()">Clear search</button>
+    </div>
+  </div>
+
+  <!-- Table section -->
+  <div class="table-section">
+    <div class="table-header">
+      <h2 class="table-title">Employees List</h2>
+      <span class="table-count">{{ filteredEmployees.length }} employees</span>
     </div>
 
-    <div class="stat-card empty-card">
-      <div class="empty-card-content"><i class="bi bi-graph-up"></i>
-        <div class="stat-number">{{ filteredEmployees.length }}</div>
-        <span>Employees Number by search</span></div>
+    <div class="table-container">
+      <table class="employees-table">
+        <thead>
+          <tr>
+            <th class="column-name">Employee</th>
+            <th class="column-email">Email</th>
+            <th class="column-status">position</th>
+            <th class="column-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loading state -->
+          <tr *ngIf="loading">
+            <td colspan="5" class="loading-cell">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+                <span>Loading employees...</span>
+              </div>
+            </td>
+          </tr>
 
+          <!-- No results -->
+          <tr *ngIf="!loading && filteredEmployees.length === 0">
+            <td colspan="5" class="no-data">
+              <div class="no-data-icon">👥</div>
+              <h3>No employees found</h3>
+              <p *ngIf="searchTerm">Try adjusting your search criteria</p>
+              <p *ngIf="!searchTerm">Get started by adding your first employee</p>
+            </td>
+          </tr>
+
+          <!-- Employees list -->
+          <tr *ngFor="let employee of filteredEmployees; trackBy: trackByEmployeeId">
+            <td>
+              <div class="employee-info">
+                <div class="employee-name">{{ employee.username }}</div>
+                <div class="employee-id">Employee ID: {{ employee.matricule }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="contact-info">
+                <div class="contact-email">{{ employee.email }}</div>
+              </div>
+            </td>
+  
+            <td>
+              <span [class]="'status-badge ' + (employee.status?.toLowerCase() || 'inactive')">
+                {{ employee.status || 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="actions">
+                <!-- View details button -->
+                <a
+                  [routerLink]="['/employees', employee.id]"
+                  class="action-btn edit-btn"
+                  title="View Details">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                  </svg>
+                </a>
+
+                <!-- Delete button -->
+                <button
+                  (click)="deleteEmployee(employee.id)"
+                  class="action-btn delete-btn"
+                  [disabled]="loading"
+                  title="Delete Employee">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-
-    <div class="stat-card empty-card">
-      <div class="empty-card-content"><i class="bi bi-calendar-check"></i><span>Statistique 3</span></div>
-    </div>
-  </div>
-  <!-- Champ de recherche -->
-  <div class="search-container" style="margin-bottom: 2rem;">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (input)="filterEmployees()"
-      placeholder="Rechercher par nom, email, téléphone ou statut..."
-      class="form-control"
-      style="max-width: 400px; padding: 0.75rem; border-radius: 10px; border: 2px solid #e9ecef;">
-  </div>
-  <!-- Boutons d'action -->
-  <div class="action-buttons-container">
-    <label class="action-btn import-btn">
-      <i class="bi bi-upload"></i> Importer
-      <input type="file" accept=".xlsx" (change)="importExcel($event)" hidden />
-    </label>
-    <button class="action-btn export-btn" (click)="exportExcel()">
-      <i class="bi bi-download"></i> Exporter
-    </button>
-    <!-- Ajoutez la classe action-btn ici -->
-    <button class="action-btn add-btn" (click)="showAdd = true">
-      <i class="bi bi-plus-circle"></i> Add Employee
-    </button>
-
-    <app-add-employee *ngIf="showAdd" (closeModalEvent)="showAdd = false"></app-add-employee>
   </div>
 
-
-    <!-- État de chargement -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <div>Loading Employees...</div>
-  </div>
-
-  <!-- Messages -->
-  <div *ngIf="errorMessage && !loading" class="error-message">
-    <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !loading" class="success-message">
-    <i class="bi bi-check-circle"></i> {{ successMessage }}
-  </div>
-
-  <div *ngIf="!loading && (employees.length > 0 || (searchTerm && filteredEmployees.length > 0))" class="table-container">
-  <!-- Tableau -->
-  <div *ngIf="!loading && employees.length > 0" class="table-container">
-    <table class="employee-table">
-      <thead>
-      <tr>
-        <th>Employees Name</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let emp of (searchTerm ? filteredEmployees : employees)">
-        <td>{{ emp.username }}</td>
-        <td>{{ emp.email }}</td>
-        <td [class]="'status status-' + (emp.status?.toLowerCase() || 'na')">
-          {{ emp.status || 'N/A' }}
-        </td>
-        <td>
-          <button [routerLink]="['/employees', emp.id]" class="btn btn-sm btn-outline-primary me-2">
-            <i class="bi bi-eye"></i> Details
-          </button>
-          <button (click)="deleteEmployee(emp.id)" class="btn btn-sm btn-danger">
-            <i class="bi bi-trash"></i> Delete
-          </button>
-        </td>
-
-      </tr>
-
-      </tbody>
-    </table>
-  </div>
-
-  <!-- État vide -->
-  <div *ngIf="!loading && employees.length === 0" class="empty-state">
-    <i class="bi bi-people"></i>
-    <h3>Aucun employé trouvé</h3>
-    <p>Commencez par importer un fichier Excel pour ajouter des employés.</p>
-  </div>
-</div>
+  <!-- Add employee modal -->
+  <app-add-employee
+    *ngIf="showAddModal"
+    (closeModalEvent)="closeAddModal()"
+    (employeeAdded)="onEmployeeAdded()">
+  </app-add-employee>
 </div>

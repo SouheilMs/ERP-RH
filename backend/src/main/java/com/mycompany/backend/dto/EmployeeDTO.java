@@ -2,6 +2,7 @@ package com.mycompany.backend.dto;
 
 import lombok.Data;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class EmployeeDTO {
@@ -33,6 +34,8 @@ public class EmployeeDTO {
     private Integer yearsOfService = 0;
     private Integer totalMonthsOfService = 0;
     private Integer seniorityBlocks = 0;
+
+    private List<String> roleNames;
 
     public String getUsername() {
         return username;
@@ -216,6 +219,14 @@ public class EmployeeDTO {
 
     public void setTotalMonthsOfService(Integer totalMonthsOfService) {
         this.totalMonthsOfService = totalMonthsOfService;
+    }
+
+    public List<String> getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(List<String> roleNames) {
+        this.roleNames = roleNames;
     }
 
     public Integer getSeniorityBlocks() {

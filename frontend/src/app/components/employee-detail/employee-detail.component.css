@@ -1333,4 +1333,972 @@
   .error-modal .modal-actions {
     justify-content: center;
   }
+  /* Ajouter dans employee-detail.component.css */
+  .employee-info-readonly {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+  }
+
+  .employee-info-readonly h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+  }
+
+  .info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 20px;
+  }
+
+  .info-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+  }
+
+  .info-value {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #2c3e50;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .info-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-group {
+      width: 100%;
+    }
+  }
+  
+}
+/* =========================== */
+/* Styles pour les messages d'obligation améliorés */
+/* =========================== */
+
+.requirement-hint {
+  display: none;
+  position: absolute;
+  z-index: 1000;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 320px;
+  animation: slideDownFade 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.requirement-hint.show {
+  display: block;
+}
+
+.hint-content {
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 2px solid #fc8181;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 
+    0 10px 30px rgba(229, 62, 62, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.hint-content::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #fc8181;
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.hint-content::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 22px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #fff5f5;
+}
+
+.hint-icon {
+  font-size: 1.4rem;
+  margin-right: 10px;
+  vertical-align: middle;
+  animation: bounce 2s infinite;
+}
+
+.hint-text {
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(100% - 45px);
+}
+
+.hint-text strong {
+  color: #c53030;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.hint-text ul {
+  margin: 8px 0 0 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: #742a2a;
+}
+
+.hint-text li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+  position: relative;
+  padding-left: 8px;
+}
+
+.hint-text li::before {
+  content: '•';
+  color: #e53e3e;
+  font-weight: bold;
+  position: absolute;
+  left: -12px;
+  animation: pulseDot 2s infinite;
+}
+
+/* Animations */
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* =========================== */
+/* Styles pour les champs avec validation améliorée */
+/* =========================== */
+
+.form-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.form-input {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* États des champs */
+.form-input.valid {
+  border-color: #48bb78 !important;
+  background: linear-gradient(135deg, #f0fff4 0%, #fff 50%);
+  box-shadow: 
+    0 0 0 4px rgba(72, 187, 120, 0.1),
+    0 4px 12px rgba(72, 187, 120, 0.15);
+}
+
+.form-input.invalid {
+  border-color: #e53e3e !important;
+  background: linear-gradient(135deg, #fff5f5 0%, #fff 50%);
+  box-shadow: 
+    0 0 0 4px rgba(229, 62, 62, 0.1),
+    0 4px 12px rgba(229, 62, 62, 0.15);
+  animation: shake 0.5s ease;
+}
+
+/* Indicateurs visuels pour les champs valides/invalides */
+.form-group::after {
+  content: '';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.form-group.valid::after {
+  content: '✓';
+  color: #48bb78;
+  font-weight: bold;
+  font-size: 16px;
+  opacity: 1;
+  animation: checkmark 0.5s ease;
+}
+
+.form-group.invalid::after {
+  content: '!';
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 16px;
+  opacity: 1;
+  animation: exclamation 0.5s ease;
+}
+
+@keyframes checkmark {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes exclamation {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) rotate(0deg) scale(0);
+  }
+  50% {
+    transform: translateY(-50%) rotate(10deg) scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) rotate(0deg) scale(1);
+  }
+}
+
+/* Animation de secousse pour les erreurs */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* =========================== */
+/* Compteur de caractères amélioré */
+/* =========================== */
+
+.char-counter {
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.char-counter.normal {
+  color: #718096;
+  background: #f7fafc;
+}
+
+.char-counter.warning {
+  color: #dd6b20;
+  background: #fffaf0;
+  animation: pulseWarning 2s infinite;
+}
+
+.char-counter.error {
+  color: #e53e3e;
+  background: #fff5f5;
+  animation: pulseError 1s infinite;
+}
+
+@keyframes pulseWarning {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(221, 107, 32, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(221, 107, 32, 0);
+  }
+}
+
+@keyframes pulseError {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0);
+  }
+}
+
+/* =========================== */
+/* Effets de focus améliorés */
+/* =========================== */
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #667eea;
+  background: white;
+  box-shadow: 
+    0 0 0 4px rgba(102, 126, 234, 0.15),
+    0 8px 20px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Gradient border pour les champs au focus */
+.form-group:focus-within::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #667eea, #764ba2, #667eea);
+  border-radius: 14px;
+  z-index: -1;
+  animation: borderGlow 2s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* =========================== */
+/* Styles responsifs pour les hints */
+/* =========================== */
+
+@media (max-width: 768px) {
+  .requirement-hint {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: none;
+    z-index: 9999;
+  }
+  
+  .hint-content {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  
+  .hint-content::before,
+  .hint-content::after {
+    display: none;
+  }
+  
+  .hint-text strong {
+    font-size: 1rem;
+  }
+  
+  .hint-text ul {
+    font-size: 0.9rem;
+  }
+}
+
+/* =========================== */
+/* Styles pour les champs spécifiques */
+/* =========================== */
+
+/* Champ téléphone tunisien */
+.phone-field .hint-content {
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border-color: #fc8181;
+}
+
+.phone-field .hint-icon {
+  color: #e53e3e;
+}
+
+/* Champ salaire */
+.salary-field .hint-content {
+  background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+  border-color: #ed8936;
+}
+
+.salary-field .hint-icon {
+  color: #dd6b20;
+}
+
+/* Champ statut */
+.status-field .hint-content {
+  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+  border-color: #48bb78;
+}
+
+.status-field .hint-icon {
+  color: #38a169;
+}
+
+/* Champ date d'embauche */
+.hiredate-field .hint-content {
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  border-color: #4299e1;
+}
+
+.hiredate-field .hint-icon {
+  color: #3182ce;
+}
+
+/* =========================== */
+/* Effet de particules pour les champs valides */
+/* =========================== */
+
+.form-input.valid {
+  position: relative;
+  overflow: hidden;
+}
+
+.form-input.valid::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #48bb78, #38a169, #48bb78);
+  border-radius: 14px;
+  z-index: -1;
+  opacity: 0;
+  animation: successGlow 2s ease-in-out;
+}
+
+@keyframes successGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+/* =========================== */
+/* Tooltip personnalisé pour les infos-bulles */
+/* =========================== */
+
+.info-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  cursor: help;
+}
+
+.info-tooltip .tooltip-icon {
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.info-tooltip:hover .tooltip-icon {
+  background: #764ba2;
+  transform: scale(1.1);
+}
+
+.info-tooltip .tooltip-text {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.info-tooltip .tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #2d3748;
+}
+
+.info-tooltip:hover .tooltip-text {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* =========================== */
+/* Animation d'entrée en cascade pour les hints */
+/* =========================== */
+
+.hint-text li {
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: slideInListItem 0.4s ease forwards;
+}
+
+.hint-text li:nth-child(1) { animation-delay: 0.1s; }
+.hint-text li:nth-child(2) { animation-delay: 0.2s; }
+.hint-text li:nth-child(3) { animation-delay: 0.3s; }
+.hint-text li:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideInListItem {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================== */
+/* Effet de brillance pour les champs au focus */
+/* =========================== */
+
+.form-input:focus {
+  position: relative;
+}
+
+.form-input:focus::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shine 1.5s ease-in-out;
+}
+/* =========================== */
+/* Styles spécifiques pour les champs date */
+/* =========================== */
+
+.date-input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.date-input {
+  position: relative;
+  cursor: pointer;
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+  min-height: 46px;
+  box-sizing: border-box;
+}
+
+/* Style pour tous les inputs date */
+input[type="date"] {
+  position: relative;
+  cursor: pointer;
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+  min-height: 46px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* Pseudo-élément pour l'icône du calendrier sur les groupes */
+.date-input-group::after {
+  content: '📅';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+  color: #667eea;
+  z-index: 2;
+  background: white;
+  padding: 0 4px;
+}
+
+/* États des champs date */
+input[type="date"]:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+input[type="date"]:hover {
+  border-color: #cbd5e0;
+}
+
+/* Pour Webkit browsers (Chrome, Safari) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+  z-index: 1;
+  opacity: 0;
+}
+
+/* Pour Firefox */
+input[type="date"]::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Ajustement pour les petits écrans */
+@media (max-width: 768px) {
+  input[type="date"] {
+    font-size: 16px; /* Empêche le zoom sur iOS */
+    min-height: 44px; /* Taille tactile minimale */
+  }
+  
+  .date-input-group::after {
+    right: 12px;
+    font-size: 18px;
+  }
+}
+
+/* Style pour les hints de date */
+.date-hint {
+  color: #718096;
+  font-size: 0.75rem;
+  display: block;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Container spécifique pour les dates de formation */
+.formation-dates {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.formation-dates .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Correction pour la modal */
+.modal-content input[type="date"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Amélioration de l'apparence sur différents navigateurs */
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+  color: #4a5568;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #667eea;
+  padding: 0 2px;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #4a5568;
+}
+
+input[type="date"]::-webkit-inner-spin-button {
+  display: none;
+}
+
+input[type="date"]::-webkit-clear-button {
+  margin-right: 10px;
+}
+
+/* Styles pour les états de validation */
+.date-input.valid {
+  border-color: #48bb78;
+}
+
+.date-input.invalid {
+  border-color: #e53e3e;
+}
+
+/* Assurer que les labels sont correctement associés */
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+/* Correction pour le form-row dans la modal */
+.modal-content .form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.modal-content .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+/* =========================== */
+/* Styles cohérents avec Update Information */
+/* =========================== */
+
+.date-input-group {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.date-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+  min-height: 46px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.date-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+/* États de validation identiques à Update Information */
+.date-input.valid {
+  border-color: #48bb78 !important;
+  background: linear-gradient(135deg, #f0fff4 0%, #fff 50%);
+}
+
+.date-input.invalid {
+  border-color: #e53e3e !important;
+  background: linear-gradient(135deg, #fff5f5 0%, #fff 50%);
+}
+
+/* Messages de validation identiques à Update Information */
+.error-message {
+  color: #e53e3e;
+  font-size: 12px;
+  padding: 8px 12px;
+  background: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+.success-message {
+  color: #38a169;
+  font-size: 12px;
+  padding: 8px 12px;
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+/* Indicateurs visuels pour les champs valides/invalides */
+.date-input-group::after {
+  content: '';
+  position: absolute;
+  right: 15px;
+  top: 42px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.date-input-group.valid::after {
+  content: '✓';
+  color: #48bb78;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 1;
+}
+
+.date-input-group.invalid::after {
+  content: '!';
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 1;
+}
+
+/* Style pour les hints de date */
+.date-hint {
+  color: #718096;
+  font-size: 11px;
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  padding-left: 4px;
+}
+
+/* Animation pour les messages */
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Container pour les dates de formation */
+.formation-dates {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.formation-dates .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Style spécifique pour les erreurs de date dans le modal */
+.date-error {
+  margin: 10px 0;
+  padding: 12px;
+  background: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  border-left: 4px solid #e53e3e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formation-dates {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .date-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .error-message,
+  .success-message {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  
+  .date-hint {
+    font-size: 10px;
+  }
+}
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+  
 }

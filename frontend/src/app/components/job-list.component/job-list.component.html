@@ -143,13 +143,14 @@
                 </button>
               }
               
-              <a 
-                [routerLink]="['/jobs/edit', job.id]" 
-                class="action-button btn-primary"
-                title="Edit offer">
-                <i class="fas fa-edit me-2"></i>
-                Edit
-              </a>
+            <!-- Dans la section des actions, remplacez le bouton Edit -->
+<a 
+  [routerLink]="['/jobs', job.id, 'edit']" 
+  class="action-button btn-primary"
+  title="Edit offer">
+  <i class="fas fa-edit me-2"></i>
+  Edit
+</a>
               
               <button 
                 class="action-button btn-danger"

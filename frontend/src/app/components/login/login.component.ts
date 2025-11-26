@@ -2,24 +2,24 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService, LoginRequest } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service'; // ✅ Importer AuthService
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './login.component.html', // Keep your existing template
-  styleUrls: ['./login.component.css']   // Keep your existing CSS
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
   loginForm: FormGroup;
   isLoading = false;
-  errorMessage = '';
+  errorMessage: string = ''; // ✅ Ajouter cette propriété
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService // ✅ Injecter AuthService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -27,42 +27,45 @@ export class LoginComponent {
     });
   }
 
-  onSubmit() {
-    if (this.loginForm.valid) {
-      this.isLoading = true;
-      this.errorMessage = '';
 
-      const loginRequest: LoginRequest = {
-        email: this.loginForm.value.email,
-        password: this.loginForm.value.password
-      };
+onSubmit() {
+  if (this.loginForm.valid) {
+    this.isLoading = true;
+    this.errorMessage = '';
 
-      // Use the real AuthService
-      this.authService.login(loginRequest).subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          console.log('Login successful:', response);
-          // Navigate to employees after successful login
+    const loginData = {
+      email: this.loginForm.get('email')?.value,
+      password: this.loginForm.get('password')?.value
+    };
+
+    this.authService.login(loginData).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        console.log('✅ Login successful:', response);
+        
+        // ✅ REDIRECTION INTELLIGENTE selon le rôle
+        if (this.authService.canViewEmployeeList()) {
+          // HR/Manager → liste des employés
           this.router.navigate(['/employees']);
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.errorMessage = error;
-          console.error('Login error:', error);
+        } else {
+          // Employé → son propre profil
+          const userId = this.authService.getCurrentUserId();
+          if (userId) {
+            this.router.navigate(['/employees', userId]);
+          } else {
+            this.router.navigate(['/login']);
+          }
         }
-      });
-    } else {
-      // Mark all fields as touched to show validation errors
-      this.markFormGroupTouched(this.loginForm);
-    }
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup) {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error;
+        console.error('❌ Login failed:', error);
       }
     });
+  } else {
+    this.loginForm.markAllAsTouched();
   }
+}
+
 }

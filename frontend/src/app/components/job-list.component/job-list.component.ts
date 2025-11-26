@@ -1,3 +1,4 @@
+// src/app/components/job-list.component/job-list.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,29 +6,23 @@ import { RouterModule } from '@angular/router';
 import { JobOfferService, JobOffer } from '../../services/job-offer.service';
 
 @Component({
-  selector: 'app-job-list.component',
+  selector: 'app-job-list',
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './job-list.component.html',
   styleUrl: './job-list.component.css',
 })
-
 export class JobListComponent implements OnInit {
   getStatusIcon(status: string): string {
-  switch (status) {
-    case 'PUBLISHED':
-      return 'fa-check-circle';
-    case 'DRAFT':
-      return 'fa-edit';
-    case 'CLOSED':
-      return 'fa-lock';
-    case 'ARCHIVED':
-      return 'fa-archive';
-    case 'EXPIRED':
-      return 'fa-clock';
-    default:
-      return 'fa-circle';
+    switch (status) {
+      case 'PUBLISHED': return 'fa-check-circle';
+      case 'DRAFT': return 'fa-edit';
+      case 'CLOSED': return 'fa-lock';
+      case 'ARCHIVED': return 'fa-archive';
+      case 'EXPIRED': return 'fa-clock';
+      default: return 'fa-circle';
+    }
   }
-}
+
   jobOffers: JobOffer[] = [];
   filteredOffers: JobOffer[] = [];
   loading = false;

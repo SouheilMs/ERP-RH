@@ -2,37 +2,88 @@
 <div *ngIf="isOpen" class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Add Employee</h2>
+      <h2>Ajouter un Employé</h2>
       <button (click)="closeModal()">×</button>
     </div>
 
     <div class="modal-body">
+      <!-- Message d'erreur -->
       <div *ngIf="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
 
       <form (ngSubmit)="saveEmployee()">
-        <label>Full Name</label>
-        <input type="text" [(ngModel)]="employee.username" name="username" required />
+        <!-- Nom complet -->
+        <div class="form-group">
+          <label class="required">Nom complet</label>
+          <input
+            type="text"
+            [(ngModel)]="employee.username"
+            name="username"
+            placeholder="John Doe"
+            required>
+        </div>
 
-        <label>Email</label>
-        <input type="email" [(ngModel)]="employee.email" name="email" required />
+        <!-- Email -->
+        <div class="form-group">
+          <label class="required">Email</label>
+          <input
+            type="email"
+            [(ngModel)]="employee.email"
+            name="email"
+            placeholder="john@example.com"
+            required>
+        </div>
 
-        <label>Password</label>
-        <input type="password" [(ngModel)]="employee.password" name="password" required />
+        <!-- Mot de passe -->
+        <div class="form-group">
+          <label class="required">Mot de passe</label>
+          <input
+            type="password"
+            [(ngModel)]="employee.password"
+            name="password"
+            placeholder="••••••"
+            required>
+        </div>
 
-        <label>Phone Number</label>
-        <input type="text" [(ngModel)]="employee.phone" name="phone" />
+        <!-- Téléphone -->
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input
+            type="text"
+            [(ngModel)]="employee.phone"
+            name="phone"
+            placeholder="+33 1 23 45 67 89">
+        </div>
 
-        <label>Status</label>
-        <select [(ngModel)]="employee.status" name="status">
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
+        <!-- Statut -->
+        <div class="form-group">
+          <label>Statut</label>
+          <select [(ngModel)]="employee.status" name="status">
+            <option value="Active">Actif</option>
+            <option value="Inactive">Inactif</option>
+          </select>
+        </div>
 
+        <!-- Rôle -->
+        <div class="form-group">
+          <label class="required">Rôle</label>
+          <select [(ngModel)]="employee.role" name="role" required>
+            <option *ngFor="let role of availableRoles" [value]="role.value">
+              {{ role.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Actions -->
         <div class="modal-actions">
-          <button type="button" (click)="closeModal()">Cancel</button>
-          <button type="submit">Add</button>
+          <button type="button" (click)="closeModal()" [disabled]="isLoading">
+            Annuler
+          </button>
+          <button type="submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Ajouter l'employé</span>
+            <span *ngIf="isLoading">Création en cours...</span>
+          </button>
         </div>
       </form>
     </div>

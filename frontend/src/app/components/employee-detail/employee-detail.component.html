@@ -35,61 +35,87 @@
   </div>
 
   <!-- Modification form -->
-  <div class="employee-form">
+  <div class="employee-form" *ngIf="canSeeUpdateForm()">
     <h3>Update Information</h3>
     <form (ngSubmit)="onUpdateSubmit($event)">
       <div class="form-row">
         <div class="form-group">
-          <label for="matricule">Matricule:</label>
-          <input id="matricule" type="text" [(ngModel)]="employee.matricule" name="matricule">
+          <label for="email">Email:</label>
+          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required maxlength="50">
         </div>
         <div class="form-group">
-          <label for="username">Name:</label>
-          <input id="username" type="text" [(ngModel)]="employee.username" name="username" required>
+          <label for="phone">Phone:</label>
+          <input id="phone" 
+                 type="number" 
+                 [(ngModel)]="employee.phone" 
+                 name="phone" 
+                 (blur)="validatePhone()"
+                 min="20000000"
+                 max="99999999"
+                 placeholder="Ex: 50123456"
+                 [class.invalid]="phoneError"
+                 [class.valid]="employee.phone && !phoneError">
+          
+          <div *ngIf="phoneError" class="error-message">
+            {{ phoneError }}
+          </div>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="email">Email:</label>
-          <input id="email" type="email" [(ngModel)]="employee.email" name="email" required>
+          <label for="address">Address:</label>
+          <input id="address" type="text" [(ngModel)]="employee.address" name="address" required maxlength="100">
         </div>
         <div class="form-group">
           <label for="salary">Salary:</label>
-          <input id="salary" type="number" [(ngModel)]="employee.salary" name="salary" min="0">
+          <input id="salary" 
+                 type="number" 
+                 [(ngModel)]="employee.salary" 
+                 name="salary" 
+                 (blur)="validateSalary()"
+                 min="0" 
+                 step="0.01"
+                 [class.invalid]="salaryError"
+                 [class.valid]="employee.salary && !salaryError">
+          
+          <div *ngIf="salaryError" class="error-message">
+            {{ salaryError }}
+          </div>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label for="status">Status:</label>
-          <input id="status" type="text" [(ngModel)]="employee.status" name="status">
+          <input id="status" 
+                 type="text" 
+                 [(ngModel)]="employee.status" 
+                 name="status" 
+                 (blur)="validateStatus()"
+                 maxlength="15"
+                 [class.invalid]="statusError"
+                 [class.valid]="employee.status && !statusError">
+          
+          <div *ngIf="statusError" class="error-message">
+            {{ statusError }}
+          </div>
         </div>
-        <div class="form-group">
+        <div class="form-group date-input-group">
           <label for="hireDate">Hire Date:</label>
-          <input id="hireDate" type="date" [(ngModel)]="employee.hireDate" name="hireDate">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="phone">Phone:</label>
-          <input id="phone" type="text" [(ngModel)]="employee.phone" name="phone">
-        </div>
-        <div class="form-group">
-          <label for="rib">RIB:</label>
-          <input id="rib" type="text" [(ngModel)]="employee.rib" name="rib">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="cin">CIN:</label>
-          <input id="cin" type="text" [(ngModel)]="employee.cin" name="cin">
-        </div>
-        <div class="form-group">
-          <label for="cnssNumber">CNSS Number:</label>
-          <input id="cnssNumber" type="text" [(ngModel)]="employee.cnssNumber" name="cnssNumber">
+          <input id="hireDate" 
+                 type="date" 
+                 [(ngModel)]="employee.hireDate" 
+                 name="hireDate"
+                 (blur)="validateHireDate()"
+                 [max]="getMaxHireDate()"
+                 [class.invalid]="hireDateError"
+                 [class.valid]="employee.hireDate && !hireDateError"
+                 class="date-input">
+          
+          <div *ngIf="hireDateError" class="error-message">
+            {{ hireDateError }}
+          </div>
         </div>
       </div>
 
@@ -181,7 +207,6 @@
            Loading certificate...
         </div>
       </div>
-
     </div>
   </div>
 
@@ -193,41 +218,61 @@
       <form (ngSubmit)="addFormation($event)">
         <div class="form-group">
           <label for="formationName">Formation Name: <span class="required">*</span></label>
-          <input id="formationName" type="text" [(ngModel)]="newFormation.name" name="name" required>
+          <input id="formationName" type="text" [(ngModel)]="newFormation.name" name="formationName" required>
         </div>
         <div class="form-group">
           <label for="formationLocation">Location: <span class="required">*</span></label>
-          <input id="formationLocation" type="text" [(ngModel)]="newFormation.location" name="location" required>
+          <input id="formationLocation" type="text" [(ngModel)]="newFormation.location" name="formationLocation" required>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="startDate">Start Date: <span class="required">*</span></label>
+        <div class="form-row formation-dates">
+          <div class="form-group date-input-group">
+            <label for="formationStartDate">Start Date: <span class="required">*</span></label>
             <input
-              id="startDate"
+              id="formationStartDate"
               type="date"
               [(ngModel)]="newFormation.startDate"
               name="startDate"
               required
               (change)="validateStartDate()"
-              [max]="getMaxStartDate()">
+              [max]="getMaxStartDate()"
+              class="form-input date-input"
+              [class.invalid]="startDateError"
+              [class.valid]="newFormation.startDate && !startDateError">
+            
+            <div *ngIf="startDateError" class="error-message">
+              {{ startDateError }}
+            </div>
+            <div *ngIf="!startDateError && newFormation.startDate" class="success-message">
+              ✓ Valid start date
+            </div>
             <small class="date-hint">Cannot be in the future</small>
           </div>
-          <div class="form-group">
-            <label for="endDate">End Date: <span class="required">*</span></label>
+          <div class="form-group date-input-group">
+            <label for="formationEndDate">End Date: <span class="required">*</span></label>
             <input
-              id="endDate"
+              id="formationEndDate"
               type="date"
               [(ngModel)]="newFormation.endDate"
               name="endDate"
               required
               (change)="validateEndDate()"
-              [min]="newFormation.startDate">
+              [min]="newFormation.startDate"
+              class="form-input date-input"
+              [class.invalid]="endDateError"
+              [class.valid]="newFormation.endDate && !endDateError">
+            
+            <div *ngIf="endDateError" class="error-message">
+              {{ endDateError }}
+            </div>
+            <div *ngIf="!endDateError && newFormation.endDate" class="success-message">
+              ✓ Valid end date
+            </div>
             <small class="date-hint">Must be after start date</small>
           </div>
         </div>
         <div class="form-group">
           <label for="certificate">Certificate (PDF):</label>
-          <input id="certificate" type="file" (change)="onCertificateSelected($event)" accept="application/pdf">
+          <input id="certificate" type="file" (change)="onCertificateSelected($event)" accept="application/pdf" name="certificate">
           <small class="file-info">Accepted format: PDF only</small>
         </div>
 
@@ -237,9 +282,12 @@
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="cancel-btn" (click)="closeFormationModal()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
-            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-          </svg></button>
+          <button type="button" class="cancel-btn" (click)="closeFormationModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+            Cancel
+          </button>
           <button type="submit" class="add-btn"
                   [disabled]="!newFormation.name || !newFormation.location || !newFormation.startDate || !newFormation.endDate || formationErrorMessage">
             Create Formation
@@ -259,18 +307,21 @@
         <p class="warning-text">This action cannot be undone.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="cancel-btn" (click)="cancelDelete()"> Cancel<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
-          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-        </svg></button>
+        <button type="button" class="cancel-btn" (click)="cancelDelete()">
+          Cancel
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+          </svg>
+        </button>
         <button type="button" class="delete-btn" (click)="confirmDelete()">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-trash3" viewBox="0 0 16 16">
             <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-          </svg> Delete Formation
+          </svg>
+          Delete Formation
         </button>
       </div>
     </div>
   </div>
-
 
   <!-- Confirmation Modal for Update Employee -->
   <div class="modal confirmation-modal" *ngIf="showUpdateConfirmation">
@@ -290,7 +341,6 @@
         <div class="confirmation-message">
           <p>Are you sure you want to update this employee's information?</p>
           <div class="warning-note">
-
             <span class="warning-text">This action will modify the employee's personal and professional data.</span>
           </div>
         </div>
@@ -312,12 +362,12 @@
       </div>
     </div>
   </div>
+
   <!-- Success Modal for Delete Formation -->
   <div class="modal success-modal" *ngIf="showDeleteSuccess">
     <div class="modal-content">
       <span class="close-btn" (click)="closeDeleteSuccess()">&times;</span>
-      <div class="success-icon"></div>
-
+      <div class="success-icon">✅</div>
       <div class="success-message">
         <p>Formation deleted successfully!</p>
       </div>
@@ -331,8 +381,7 @@
   <div class="modal success-modal" *ngIf="showUploadSuccess">
     <div class="modal-content">
       <span class="close-btn" (click)="closeUploadSuccess()">&times;</span>
-      <div> </div>
-
+      <div class="success-icon">✅</div>
       <div class="success-message">
         <p>Photo uploaded successfully!</p>
       </div>
@@ -346,8 +395,7 @@
   <div class="modal success-modal" *ngIf="showUpdateSuccess">
     <div class="modal-content">
       <span class="close-btn" (click)="closeUpdateSuccess()">&times;</span>
-      <div></div>
-
+      <div class="success-icon">✅</div>
       <div class="success-message">
         <p>Employee information updated successfully!</p>
       </div>
@@ -361,8 +409,7 @@
   <div class="modal success-modal" *ngIf="showFormationSuccess">
     <div class="modal-content">
       <span class="close-btn" (click)="closeFormationSuccess()">&times;</span>
-      <div></div>
-
+      <div class="success-icon">✅</div>
       <div class="success-message">
         <p>Formation added successfully!</p>
       </div>
