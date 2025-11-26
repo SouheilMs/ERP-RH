@@ -25,37 +25,35 @@ public class JwtUtils {
 
     @Value("${bezkoder.app.jwtExpirationMs}")
     private int jwtExpirationMs;
-public String generateJwtToken(Authentication authentication) {
-    EmployeeDetailsImpl userPrincipal = (EmployeeDetailsImpl) authentication.getPrincipal();
 
-    List<String> roles = userPrincipal.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList());
+    public String generateJwtToken(Authentication authentication) {
+        EmployeeDetailsImpl userPrincipal = (EmployeeDetailsImpl) authentication.getPrincipal();
 
-    return Jwts.builder()
-            .setSubject(userPrincipal.getUsername())  // ✅ Utiliser username comme subject
-            .claim("email", userPrincipal.getEmail())
-            .claim("username", userPrincipal.getUsername())
-            .claim("roles", roles)
-            .setIssuedAt(new Date())
-            .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-            .signWith(key(), SignatureAlgorithm.HS256)
-            .compact();
-}
+        List<String> roles = userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
 
-public String getUserNameFromJwtToken(String token) {
-    Claims claims = Jwts.parserBuilder()
-            .setSigningKey(key())
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+        return Jwts.builder()
+                .setSubject(userPrincipal.getEmail())  // ✅ UTILISER EMAIL COMME SUBJECT
+                .claim("email", userPrincipal.getEmail())
+                .claim("username", userPrincipal.getUsername())
+                .claim("roles", roles)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
-    // ✅ Retourner directement le subject (qui est maintenant le username)
-    return claims.getSubject();
-}
+    public String getUserNameFromJwtToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
 
-
-
+        // ✅ Retourner le subject (qui est maintenant l'email)
+        return claims.getSubject();
+    }
 
     private Key key() {
         // Si la clé est trop courte, en générer une sécurisée
@@ -78,7 +76,6 @@ public String getUserNameFromJwtToken(String token) {
         }
     }
 
- 
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder()
@@ -98,30 +95,5 @@ public String getUserNameFromJwtToken(String token) {
             logger.error("Claims JWT vides: {}", e.getMessage());
         }
         return false;
-    }
-
-    // Méthode utilitaire pour générer une clé sécurisée
-    public static String generateSecureKey() {
-        Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-        return Encoders.BASE64.encode(key.getEncoded());
-    }
-
-    // Méthode de debug pour vérifier le contenu du token
-    public void debugToken(String token) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-            
-            logger.info("🔍 Token Debug:");
-            logger.info("Subject: {}", claims.getSubject());
-            logger.info("Email: {}", claims.get("email"));
-            logger.info("Username: {}", claims.get("username"));
-            logger.info("Roles: {}", claims.get("roles"));
-        } catch (Exception e) {
-            logger.error("Error debugging token: {}", e.getMessage());
-        }
     }
 }

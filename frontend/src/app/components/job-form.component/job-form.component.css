@@ -1,16 +1,15 @@
 .form-container {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   padding: 30px 20px;
 }
 
 .form-card {
-  background: rgba(238, 235, 235, 0.95);
+  background: rgba(243, 242, 242, 0.68);
   border-radius: 20px;
-  box-shadow: 0 25px 50px rgba(9, 9, 9, 0.219);
+  box-shadow: 0 25px 50px rgba(9, 9, 9, 0.043);
   padding: 35px 40px;
   margin: 0 auto;
-  max-width: 1000px;
+  max-width: 1400px;
   position: relative;
   animation: slideIn 0.5s ease-out;
 }
@@ -32,7 +31,6 @@
   align-items: center;
   margin-bottom: 30px;
   flex-wrap: wrap;
-  gap: 20px;
 }
 
 .form-title {
@@ -44,6 +42,9 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .back-button {
@@ -200,11 +201,6 @@
   animation: fadeIn 0.3s ease;
 }
 
-.error-message::before {
-  content: '⚠️';
-  font-size: 14px;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -222,6 +218,9 @@
   text-align: right;
   margin-top: 4px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .char-count.warning {
@@ -256,6 +255,9 @@
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -270,16 +272,8 @@
   box-shadow: none;
 }
 
-.submit-button.loading::after {
-  content: '';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-left: 8px;
+.submit-button.loading .fa-spinner {
+  animation: fa-spin 1s infinite linear;
 }
 
 .cancel-button {
@@ -306,7 +300,7 @@
   box-shadow: 0 6px 20px rgba(113, 128, 150, 0.4);
 }
 
-/* Styles spécifiques pour les selects */
+/* Styles pour les selects avec scroll */
 .form-select {
   appearance: none;
   background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
@@ -314,43 +308,142 @@
   background-position: right 15px center;
   background-size: 12px;
   padding-right: 45px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-/* Style pour la date */
-.form-input[type="date"] {
-  position: relative;
+/* Système de tags style LinkedIn */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 45px;
+  padding: 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f7fafc;
+  transition: all 0.3s ease;
 }
 
-.form-input[type="date"]::-webkit-calendar-picker-indicator {
-  background: transparent;
-  bottom: 0;
-  color: transparent;
-  cursor: pointer;
-  height: auto;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: auto;
-}
-
-/* Styles pour les états de focus améliorés */
-.form-input:not(.error):focus,
-.form-select:not(.error):focus,
-.form-textarea:not(.error):focus {
+.tags-container:focus-within {
   border-color: #667eea;
   background-color: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
-/* Animation de transition douce pour tous les éléments de formulaire */
-.form-input,
-.form-select,
-.form-textarea,
-.form-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.tag-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 8px 4px;
+  flex: 1;
+  min-width: 120px;
+  font-size: 14px;
 }
 
-/* Responsive Design */
+.tag-input::placeholder {
+  color: #a0aec0;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: tagSlideIn 0.3s ease;
+}
+
+@keyframes tagSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Suggestions de tags */
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.tag-suggestion {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.tag-suggestion:hover {
+  background-color: #f7fafc;
+}
+
+.tag-suggestion:last-child {
+  border-bottom: none;
+}
+
+/* Message d'erreur */
+.error-banner {
+  background: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s ease;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c53030;
+}
+
+/* Icônes */
+.fas {
+  font-size: 14px;
+}
+
+.me-1 { margin-right: 0.25rem; }
+.me-2 { margin-right: 0.5rem; }
+
+/* Responsive */
 @media (max-width: 768px) {
   .form-container {
     padding: 20px 15px;
@@ -389,6 +482,14 @@
     align-self: center;
     max-width: 200px;
   }
+
+  .form-label {
+    font-size: 14px;
+  }
+  
+  .fas {
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -419,145 +520,5 @@
 
   .char-count {
     font-size: 11px;
-  }
-}
-
-/* Améliorations d'accessibilité */
-.form-input:focus-visible,
-.form-select:focus-visible,
-.form-textarea:focus-visible {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-/* Style pour les textareas avec défilement personnalisé */
-.form-textarea::-webkit-scrollbar {
-  width: 6px;
-}
-
-.form-textarea::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.form-textarea::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.form-textarea::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Effet de pulsation pour le bouton de soumission */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
-  }
-}
-
-.submit-button:not(:disabled):not(.loading):hover {
-  animation: pulse 1.5s infinite;
-}
-
-/* Style pour les champs requis non remplis */
-.form-input:invalid:not(:focus):not(:placeholder-shown),
-.form-select:invalid:not(:focus),
-.form-textarea:invalid:not(:focus):not(:placeholder-shown) {
-  border-color: #f56565;
-  background-color: #fff5f5;
-}
-.error-banner {
-  background: #fed7d7;
-  border: 1px solid #feb2b2;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  animation: slideIn 0.3s ease;
-}
-
-.error-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #c53030;
-}
-
-.error-icon {
-  font-size: 16px;
-}
-
-.error-text {
-  font-weight: 500;
-  font-size: 14px;
-}
-/* Styles pour les icônes Font Awesome */
-.fas {
-  font-size: 14px;
-}
-
-.me-1 {
-  margin-right: 0.25rem;
-}
-
-.me-2 {
-  margin-right: 0.5rem;
-}
-
-/* Spinner animation pour le bouton de soumission */
-.submit-button.loading .fa-spinner {
-  animation: fa-spin 1s infinite linear;
-}
-
-/* Ajustement pour les labels avec icônes */
-.form-label {
-  display: flex;
-  align-items: center;
-}
-
-/* Style pour le compteur de caractères avec icônes */
-.char-count {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Style pour les messages d'erreur avec icônes */
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Style pour le header avec icône */
-.form-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Style pour les boutons avec icônes */
-.back-button,
-.cancel-button,
-.submit-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .form-label {
-    font-size: 14px;
-  }
-  
-  .fas {
-    font-size: 12px;
   }
 }

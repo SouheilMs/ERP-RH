@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-
 // Interfaces exportées
 export interface SignupRequest {
   username: string;
@@ -24,8 +23,8 @@ export interface LoginRequest {
 }
 
 export interface JwtResponse {
-  accessToken: string;
-  tokenType: string;
+  token: string;        
+  type: string;
   id: string;
   username: string;
   email: string;
@@ -56,39 +55,64 @@ export class AuthService {
       );
   }
 
-  login(loginRequest: LoginRequest): Observable<JwtResponse> {
-    console.log('🔄 Tentative de login vers:', `${this.apiUrl}/signin`);
+canViewFormations(): boolean {
+  return this.isHR() || this.isHRManager();
+}
+  // login(loginRequest: LoginRequest): Observable<JwtResponse> {
+  //   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+  //     .pipe(
+  //       tap((response: JwtResponse) => {
+  //         // Store token and user info
+  //         localStorage.setItem('authToken', response.token);
+  //         localStorage.setItem('user', JSON.stringify({
+  //           id: response.id,
+  //           username: response.username,
+  //           email: response.email,
+  //           roles: response.roles
+  //         }));
+  //         this.isLoggedInSubject.next(true);
+  //       }),
+  //       catchError(this.handleError)
+  //     );
+  // }
 
-    return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
-      .pipe(
-        tap((response: JwtResponse) => {
-          console.log('✅ Réponse login reçue:', response);
+login(loginRequest: LoginRequest): Observable<JwtResponse> {
+  console.log('🔄 Tentative de login vers:', `${this.apiUrl}/signin`);
 
-          if (response.accessToken) {
-            // ✅ Stocker le token correctement
-            localStorage.setItem('authToken', response.accessToken);
-            
-            const userData = {
-              id: response.id,
-              username: response.username,
-              email: response.email,
-              roles: response.roles
-            };
-            localStorage.setItem('user', JSON.stringify(userData));
+  return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+    .pipe(
+      tap((response: JwtResponse) => {
+        console.log('✅ Réponse login reçue:', response);
 
-            this.isLoggedInSubject.next(true);
-            this.userRolesSubject.next(response.roles);
+        if (response.token) {  // ✅ CORRECTION : Utiliser "token" au lieu de "accessToken"
+          // Stocker le token correctement
+          localStorage.setItem('authToken', response.token);
+          
+          const userData = {
+            id: response.id,
+            username: response.username,
+            email: response.email,
+            roles: response.roles
+          };
+          localStorage.setItem('user', JSON.stringify(userData));
 
-            console.log('🔐 Token stocké avec succès');
-          } else {
-            console.error('❌ Pas de token dans la réponse');
-            throw new Error('No token received');
-          }
-        }),
-        catchError(this.handleError)
-      );
-  }
+          this.isLoggedInSubject.next(true);
+          this.userRolesSubject.next(response.roles);
 
+          console.log('🔐 Token stocké avec succès');
+          console.log('👤 User ID:', response.id);
+          console.log('🎯 Roles:', response.roles);
+          
+          // ✅ Débogage du token
+          this.decodeToken();
+        } else {
+          console.error('❌ Pas de token dans la réponse');
+          throw new Error('No token received');
+        }
+      }),
+      catchError(this.handleError)
+    );
+}
   resetPassword(resetRequest: LoginRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)
       .pipe(
@@ -122,22 +146,49 @@ export class AuthService {
     return user?.roles || [];
   }
 
-  // Méthode pour obtenir l'ID de l'utilisateur connecté
-  getCurrentUserId(): string | null {
-    const user = this.getUser();
-    return user?.id || null;
+ 
+// Dans AuthService, modifiez getCurrentUserId()
+getCurrentUserId(): string | null {
+  const user = this.getUser();
+  console.log('🔍 getCurrentUserId - user data:', user);
+  
+  if (user && user.id) {
+    console.log('✅ User ID found:', user.id);
+    return user.id;
   }
+  
+  console.log('❌ User ID not found - user object:', user);
+  return null;
+}
 
-  // ✅ CORRECTION : Méthodes de vérification de rôle plus précises
-  isHR(): boolean {
-    const roles = this.getUserRoles();
-    return roles.includes('ROLE_HR');
+// Et dans getUser()
+getUser(): any {
+  const userJson = localStorage.getItem('user');
+  console.log('🔍 getUser - raw JSON from localStorage:', userJson);
+  
+  try {
+    const user = userJson ? JSON.parse(userJson) : null;
+    console.log('🔍 getUser - parsed user:', user);
+    return user;
+  } catch (error) {
+    console.error('❌ Erreur parsing user data:', error);
+    return null;
   }
+}
+  // ✅ CORRECTION : Méthodes de vérification de rôle plus précises
+ isHR(): boolean {
+  const roles = this.getUserRoles();
+  const isHR = roles.includes('ROLE_HR');
+  console.log('🔍 isHR() check:', { roles, isHR });
+  return isHR;
+}
 
   isHRManager(): boolean {
-    const roles = this.getUserRoles();
-    return roles.includes('ROLE_HRMANAGER');
-  }
+  const roles = this.getUserRoles();
+  const isHRManager = roles.includes('ROLE_HRMANAGER');
+  console.log('🔍 isHRManager() check:', { roles, isHRManager });
+  return isHRManager;
+}
 
   isEmployee(): boolean {
     return this.getUserRoles().includes('ROLE_EMPLOYEE');
@@ -260,16 +311,6 @@ export class AuthService {
     return token;
   }
 
-  getUser(): any {
-    const user = localStorage.getItem('user');
-    try {
-      return user ? JSON.parse(user) : null;
-    } catch (error) {
-      console.error('❌ Erreur parsing user data:', error);
-      return null;
-    }
-  }
-
   isLoggedIn(): boolean {
     return this.hasToken();
   }
@@ -281,7 +322,15 @@ export class AuthService {
   getUserRolesObservable(): Observable<string[]> {
     return this.userRolesSubject.asObservable();
   }
-
+debugCurrentUser(): void {
+  console.log('🐛 DEBUG CURRENT USER:');
+  console.log('  - Token:', this.getToken() ? 'PRESENT' : 'NULL');
+  console.log('  - User:', this.getUser());
+  console.log('  - Roles:', this.getUserRoles());
+  console.log('  - isHR():', this.isHR());
+  console.log('  - isHRManager():', this.isHRManager());
+  console.log('  - isEmployee():', this.isEmployee());
+}
   // ================= MÉTHODES DE DEBUG =================
 
   debugAuth(): void {
@@ -341,4 +390,21 @@ export class AuthService {
 
     return throwError(() => errorMessage);
   }
+  debugLoginResponse(loginRequest: LoginRequest): void {
+  console.log('🧪 DEBUG: Testing login response format');
+  
+  this.http.post<any>(`${this.apiUrl}/signin`, loginRequest).subscribe({
+    next: (rawResponse) => {
+      console.log('🔍 RAW LOGIN RESPONSE:', rawResponse);
+      console.log('📋 Response keys:', Object.keys(rawResponse));
+      console.log('🔐 Token field name:', 
+        rawResponse.accessToken ? 'accessToken' : 
+        rawResponse.token ? 'token' : 
+        'UNKNOWN');
+    },
+    error: (error) => {
+      console.error('❌ Debug login failed:', error);
+    }
+  });
+}
 }

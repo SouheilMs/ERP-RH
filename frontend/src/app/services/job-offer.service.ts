@@ -1,10 +1,9 @@
-// src/app/services/job-offer.service.ts - VERSION COMPLÈTE CORRIGÉE
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
-// 🔥 AJOUT : Interfaces manquantes
 export interface JobOffer {
   id: string;
   title: string;
@@ -17,7 +16,7 @@ export interface JobOffer {
   benefits: string;
   status: string;
   publishedBy: string;
-  publishedDate: string;
+  publishedDate: string; 
   closingDate: string;
   createdAt: string;
   updatedAt: string;
@@ -52,53 +51,32 @@ export interface JobOfferRequest {
 })
 export class JobOfferService {
   private apiUrl = 'http://localhost:8081/api/job-offers';
+  private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
-  constructor(private http: HttpClient) { }
-
-  // 🔥 CORRECTION CRITIQUE : Méthode pour créer les headers AVEC le token
+  // ✅ CORRECTION : Méthode getAuthHeaders unique
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authToken');
-    console.log('🔐 JobOfferService.getAuthHeaders - Token found:', token ? `PRESENT (${token.substring(0, 20)}...)` : 'NULL');
-    
+    const token = this.authService.getToken();
     if (token) {
-      console.log('✅ Creating headers with Authorization Bearer token');
       return new HttpHeaders({
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       });
     } else {
-      console.log('❌ No token available - requests will fail with 401');
       return new HttpHeaders({
         'Content-Type': 'application/json'
       });
     }
   }
 
-  // 🔥 CORRECTION : Mettez à jour TOUTES les méthodes pour utiliser getAuthHeaders()
+  // ✅ CORRECTION : Méthode getAllJobOffers manquante
   getAllJobOffers(): Observable<JobOffer[]> {
-    console.log('🔄 JobOfferService.getAllJobOffers - Starting request with auth headers');
     const headers = this.getAuthHeaders();
-    
-    // Log pour vérifier
-    console.log('📤 Headers being sent:', {
-      hasAuth: headers.has('Authorization'),
-      contentType: headers.get('Content-Type')
-    });
-    
     return this.http.get<JobOffer[]>(this.apiUrl, { headers })
-      .pipe(
-        tap(offers => {
-          console.log('✅ JobOfferService.getAllJobOffers - SUCCESS, received:', offers?.length, 'offers');
-        }),
-        catchError(this.handleError)
-      );
-  }
-
-  getJobOfferById(id: string): Observable<JobOffer> {
-    const headers = this.getAuthHeaders();
-    return this.http.get<JobOffer>(`${this.apiUrl}/${id}`, { headers })
       .pipe(catchError(this.handleError));
   }
+
+
 
   createJobOffer(request: JobOfferRequest, publisherId: string): Observable<JobOffer> {
     const headers = this.getAuthHeaders();
@@ -107,11 +85,6 @@ export class JobOfferService {
       .pipe(catchError(this.handleError));
   }
 
-  updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
-    const headers = this.getAuthHeaders();
-    return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request, { headers })
-      .pipe(catchError(this.handleError));
-  }
 
   deleteJobOffer(id: string): Observable<void> {
     const headers = this.getAuthHeaders();
@@ -158,9 +131,29 @@ export class JobOfferService {
         catchError(this.handleError)
       );
   }
+// Dans job-offer.service.ts - AJOUTER CES MÉTHODES
 
+updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
+  const headers = this.getAuthHeaders();
+  return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request, { headers })
+    .pipe(
+      tap((updatedJob) => console.log('✅ Offre mise à jour:', updatedJob.title)),
+      catchError(this.handleError)
+    );
+}
+
+// Méthode pour récupérer une offre spécifique
+getJobOfferById(id: string): Observable<JobOffer> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<JobOffer>(`${this.apiUrl}/${id}`, { headers })
+    .pipe(
+      tap((job) => console.log('✅ Offre récupérée:', job.title)),
+      catchError(this.handleError)
+    );
+}
+  // ✅ CORRECTION : Une seule méthode handleError
   private handleError(error: HttpErrorResponse) {
-    console.error('❌ JobOfferService Error - Full details:', {
+    console.error('❌ JobOfferService Error:', {
       status: error.status,
       statusText: error.statusText,
       url: error.url,
@@ -171,7 +164,6 @@ export class JobOfferService {
     
     if (error.status === 401) {
       errorMessage = 'Non autorisé - Le token JWT est manquant ou invalide';
-      console.log('🚨 401 Unauthorized - Vérifiez que le header Authorization est envoyé');
     } else if (error.status === 403) {
       errorMessage = 'Accès refusé';
     } else if (error.status === 404) {

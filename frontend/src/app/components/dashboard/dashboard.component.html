@@ -8,22 +8,30 @@
       <li *ngIf="canViewEmployees">
         <a routerLink="/employees" routerLinkActive="active">
           <i class="fas fa-users me-2"></i>
-          Liste des employés
+          Employees List
         </a>
       </li>
 
       <li *ngIf="canViewEmployees">
         <a routerLink="/roles" routerLinkActive="active">
           <i class="fas fa-bullseye me-2"></i>
-          Liste des rôles
+          Roles List
         </a>
       </li>
 
-      <!-- Add Job Offers to sidebar (RH seulement) -->
-      <li *ngIf="canViewJobs"> <!-- ✅ UTILISER canViewJobs AU LIEU DE canViewEmployees -->
+      <!-- ✅ Add Job Offers to sidebar (RH seulement) -->
+      <li *ngIf="canViewJobs">
         <a routerLink="/jobs" routerLinkActive="active">
           <i class="fas fa-briefcase me-2"></i>
-          Offres d'emploi
+          Job Offers
+        </a>
+      </li>
+
+      <!-- ✅ Add Formations to sidebar (RH seulement) -->
+      <li *ngIf="canViewFormations">
+        <a routerLink="/formations" routerLinkActive="active">
+          <i class="fas fa-chalkboard-teacher me-2"></i>
+          Formations
         </a>
       </li>
 
@@ -45,7 +53,7 @@
     </ul>
   </aside>
 
-  <!-- Contenu principal -->
+  <!-- Main content -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>

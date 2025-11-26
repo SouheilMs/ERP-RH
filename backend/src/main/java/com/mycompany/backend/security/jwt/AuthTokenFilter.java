@@ -18,7 +18,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
@@ -42,11 +41,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 
                 logger.info("✅ Token JWT valide pour l'utilisateur: {}", username);
                 
-                // Debug du token
-                jwtUtils.debugToken(jwt);
+                // ✅ SUPPRIMER CETTE LIGNE - debugToken n'existe pas
+                // jwtUtils.debugToken(jwt);
                 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     try {
+                        // ✅ UTILISER UNIQUEMENT loadUserByUsername
                         UserDetails userDetails = employeeDetailsService.loadUserByUsername(username);
                         
                         logger.info("👤 UserDetails chargé - Username: {}", userDetails.getUsername());
@@ -60,8 +60,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                         
                         logger.info("✅ Authentification configurée dans SecurityContext pour: {}", username);
                     } catch (UsernameNotFoundException e) {
-                        logger.error("❌ Utilisateur non trouvé avec identifiant: {}", username);
-                        logger.error("❌ Vérifiez si l'utilisateur existe avec cet email dans la base de données");
+                        logger.error("❌ Utilisateur non trouvé avec username: {}", username);
+                        // Ne pas essayer avec email - simplement logger l'erreur
                     }
                 }
             } else {

@@ -1,17 +1,17 @@
 // src/app/guards/auth.guard.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { CanActivateFn } from '@angular/router';
-import { AuthGuard } from './auth.guard';
+import { authGuard } from './auth.guard'; // ✅ Importer authGuard (fonction)
 
-describe('AuthGuard', () => {
-  let guard: AuthGuard;
+describe('authGuard', () => {
+  const executeGuard: CanActivateFn = (...guardParameters) => 
+      TestBed.runInInjectionContext(() => authGuard(...guardParameters));
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    guard = TestBed.inject(AuthGuard);
   });
 
   it('should be created', () => {
-    expect(guard).toBeTruthy();
+    expect(executeGuard).toBeTruthy();
   });
 });

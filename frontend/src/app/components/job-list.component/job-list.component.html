@@ -1,39 +1,39 @@
 <div class="job-container">
   <div class="job-card">
-    <!-- Header avec titre et actions -->
+    <!-- Header with title and actions -->
     <div class="job-header">
       <h1 class="job-title">
         <i class="fas fa-briefcase me-2"></i>
-        Gestion des Offres d'Emploi
+        Job Offers Management
       </h1>
       
       <div class="search-filter-container">
-        <!-- Barre de recherche -->
+        <!-- Search bar -->
         <div class="search-wrapper">
           <i class="fas fa-search search-icon"></i>
           <input
             type="text"
             class="search-input"
-            placeholder="Rechercher une offre..."
+            placeholder="Search for an offer..."
             [(ngModel)]="searchKeyword"
             (input)="searchJobs()"
           >
         </div>
         
-        <!-- Filtre par statut -->
+        <!-- Status filter -->
         <div class="filter-wrapper">
           <i class="fas fa-filter filter-icon"></i>
           <select class="filter-select" [(ngModel)]="selectedStatus" (change)="filterByStatus()">
             <option *ngFor="let status of statuses" [value]="status">
-              {{ status === 'ALL' ? 'Tous les statuts' : status }}
+              {{ status === 'ALL' ? 'All Statuses' : status }}
             </option>
           </select>
         </div>
         
-        <!-- Bouton créer -->
+        <!-- Create button -->
         <a routerLink="/jobs/new" class="create-button">
           <i class="fas fa-plus me-2"></i>
-          Nouvelle Offre
+          New Offer
         </a>
       </div>
     </div>
@@ -44,17 +44,17 @@
         <div class="loading-spinner">
           <i class="fas fa-spinner fa-spin"></i>
         </div>
-        <p>Chargement des offres d'emploi...</p>
+        <p>Loading job offers...</p>
       </div>
     }
 
-    <!-- Grid des offres d'emploi -->
+    <!-- Job offers grid -->
     @if (!loading && filteredOffers.length > 0) {
       <div class="job-grid">
         @for (job of filteredOffers; track job.id) {
           <div class="job-item">
             
-            <!-- En-tête de l'offre -->
+            <!-- Offer header -->
             <div class="job-item-header">
               <div>
                 <h3 class="job-item-title">
@@ -74,7 +74,7 @@
               </span>
             </div>
 
-            <!-- Détails principaux -->
+            <!-- Main details -->
             <div class="job-details">
               <div class="job-detail">
                 <i class="fas fa-file-contract me-2"></i>
@@ -91,7 +91,7 @@
               @if (job.closingDate) {
                 <div class="job-detail">
                   <i class="fas fa-calendar-times me-2"></i>
-                  Clôture : {{ formatDate(job.closingDate) }}
+                  Closes: {{ formatDate(job.closingDate) }}
                 </div>
               }
             </div>
@@ -102,21 +102,21 @@
               {{ job.description }}
             </p>
 
-            <!-- Statistiques -->
+            <!-- Statistics -->
             <div class="job-stats">
               <div class="stat">
                 <i class="fas fa-eye stat-icon"></i>
                 <span class="stat-value">{{ job.viewCount || 0 }}</span>
-                <span class="stat-label">Vues</span>
+                <span class="stat-label">Views</span>
               </div>
               <div class="stat">
                 <i class="fas fa-users stat-icon"></i>
                 <span class="stat-value">{{ job.applicationCount || 0 }}</span>
-                <span class="stat-label">Candidatures</span>
+                <span class="stat-label">Applications</span>
               </div>
               <div class="stat">
                 <i class="fas fa-tags stat-icon"></i>
-                <span class="stat-value">{{ job.tags?.length || 0 }}</span>
+                <span class="stat-value">{{ job.tags.length || 0 }}</span>
                 <span class="stat-label">Tags</span>
               </div>
             </div>
@@ -127,9 +127,9 @@
                 <button 
                   class="action-button btn-success"
                   (click)="publishJob(job.id)"
-                  title="Publier l'offre">
+                  title="Publish offer">
                   <i class="fas fa-bullhorn me-2"></i>
-                  Publier
+                  Publish
                 </button>
               }
               
@@ -137,26 +137,27 @@
                 <button 
                   class="action-button btn-warning"
                   (click)="closeJob(job.id)"
-                  title="Clôturer l'offre">
+                  title="Close offer">
                   <i class="fas fa-lock me-2"></i>
-                  Clôturer
+                  Close
                 </button>
               }
               
-              <a 
+            <!-- Dans la section des actions, remplacez le bouton Edit -->
+<a 
   [routerLink]="['/jobs', job.id, 'edit']" 
   class="action-button btn-primary"
-  title="Modifier l'offre">
+  title="Edit offer">
   <i class="fas fa-edit me-2"></i>
-  Modifier
+  Edit
 </a>
               
               <button 
                 class="action-button btn-danger"
                 (click)="deleteJob(job.id)"
-                title="Supprimer l'offre">
+                title="Delete offer">
                 <i class="fas fa-trash me-2"></i>
-                Supprimer
+                Delete
               </button>
             </div>
 
@@ -174,22 +175,22 @@
       </div>
     }
 
-    <!-- Aucun résultat -->
+    <!-- No results -->
     @if (!loading && filteredOffers.length === 0) {
       <div class="no-results">
         <div class="no-results-icon">
           <i class="fas fa-search fa-3x"></i>
         </div>
-        <h3>Aucune offre trouvée</h3>
+        <h3>No offers found</h3>
         @if (searchKeyword || selectedStatus !== 'ALL') {
-          <p>Aucune offre ne correspond à vos critères de recherche.</p>
+          <p>No offers match your search criteria.</p>
         }
         @if (!searchKeyword && selectedStatus === 'ALL') {
-          <p>Aucune offre d'emploi n'a été créée pour le moment.</p>
+          <p>No job offers have been created yet.</p>
         }
         <a routerLink="/jobs/new" class="create-button" style="margin-top: 20px;">
           <i class="fas fa-plus me-2"></i>
-          Créer la première offre
+          Create first offer
         </a>
       </div>
     }

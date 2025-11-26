@@ -1,12 +1,15 @@
-// src/app/interceptors/auth.interceptor.ts
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<any>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<any>> => {
   
-  console.log('🔄 AuthInterceptor for:', req.url);
+  console.log('=== 🚨 AUTH INTERCEPTOR TRIGGERED 🚨 ===');
+  console.log('🔄 URL:', req.url);
+  console.log('🔍 Method:', req.method);
+  console.log('📨 Original Headers:', req.headers.keys());
   
   // Ne pas ajouter le header pour les URLs d'authentification
   if (req.url.includes('/api/auth/')) {
@@ -15,17 +18,25 @@ export const authInterceptor: HttpInterceptorFn = (
   }
 
   const token = localStorage.getItem('authToken');
+  console.log('🔐 Token from localStorage:', token ? `PRESENT (${token.length} chars)` : 'NULL');
   
   if (token) {
     console.log('✅ Adding Authorization header');
     
     const authReq = req.clone({
-      headers: req.headers.set('Authorization', `Bearer ${token}`)
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
     });
+    
+    console.log('📨 Final Headers:', authReq.headers.keys());
+    console.log('🔑 Authorization Header:', authReq.headers.get('Authorization')?.substring(0, 50) + '...');
+    console.log('=== ✅ INTERCEPTOR COMPLETE ===');
     
     return next(authReq);
   }
   
-  console.log('❌ No token found for protected route');
+  console.log('❌ No token - proceeding without auth');
+  console.log('=== ❌ INTERCEPTOR COMPLETE ===');
   return next(req);
 };
