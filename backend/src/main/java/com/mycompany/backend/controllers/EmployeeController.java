@@ -2,6 +2,7 @@ package com.mycompany.backend.controllers;
 
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.dto.EmployeeDetailDTO;
+import com.mycompany.backend.dto.EmployeeGetDTO;
 import com.mycompany.backend.dto.FormationDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
@@ -51,15 +52,29 @@ public class EmployeeController {
 
     // -------------------- EMPLOYÉ --------------------
     @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
-        return ResponseEntity.ok(employeeService.getAllEmployees());
+    public ResponseEntity<List<EmployeeGetDTO>> getAllEmployees() {
+        System.out.println("🔄 GET /api/employees - Returning simplified DTOs");
+
+        try {
+            List<Employee> employees = employeeService.getAllEmployees();
+
+            // Convertir en DTOs simplifiés pour éviter la récursion
+            List<EmployeeGetDTO> employeeDTOs = EmployeeGetDTO.EmployeesToEmployeeDtos(employees);
+
+            System.out.println("✅ Returning " + employeeDTOs.size() + " employees as DTOs");
+            return ResponseEntity.ok(employeeDTOs);
+        } catch (Exception e) {
+            System.err.println("❌ Error in getAllEmployees: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
         System.out.println("=== GET EMPLOYEE BY ID CONTROLLER ===");
         System.out.println("🔍 Employee ID requested: " + id);
-        
+
         try {
             // Vérifier l'authentification
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -70,7 +85,7 @@ public class EmployeeController {
             } else {
                 System.out.println("❌ No authentication found in controller!");
             }
-            
+
             Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
             if (employeeOpt.isPresent()) {
                 System.out.println("✅ Employee found: " + employeeOpt.get().getUsername());
@@ -98,7 +113,7 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
-                                                           @RequestBody Employee employeeDetails) {
+                                                            @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -138,7 +153,7 @@ public class EmployeeController {
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
-                                                        @RequestParam("file") MultipartFile file) {
+                                                         @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -226,7 +241,7 @@ public class EmployeeController {
         }
 
         Formation savedFormation = formationRepository.save(f);
-        
+
         // Initialiser la collection si elle est null
         if (emp.getFormations() == null) {
             emp.setFormations(new HashSet<>());

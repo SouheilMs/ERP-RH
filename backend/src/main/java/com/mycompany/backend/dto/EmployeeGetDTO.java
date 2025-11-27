@@ -17,7 +17,10 @@ public class EmployeeGetDTO {
     private String id;
     private String username;
     private String email;
-    private List<String> roleName;
+    private String phone;
+    private String position;
+    private String status;
+    private List<String> roleNames;
 
     // Getters et Setters
     public String getId() {
@@ -43,34 +46,74 @@ public class EmployeeGetDTO {
     public void setEmail(String email) {
         this.email = email;
     }
-    public List<String> getRoleName() {
-        return roleName;
+
+    public String getPhone() {
+        return phone;
     }
 
-    public void setRoleName(List<String> roleName) {
-        this.roleName = roleName;
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<String> getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(List<String> roleNames) {
+        this.roleNames = roleNames;
     }
 
     public static EmployeeGetDTO EmployeeToEmployeeDto(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+
         EmployeeGetDTO employeeGetDTO = new EmployeeGetDTO();
         employeeGetDTO.setId(employee.getId());
         employeeGetDTO.setUsername(employee.getUsername());
         employeeGetDTO.setEmail(employee.getEmail());
+        employeeGetDTO.setPhone(employee.getPhone());
+        employeeGetDTO.setPosition(employee.getPosition());
+        employeeGetDTO.setStatus(employee.getStatus());
 
         List<String> names = new ArrayList<>();
         Set<Role> roles = employee.getRoles();
-        for (Role role : roles) {
-            // Utilisez getName() qui retourne l'enum ERole, puis name() pour le String
-            names.add(role.getName().name());
+        if (roles != null) {
+            for (Role role : roles) {
+                if (role != null && role.getName() != null) {
+                    names.add(role.getName().name());
+                }
+            }
         }
-        employeeGetDTO.setRoleName(names);
+        employeeGetDTO.setRoleNames(names);
         return employeeGetDTO;
     }
 
     public static List<EmployeeGetDTO> EmployeesToEmployeeDtos(List<Employee> employees) {
         List<EmployeeGetDTO> employeeDtos = new ArrayList<>();
-        for (Employee employee : employees) {
-            employeeDtos.add(EmployeeToEmployeeDto(employee));
+        if (employees != null) {
+            for (Employee employee : employees) {
+                EmployeeGetDTO dto = EmployeeToEmployeeDto(employee);
+                if (dto != null) {
+                    employeeDtos.add(dto);
+                }
+            }
         }
         return employeeDtos;
     }
