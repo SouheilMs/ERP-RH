@@ -228,111 +228,84 @@
     </div>
   }
 
-  <!-- Single Delete Confirmation Popup -->
-  @if (showDeleteConfirmation) {
-    <div class="confirmation-overlay" (click)="closeDeleteConfirmation()">
-      <div class="confirmation-modal" (click)="$event.stopPropagation()" [class.shake]="deleteError">
-        <div class="confirmation-header">
-          <div class="confirmation-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3 class="confirmation-title">Confirm Deletion</h3>
-          <p class="confirmation-subtitle">This action cannot be undone</p>
-        </div>
+<!-- Simple Delete Confirmation Popup -->
+@if (showDeleteConfirmation) {
+  <div class="simple-confirmation-overlay" (click)="closeDeleteConfirmation()">
+    <div class="simple-confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="simple-confirmation-content">
+        <h3 class="simple-confirmation-title">Delete Role</h3>
+        <p class="simple-confirmation-message">
+          Are you sure you want to delete <strong>"{{ editRoleData.roleName }}"</strong>?
+        </p>
+        <p class="simple-confirmation-warning">This action cannot be undone.</p>
         
-        <div class="confirmation-body">
-          <p>Are you sure you want to delete the following role?</p>
-          
-          <div class="role-to-delete">
-            <span class="role-to-delete-badge">{{ editRoleData.roleName }}</span>
-          </div>
-          
-          <p class="warning-text">
+        @if (deleteError) {
+          <div class="simple-error-message">
             <i class="fas fa-exclamation-circle"></i>
-            This action cannot be undone and will permanently delete the role.
-          </p>
-
-          @if (deleteError) {
-            <div class="error-message" (click)="clearDeleteError()">
-              <i class="fas fa-exclamation-triangle"></i>
-              {{ deleteError }}
-            </div>
-          }
-
-          <div class="confirmation-actions">
-            <button class="cancel-delete-btn" (click)="closeDeleteConfirmation()" [disabled]="deleteLoading">
-              Cancel
-            </button>
-            <button class="confirm-delete-btn" (click)="confirmDelete()" [disabled]="deleteLoading">
-              @if (deleteLoading) {
-                <span class="delete-loading">
-                  <span class="delete-spinner"></span>
-                  Deleting...
-                </span>
-              } @else {
-                <i class="fas fa-trash"></i>
-                Delete
-              }
-            </button>
+            {{ deleteError }}
           </div>
-        </div>
-      </div>
-    </div>
-  }
+        }
 
-  <!-- Bulk Delete Confirmation Popup -->
-  @if (showBulkDeleteConfirmation) {
-    <div class="confirmation-overlay" (click)="closeBulkDeleteConfirmation()">
-      <div class="confirmation-modal" (click)="$event.stopPropagation()" [class.shake]="deleteError">
-        <div class="confirmation-header">
-          <div class="confirmation-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3 class="confirmation-title">Confirm Bulk Deletion</h3>
-          <p class="confirmation-subtitle">This action cannot be undone</p>
-        </div>
-        
-        <div class="confirmation-body">
-          <p>Are you sure you want to delete the {{ getSelectedCount() }} selected roles?</p>
-          
-          <div class="selected-roles-list">
-            @for (role of filteredRoles; track role.id) {
-              @if (selectedRoles.has(role.id)) {
-                <span class="role-to-delete-badge small">{{ role.roleName }}</span>
-              }
+        <div class="simple-confirmation-actions">
+          <button class="simple-cancel-btn" (click)="closeDeleteConfirmation()" [disabled]="deleteLoading">
+            Cancel
+          </button>
+          <button class="simple-confirm-btn" (click)="confirmDelete()" [disabled]="deleteLoading">
+            @if (deleteLoading) {
+              <span class="simple-loading"></span>
+              Deleting...
+            } @else {
+              Delete
             }
-          </div>
-          
-          <p class="warning-text">
-            <i class="fas fa-exclamation-circle"></i>
-            This action cannot be undone and will permanently delete the selected roles.
-          </p>
-
-          @if (deleteError) {
-            <div class="error-message" (click)="clearDeleteError()">
-              <i class="fas fa-exclamation-triangle"></i>
-              {{ deleteError }}
-            </div>
-          }
-
-          <div class="confirmation-actions">
-            <button class="cancel-delete-btn" (click)="closeBulkDeleteConfirmation()" [disabled]="bulkDeleteLoading">
-              Cancel
-            </button>
-            <button class="confirm-delete-btn" (click)="confirmBulkDelete()" [disabled]="bulkDeleteLoading">
-              @if (bulkDeleteLoading) {
-                <span class="delete-loading">
-                  <span class="delete-spinner"></span>
-                  Deleting...
-                </span>
-              } @else {
-                <i class="fas fa-trash"></i>
-                Delete ({{ getSelectedCount() }})
-              }
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>
-  }
+  </div>
+}
+
+<!-- Simple Bulk Delete Confirmation Popup -->
+@if (showBulkDeleteConfirmation) {
+  <div class="simple-confirmation-overlay" (click)="closeBulkDeleteConfirmation()">
+    <div class="simple-confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="simple-confirmation-content">
+        <h3 class="simple-confirmation-title">Delete Roles</h3>
+        <p class="simple-confirmation-message">
+          Are you sure you want to delete {{ getSelectedCount() }} selected role(s)?
+        </p>
+        
+        <div class="simple-selected-roles">
+          @for (role of filteredRoles; track role.id) {
+            @if (selectedRoles.has(role.id)) {
+              <span class="simple-role-badge">{{ role.roleName }}</span>
+            }
+          }
+        </div>
+        
+        <p class="simple-confirmation-warning">This action cannot be undone.</p>
+
+        @if (deleteError) {
+          <div class="simple-error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ deleteError }}
+          </div>
+        }
+
+        <div class="simple-confirmation-actions">
+          <button class="simple-cancel-btn" (click)="closeBulkDeleteConfirmation()" [disabled]="bulkDeleteLoading">
+            Cancel
+          </button>
+          <button class="simple-confirm-btn" (click)="confirmBulkDelete()" [disabled]="bulkDeleteLoading">
+            @if (bulkDeleteLoading) {
+              <span class="simple-loading"></span>
+              Deleting...
+            } @else {
+              Delete ({{ getSelectedCount() }})
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 </div>
