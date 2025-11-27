@@ -163,12 +163,12 @@ getEmployeeById(id: string): Observable<Employee> {
         }),
         catchError(error => {
             console.error('❌ getEmployeeById FAILED - Status:', error.status);
-            
+
             if (error.status === 401 || error.status === 403) {
                 console.error('🔐 Authentication error, redirecting to login');
                 this.authService.logout();
             }
-            
+
             return throwError(() => error);
         })
     );
@@ -264,7 +264,7 @@ getEmployeeById(id: string): Observable<Employee> {
 getEmployeePhotoBlob(id: string): Observable<Blob> {
     const headers = this.getAuthHeadersBlob();
     const timestamp = new Date().getTime();
-    
+
     return this.http.get(`${this.apiUrl}/${id}/photo`, {
       responseType: 'blob',
       headers: headers,
@@ -288,7 +288,7 @@ getEmployeePhotoBlob(id: string): Observable<Blob> {
         <circle cx="100" cy="60" r="30" fill="#cccccc"/>
         <text x="100" y="140" font-size="14" text-anchor="middle" fill="#666666">No Image</text>
     </svg>`;
-    
+
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
     return of(blob);
   }
