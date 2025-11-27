@@ -45,17 +45,17 @@
         </div>
         <div class="form-group">
           <label for="phone">Phone:</label>
-          <input id="phone" 
-                 type="number" 
-                 [(ngModel)]="employee.phone" 
-                 name="phone" 
+          <input id="phone"
+                 type="number"
+                 [(ngModel)]="employee.phone"
+                 name="phone"
                  (blur)="validatePhone()"
                  min="20000000"
                  max="99999999"
                  placeholder="Ex: 50123456"
                  [class.invalid]="phoneError"
                  [class.valid]="employee.phone && !phoneError">
-          
+
           <div *ngIf="phoneError" class="error-message">
             {{ phoneError }}
           </div>
@@ -69,16 +69,16 @@
         </div>
         <div class="form-group">
           <label for="salary">Salary:</label>
-          <input id="salary" 
-                 type="number" 
-                 [(ngModel)]="employee.salary" 
-                 name="salary" 
+          <input id="salary"
+                 type="number"
+                 [(ngModel)]="employee.salary"
+                 name="salary"
                  (blur)="validateSalary()"
-                 min="0" 
+                 min="0"
                  step="0.01"
                  [class.invalid]="salaryError"
                  [class.valid]="employee.salary && !salaryError">
-          
+
           <div *ngIf="salaryError" class="error-message">
             {{ salaryError }}
           </div>
@@ -87,32 +87,32 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="status">Status:</label>
-          <input id="status" 
-                 type="text" 
-                 [(ngModel)]="employee.status" 
-                 name="status" 
-                 (blur)="validateStatus()"
+          <label for="position">Position:</label>
+          <input id="position"
+                 type="text"
+                 [(ngModel)]="employee.position"
+                 name="position"
+                 (blur)="validatePosition()"
                  maxlength="15"
-                 [class.invalid]="statusError"
-                 [class.valid]="employee.status && !statusError">
-          
-          <div *ngIf="statusError" class="error-message">
-            {{ statusError }}
+                 [class.invalid]="positionError"
+                 [class.valid]="employee.status && !positionError">
+
+          <div *ngIf="positionError" class="error-message">
+            {{ positionError }}
           </div>
         </div>
         <div class="form-group date-input-group">
           <label for="hireDate">Hire Date:</label>
-          <input id="hireDate" 
-                 type="date" 
-                 [(ngModel)]="employee.hireDate" 
+          <input id="hireDate"
+                 type="date"
+                 [(ngModel)]="employee.hireDate"
                  name="hireDate"
                  (blur)="validateHireDate()"
                  [max]="getMaxHireDate()"
                  [class.invalid]="hireDateError"
                  [class.valid]="employee.hireDate && !hireDateError"
                  class="date-input">
-          
+
           <div *ngIf="hireDateError" class="error-message">
             {{ hireDateError }}
           </div>
@@ -238,7 +238,7 @@
               class="form-input date-input"
               [class.invalid]="startDateError"
               [class.valid]="newFormation.startDate && !startDateError">
-            
+
             <div *ngIf="startDateError" class="error-message">
               {{ startDateError }}
             </div>
@@ -260,7 +260,7 @@
               class="form-input date-input"
               [class.invalid]="endDateError"
               [class.valid]="newFormation.endDate && !endDateError">
-            
+
             <div *ngIf="endDateError" class="error-message">
               {{ endDateError }}
             </div>

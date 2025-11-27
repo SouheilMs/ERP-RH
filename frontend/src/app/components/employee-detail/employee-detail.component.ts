@@ -80,7 +80,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   // Variables pour les erreurs de validation
   phoneError = '';
   salaryError = '';
-  statusError = '';
+  positionError = '';
   hireDateError = '';
   addressError = '';
 
@@ -130,10 +130,10 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private checkPermissions(employeeId: string) {
     const currentUser = this.authService.getUser();
     this.isViewingOwnProfile = currentUser?.id === employeeId;
-    
+
     // ✅ CORRECTION : HR et HR Manager peuvent voir TOUS les profils + leur propre profil
     this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
-    
+
     // ✅ CORRECTION : Les RH peuvent éditer tous les profils SAUF leur propre profil via cette interface
     this.canEdit = this.canViewAllInfo && !this.isViewingOwnProfile;
 
@@ -213,12 +213,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.salaryError = this.isSalaryValid(this.employee.salary) ? '' : 'Le salaire ne peut pas être négatif';
   }
 
-  validateStatus() {
-    if (!this.employee?.status) {
-      this.statusError = '';
+  validatePosition() {
+    if (!this.employee?.position) {
+      this.positionError = '';
       return;
     }
-    this.statusError = this.isStatusLengthValid(this.employee.status) ? '' : 'Le statut ne peut pas dépasser 20 caractères';
+    this.positionError = this.isPositionLengthValid(this.employee.position) ? '' : 'La position ne peut pas dépasser 20 caractères';
   }
 
   validateHireDate() {
@@ -296,9 +296,9 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     return address.length <= 20;
   }
 
-  isStatusLengthValid(status: string): boolean {
-    if (!status) return true;
-    return status.length <= 20;
+  isPositionLengthValid(position: string): boolean {
+    if (!position) return true;
+    return position.length <= 20;
   }
 
   isAdressLengthValid(address: string): boolean {
@@ -313,7 +313,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
-    
+
     this.employeeService.getEmployeeById(id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
@@ -326,19 +326,19 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.errorMessage = "Impossible de récupérer les données de l'employé";
         this.loading = false;
         this.showErrorModal = true;
-        
-        if (error.status === 401) {
+
+        if (error.position === 401) {
           this.errorMessage = "Accès non autorisé. Token peut être expiré.";
-        } else if (error.status === 403) {
+        } else if (error.position === 403) {
           this.errorMessage = "Accès refusé. Vous n'avez pas les permissions nécessaires.";
           this.showUnauthorizedMessage = true;
-          
+
           if (this.authService.isEmployee()) {
             setTimeout(() => {
               this.router.navigate(['/my-profile']);
             }, 3000);
           }
-        } else if (error.status === 404) {
+        } else if (error.position === 404) {
           this.errorMessage = "Employé non trouvé.";
         }
       }
@@ -389,7 +389,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
     const file = event.target.files[0];
     if (!file) return;
-    
+
     if (!file.type.startsWith('image/')) {
       this.errorMessage = "Veuillez sélectionner un fichier image valide";
       this.showErrorModal = true;
@@ -424,7 +424,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.showUploadSuccess = true;
         this.isUploadingPhoto = false;
         console.log('✅ Photo uploaded successfully');
-        
+
         this.reloadEmployeePhoto();
       },
       error: (error) => {
@@ -438,13 +438,13 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   private reloadEmployeePhoto(): void {
     console.log('🔄 Reloading employee photo after upload');
-    
+
     if (this.previewUrl && this.previewUrl.toString().startsWith('blob:')) {
       URL.revokeObjectURL(this.previewUrl.toString());
     }
-    
+
     this.previewUrl = null;
-    
+
     setTimeout(() => {
       this.loadEmployeePhoto();
     }, 500);
@@ -467,7 +467,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    if (this.employee?.status && !this.isStatusLengthValid(this.employee.status)) {
+    if (this.employee?.position && !this.isPositionLengthValid(this.employee.position)) {
       this.errorMessage = "Le statut ne peut pas dépasser 20 caractères";
       return false;
     }
@@ -534,7 +534,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.employeeService.uploadPhoto(this.employee.id, formData).subscribe({
       next: (photoData: Employee) => {
         console.log('✅ Photo uploaded successfully, now updating info');
-        
+
         this.updateEmployeeInfo().subscribe({
           next: (infoData: Employee) => {
             this.employee = infoData;
@@ -543,7 +543,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
             this.showUpdateSuccess = true;
             this.isUpdatingEmployee = false;
             console.log('✅✅ Photo AND info updated successfully');
-            
+
             this.reloadEmployeeDataAndPhoto();
           },
           error: (error) => {
@@ -571,7 +571,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.showUpdateSuccess = true;
         this.isUpdatingEmployee = false;
         console.log('✅ Info updated successfully');
-        
+
         this.reloadEmployeeData();
       },
       error: (error) => {
@@ -589,13 +589,13 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       email: this.employee!.email,
       phone: this.employee!.phone,
       salary: this.employee!.salary,
-      status: this.employee!.status,
+      position: this.employee!.position,
       hireDate: this.employee!.hireDate,
 
       // New fields
       cin: this.employee!.cin,
       cnssNumber: this.employee!.cnssNumber,
-      position: this.employee!.position,
+
       address: this.employee!.address,
       city: this.employee!.city,
       matricule: this.employee!.matricule,
@@ -613,14 +613,14 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   private reloadEmployeeDataAndPhoto(): void {
     if (!this.employee?.id) return;
-    
+
     console.log('🔄 Reloading employee data and photo');
-    
+
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
         console.log('✅ Employee data reloaded');
-        
+
         this.reloadEmployeePhoto();
       },
       error: (error) => {
@@ -631,9 +631,9 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   private reloadEmployeeData(): void {
     if (!this.employee?.id) return;
-    
+
     console.log('🔄 Reloading employee data');
-    
+
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;

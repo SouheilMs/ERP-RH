@@ -23,7 +23,7 @@ export interface LoginRequest {
 }
 
 export interface JwtResponse {
-  token: string;        
+  token: string;
   type: string;
   id: string;
   username: string;
@@ -87,7 +87,7 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
         if (response.token) {  // ✅ CORRECTION : Utiliser "token" au lieu de "accessToken"
           // Stocker le token correctement
           localStorage.setItem('authToken', response.token);
-          
+
           const userData = {
             id: response.id,
             username: response.username,
@@ -102,7 +102,7 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
           console.log('🔐 Token stocké avec succès');
           console.log('👤 User ID:', response.id);
           console.log('🎯 Roles:', response.roles);
-          
+
           // ✅ Débogage du token
           this.decodeToken();
         } else {
@@ -146,17 +146,17 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
     return user?.roles || [];
   }
 
- 
+
 // Dans AuthService, modifiez getCurrentUserId()
 getCurrentUserId(): string | null {
   const user = this.getUser();
   console.log('🔍 getCurrentUserId - user data:', user);
-  
+
   if (user && user.id) {
     console.log('✅ User ID found:', user.id);
     return user.id;
   }
-  
+
   console.log('❌ User ID not found - user object:', user);
   return null;
 }
@@ -165,7 +165,7 @@ getCurrentUserId(): string | null {
 getUser(): any {
   const userJson = localStorage.getItem('user');
   console.log('🔍 getUser - raw JSON from localStorage:', userJson);
-  
+
   try {
     const user = userJson ? JSON.parse(userJson) : null;
     console.log('🔍 getUser - parsed user:', user);
@@ -392,14 +392,14 @@ debugCurrentUser(): void {
   }
   debugLoginResponse(loginRequest: LoginRequest): void {
   console.log('🧪 DEBUG: Testing login response format');
-  
+
   this.http.post<any>(`${this.apiUrl}/signin`, loginRequest).subscribe({
     next: (rawResponse) => {
       console.log('🔍 RAW LOGIN RESPONSE:', rawResponse);
       console.log('📋 Response keys:', Object.keys(rawResponse));
-      console.log('🔐 Token field name:', 
-        rawResponse.accessToken ? 'accessToken' : 
-        rawResponse.token ? 'token' : 
+      console.log('🔐 Token field name:',
+        rawResponse.accessToken ? 'accessToken' :
+        rawResponse.token ? 'token' :
         'UNKNOWN');
     },
     error: (error) => {

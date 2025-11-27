@@ -27,19 +27,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private rolesSubscription?: Subscription;
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.updatePermissions();
-    
+
     this.rolesSubscription = this.authService.getUserRolesObservable().subscribe(roles => {
       this.updatePermissions();
     });
 
     console.log('👤 User connected with role:', this.userRole);
-    
+
     // ✅ Redirection automatique
     this.redirectIfNeeded();
   }
@@ -50,7 +50,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewFormations = this.authService.isHR() || this.authService.isHRManager(); // ✅ FORMATIONS POUR RH SEULEMENT
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
-    
+
     console.log('🔐 Permissions updated:');
     console.log('   - canViewEmployees:', this.canViewEmployees);
     console.log('   - canViewJobs:', this.canViewJobs);
