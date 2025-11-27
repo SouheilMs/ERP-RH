@@ -24,7 +24,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
 
         Double proportionalSalary = baseSalary * actualDays / workingDays;
 
-        // CORRECTION : Gérer les valeurs nulles pour totalSeniorityBonus
+        //  Gérer les valeurs nulles pour totalSeniorityBonus
         Double totalSeniorityBonus = 0.0;
         if (seniorityInfo.get("seniorityBonus") != null) {
             totalSeniorityBonus = (Double) seniorityInfo.get("seniorityBonus");
@@ -79,9 +79,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         return calculateSeniorityBonusForPeriod(employee, new Date());
     }
 
-    /**
-     *  CALCUL UNIQUEMENT DE LA PRIME 9 DINARS
-     */
+   // Calcule la prime d'ancienneté pour une période donnée
     public Map<String, Object> calculateSeniorityBonusForPeriod(Employee employee, Date periodDate) {
         Map<String, Object> result = new HashMap<>();
 
@@ -149,9 +147,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         return result;
     }
 
-    /**
-     *  Calcul précis des mois de service
-     */
+    // Méthode utilitaire pour calculer les mois exacts de service
     private int calculateExactMonthsOfService(Calendar hireDate, Calendar currentDate) {
         int years = currentDate.get(Calendar.YEAR) - hireDate.get(Calendar.YEAR);
         int months = currentDate.get(Calendar.MONTH) - hireDate.get(Calendar.MONTH);

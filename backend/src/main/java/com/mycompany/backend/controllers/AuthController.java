@@ -13,8 +13,10 @@ import com.mycompany.backend.security.jwt.JwtUtils;
 import com.mycompany.backend.services.EmployeeDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,115 +32,165 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-	@Autowired
-	AuthenticationManager authenticationManager;
 
-	@Autowired
-	EmployeeRepository employeeRepository;
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AuthController.class);
 
-	@Autowired
-	RoleRepository roleRepository;
+    @Autowired
+    AuthenticationManager authenticationManager;
 
-	@Autowired
-	PasswordEncoder encoder;
+    @Autowired
+    EmployeeRepository employeeRepository;
 
-	@Autowired
-	JwtUtils jwtUtils;
+    @Autowired
+    RoleRepository roleRepository;
 
-	@PostMapping("/signin")
-	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    @Autowired
+    PasswordEncoder encoder;
 
-		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+    @Autowired
+    JwtUtils jwtUtils;
 
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-		String jwt = jwtUtils.generateJwtToken(authentication);
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        try {
+            logger.info("🔐 Tentative de connexion pour: {}", loginRequest.getEmail());
 
-		EmployeeDetailsImpl employeeDetails = (EmployeeDetailsImpl) authentication.getPrincipal();
-		List<String> roles = employeeDetails.getAuthorities().stream()
-				.map(item -> item.getAuthority())
-				.collect(Collectors.toList());
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-		return ResponseEntity.ok(new JwtResponse(jwt,
-				employeeDetails.getId().toString(),
-				employeeDetails.getUsername(),
-				employeeDetails.getEmail(),
-				roles));
-	}
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
 
-	@PostMapping("/signup")
-	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-		if (employeeRepository.existsByUsername(signUpRequest.getUsername())) {
-			return ResponseEntity
-					.badRequest()
-					.body(new MessageResponse("Error: Username is already taken!"));
-		}
+            EmployeeDetailsImpl employeeDetails = (EmployeeDetailsImpl) authentication.getPrincipal();
+            List<String> roles = employeeDetails.getAuthorities().stream()
+                    .map(item -> item.getAuthority())
+                    .collect(Collectors.toList());
 
-		if (employeeRepository.existsByEmail(signUpRequest.getEmail())) {
-			return ResponseEntity
-					.badRequest()
-					.body(new MessageResponse("Error: Email is already in use!"));
-		}
+            logger.info("✅ Connexion réussie pour: {}", employeeDetails.getEmail());
 
-		// Create new user's account
-		Employee employee = new Employee();
-		employee.setUsername(signUpRequest.getUsername());
-		employee.setEmail(signUpRequest.getEmail());
-		employee.setPassword(encoder.encode(signUpRequest.getPassword()));
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    employeeDetails.getId().toString(),
+                    employeeDetails.getUsername(),
+                    employeeDetails.getEmail(),
+                    roles));
 
-		Set<String> strRoles = signUpRequest.getRoles();
-		Set<Role> roles = new HashSet<>();
+        } catch (BadCredentialsException e) {
+            logger.error("❌ Identifiants invalides pour: {}", loginRequest.getEmail());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Error: Invalid email or password!"));
+        } catch (Exception e) {
+            logger.error("❌ Erreur lors de l'authentification: {}", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: Authentication failed - " + e.getMessage()));
+        }
+    }
 
-		if (strRoles == null) {
-			Role userRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
-					.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-			roles.add(userRole);
-		} else {
-			strRoles.forEach(role -> {
-				switch (role) {
-					case "hrManager":
-						Role adminRole = roleRepository.findByRoleName("ROLE_HRMANAGER")
-								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-						roles.add(adminRole);
-						break;
-					case "hr":
-						Role hrRole = roleRepository.findByRoleName("ROLE_HR")
-								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-						roles.add(hrRole);
-						break;
-					default:
-						Role employeeRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
-								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-						roles.add(employeeRole);
-				}
-			});
-		}
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+        try {
+            logger.info("👤 Tentative d'inscription pour: {}", signUpRequest.getEmail());
 
-		employee.setRoles(roles);
-		employeeRepository.save(employee);
+            if (employeeRepository.existsByUsername(signUpRequest.getUsername())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Username is already taken!"));
+            }
 
-		Set<String> roleNames = roles.stream()
-				.map(role -> {
-					// Utilisez getRoleName() au lieu de getName().name()
-					String roleName = role.getRoleName().toLowerCase();
-					if (roleName.startsWith("role_")) {
-						roleName = roleName.substring(5);
-					}
-					return roleName;
-				})
-				.collect(Collectors.toSet());
+            if (employeeRepository.existsByEmail(signUpRequest.getEmail())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Email is already in use!"));
+            }
 
-		return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
-	}
+            // Create new user's account
+            Employee employee = new Employee();
+            employee.setUsername(signUpRequest.getUsername());
+            employee.setEmail(signUpRequest.getEmail());
+            employee.setPassword(encoder.encode(signUpRequest.getPassword()));
 
-	@PostMapping("/reset-password")
-	public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
-		Employee employee = employeeRepository.findByEmail(resetRequest.getEmail())
-				.orElseThrow(() -> new RuntimeException("Error: User not found."));
+            Set<String> strRoles = signUpRequest.getRoles();
+            Set<Role> roles = new HashSet<>();
 
-		employee.setPassword(encoder.encode(resetRequest.getPassword()));
-		employeeRepository.save(employee);
+            if (strRoles == null) {
+                Role userRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
+                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                roles.add(userRole);
+            } else {
+                strRoles.forEach(role -> {
+                    switch (role) {
+                        case "hrManager":
+                            Role adminRole = roleRepository.findByRoleName("ROLE_HRMANAGER")
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(adminRole);
+                            break;
+                        case "hr":
+                            Role hrRole = roleRepository.findByRoleName("ROLE_HR")
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(hrRole);
+                            break;
+                        default:
+                            Role employeeRole = roleRepository.findByRoleName("ROLE_EMPLOYEE")
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(employeeRole);
+                    }
+                });
+            }
 
-		return ResponseEntity.ok(new MessageResponse("Password reset successfully!"));
-	}
+            employee.setRoles(roles);
+            employeeRepository.save(employee);
+
+            Set<String> roleNames = roles.stream()
+                    .map(role -> {
+                        String roleName = role.getRoleName().toLowerCase();
+                        if (roleName.startsWith("role_")) {
+                            roleName = roleName.substring(5);
+                        }
+                        return roleName;
+                    })
+                    .collect(Collectors.toSet());
+
+            logger.info("✅ Inscription réussie pour: {}", employee.getEmail());
+
+            return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
+
+        } catch (Exception e) {
+            logger.error("❌ Erreur lors de l'inscription: {}", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: Registration failed - " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
+        try {
+            logger.info("🔑 Réinitialisation mot de passe pour: {}", resetRequest.getEmail());
+
+            Employee employee = employeeRepository.findByEmail(resetRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Error: User not found."));
+
+            employee.setPassword(encoder.encode(resetRequest.getPassword()));
+            employeeRepository.save(employee);
+
+            logger.info("✅ Mot de passe réinitialisé pour: {}", resetRequest.getEmail());
+
+            return ResponseEntity.ok(new MessageResponse("Password reset successfully!"));
+
+        } catch (Exception e) {
+            logger.error("❌ Erreur réinitialisation mot de passe: {}", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: Password reset failed - " + e.getMessage()));
+        }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGlobalException(Exception e) {
+        logger.error("❌ Erreur non gérée dans AuthController: {}", e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new MessageResponse("Error: Internal server error - " + e.getMessage()));
+    }
+	
 }

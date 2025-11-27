@@ -1,6 +1,8 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.dto.*;
+import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.EmployeeDetailDTO;
+import com.mycompany.backend.dto.FormationDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Formation;
@@ -13,6 +15,9 @@ import com.mycompany.backend.services.GridFsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,8 +27,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -45,18 +51,43 @@ public class EmployeeController {
 
     // -------------------- EMPLOYÉ --------------------
     @GetMapping
-    public ResponseEntity<List<EmployeeGetDTO>> getAllEmployees() {
-        List<Employee> employees = employeeService.getAllEmployees();
-        List<EmployeeGetDTO> response = EmployeeGetDTO.EmployeesToEmployeeDtos(employees);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
-        return employeeService.getEmployeeById(id)
-                .map(this::convertToDetailDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        System.out.println("=== GET EMPLOYEE BY ID CONTROLLER ===");
+        System.out.println("🔍 Employee ID requested: " + id);
+        
+        try {
+            // Vérifier l'authentification
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                System.out.println("👤 Authenticated user: " + auth.getName());
+                System.out.println("🎯 Authorities: " + auth.getAuthorities());
+                System.out.println("✅ Is authenticated: " + auth.isAuthenticated());
+            } else {
+                System.out.println("❌ No authentication found in controller!");
+            }
+            
+            Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
+            if (employeeOpt.isPresent()) {
+                System.out.println("✅ Employee found: " + employeeOpt.get().getUsername());
+                EmployeeDetailDTO response = convertToDetailDTO(employeeOpt.get());
+                return ResponseEntity.ok(response);
+            } else {
+                System.out.println("❌ Employee not found with ID: " + id);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (AccessDeniedException e) {
+            System.err.println("❌ ACCESS DENIED in controller: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (Exception e) {
+            System.err.println("❌ Error getting employee in controller: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/Add-employee")
@@ -67,7 +98,7 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
-                                                            @RequestBody Employee employeeDetails) {
+                                                           @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -107,7 +138,7 @@ public class EmployeeController {
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
-                                                         @RequestParam("file") MultipartFile file) {
+                                                        @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -195,6 +226,11 @@ public class EmployeeController {
         }
 
         Formation savedFormation = formationRepository.save(f);
+        
+        // Initialiser la collection si elle est null
+        if (emp.getFormations() == null) {
+            emp.setFormations(new HashSet<>());
+        }
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
@@ -242,8 +278,11 @@ public class EmployeeController {
             }
         }
 
-        employee.getFormations().removeIf(form -> form.getId().equals(formationId));
-        employeeRepository.save(employee);
+        if (employee.getFormations() != null) {
+            employee.getFormations().removeIf(form -> form.getId().equals(formationId));
+            employeeRepository.save(employee);
+        }
+
         formationRepository.deleteById(formationId);
 
         return ResponseEntity.ok("Formation supprimée avec succès");
