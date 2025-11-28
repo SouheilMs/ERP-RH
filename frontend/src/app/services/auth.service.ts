@@ -390,6 +390,40 @@ export class AuthService {
 
     return throwError(() => errorMessage);
   }
+  canChangePassword(employeeId: string): boolean {
+    const currentUserId = this.getCurrentUserId();
+    const isOwnProfile = currentUserId === employeeId;
+
+    console.log('🔐 canChangePassword Check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', isOwnProfile);
+
+    // ✅ SEULEMENT si c'est son propre profil
+    return isOwnProfile;
+  }
+  debugToken(): void {
+    const token = this.getToken();
+    if (token) {
+      console.log('🔐 Token Debug:');
+      console.log('   - Présent:', !!token);
+      console.log('   - Longueur:', token.length);
+
+      try {
+        // Décoder le payload JWT (partie entre les deux points)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('   - Payload:', payload);
+        console.log('   - Expiration:', new Date(payload.exp * 1000));
+        console.log('   - Email:', payload.email);
+        console.log('   - Roles:', payload.roles);
+      } catch (error) {
+        console.error('❌ Erreur décodage token:', error);
+      }
+    } else {
+      console.warn('⚠️ Aucun token trouvé');
+    }
+  }
   debugLoginResponse(loginRequest: LoginRequest): void {
     console.log('🧪 DEBUG: Testing login response format');
 

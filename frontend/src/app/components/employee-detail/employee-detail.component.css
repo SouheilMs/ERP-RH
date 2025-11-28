@@ -1395,7 +1395,7 @@
       width: 100%;
     }
   }
-  
+
 }
 /* =========================== */
 /* Styles pour les messages d'obligation améliorés */
@@ -1420,7 +1420,7 @@
   border: 2px solid #fc8181;
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(229, 62, 62, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -1551,7 +1551,7 @@
 .form-input.valid {
   border-color: #48bb78 !important;
   background: linear-gradient(135deg, #f0fff4 0%, #fff 50%);
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(72, 187, 120, 0.1),
     0 4px 12px rgba(72, 187, 120, 0.15);
 }
@@ -1559,7 +1559,7 @@
 .form-input.invalid {
   border-color: #e53e3e !important;
   background: linear-gradient(135deg, #fff5f5 0%, #fff 50%);
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(229, 62, 62, 0.1),
     0 4px 12px rgba(229, 62, 62, 0.15);
   animation: shake 0.5s ease;
@@ -1692,7 +1692,7 @@
 .form-textarea:focus {
   border-color: #667eea;
   background: white;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(102, 126, 234, 0.15),
     0 8px 20px rgba(102, 126, 234, 0.2);
   transform: translateY(-2px);
@@ -1735,21 +1735,21 @@
     max-width: none;
     z-index: 9999;
   }
-  
+
   .hint-content {
     padding: 20px;
     border-radius: 20px;
   }
-  
+
   .hint-content::before,
   .hint-content::after {
     display: none;
   }
-  
+
   .hint-text strong {
     font-size: 1rem;
   }
-  
+
   .hint-text ul {
     font-size: 0.9rem;
   }
@@ -2039,7 +2039,7 @@ input[type="date"]::-moz-focus-inner {
     font-size: 16px; /* Empêche le zoom sur iOS */
     min-height: 44px; /* Taille tactile minimale */
   }
-  
+
   .date-input-group::after {
     right: 12px;
     font-size: 18px;
@@ -2277,18 +2277,18 @@ input[type="date"]::-webkit-clear-button {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .date-input {
     font-size: 16px;
     min-height: 44px;
   }
-  
+
   .error-message,
   .success-message {
     font-size: 11px;
     padding: 6px 10px;
   }
-  
+
   .date-hint {
     font-size: 10px;
   }
@@ -2300,5 +2300,5 @@ input[type="date"]::-webkit-clear-button {
   100% {
     left: 200%;
   }
-  
+
 }

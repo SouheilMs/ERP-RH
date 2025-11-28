@@ -131,14 +131,28 @@ export class EmployeeServices {
   }
 
   // ================= EMPLOYEE =================
+// employee.service.ts
   getAllEmployees(): Observable<Employee[]> {
-    console.log('🔄 getAllEmployees - Adding auth headers');
+    console.log('🔄 getAllEmployees - Starting request with DTO format');
     const headers = this.getAuthHeaders();
 
-    return this.http.get<Employee[]>(this.apiUrl, { headers }).pipe(
-      tap((employees) => console.log('✅ getAllEmployees SUCCESS - Count:', employees?.length || 0)),
+    return this.http.get<Employee[]>(this.apiUrl, {
+      headers,
+      observe: 'response'
+    }).pipe(
+      tap(response => {
+        console.log('✅ getAllEmployees SUCCESS - Status:', response.status);
+        console.log('📊 Employees count:', response.body?.length || 0);
+      }),
+      map(response => response.body || []),
       catchError(error => {
         console.error('❌ getAllEmployees FAILED:', error);
+
+        // Log détaillé de l'erreur
+        if (error.status === 200) {
+          console.error('📄 Raw error response:', error.error);
+        }
+
         return throwError(() => error);
       })
     );
@@ -574,5 +588,21 @@ getEmployeePhotoBlob(id: string): Observable<Blob> {
         console.error('🧪 TEST FAILED:', error);
       }
     });
+  }
+// ================= CHANGEMENT MOT DE PASSE =================
+  changePassword(employeeId: string, passwordData: { currentPassword: string, newPassword: string }): Observable<any> {
+    console.log('🔄 changePassword - Adding auth headers');
+    const headers = this.getAuthHeaders();
+
+    return this.http.put(`${this.apiUrl}/${employeeId}/change-password`, passwordData, {
+      headers,
+      responseType: 'text'
+    }).pipe(
+      tap(() => console.log('✅ changePassword SUCCESS')),
+      catchError(error => {
+        console.error('❌ changePassword FAILED:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -221,6 +222,63 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findAll();
     }
 
+    @Override
+    public ResponseEntity<?> changePassword(String employeeId, String currentPassword, String newPassword) {
+        try {
+            System.out.println("🔄 EmployeeServiceImpl.changePassword called for ID: " + employeeId);
+
+            // Vérifier que l'utilisateur modifie son propre mot de passe
+            if (!isViewingOwnProfile(employeeId)) {
+                System.out.println("❌ Access denied: Users can only change their own password");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Access denied: You can only change your own password");
+            }
+
+            Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+            if (employeeOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Employee not found");
+            }
+
+            Employee employee = employeeOpt.get();
+
+            // Vérifier l'ancien mot de passe
+            if (!passwordEncoder.matches(currentPassword, employee.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Current password is incorrect");
+            }
+
+            // Valider le nouveau mot de passe
+            if (newPassword == null || newPassword.length() < 6) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("New password must be at least 6 characters long");
+            }
+
+            // Mettre à jour le mot de passe
+            employee.setPassword(passwordEncoder.encode(newPassword));
+            employeeRepository.save(employee);
+
+            System.out.println("✅ Password changed successfully for employee: " + employeeId);
+            return ResponseEntity.ok("Password changed successfully");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error changing password: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error changing password");
+        }
+    }
+    // Dans la méthode changePassword, ajoutez ces validations :
+    private void validatePasswordChange(String employeeId) {
+        System.out.println("=== VÉRIFICATION PERMISSION CHANGEMENT MOT DE PASSE ===");
+
+        // Vérifier que l'utilisateur modifie son propre mot de passe
+        if (!isViewingOwnProfile(employeeId)) {
+            System.out.println("❌ ACCÈS REFUSÉ: Tentative de changer le mot de passe d'un autre utilisateur");
+            throw new AccessDeniedException("Access denied: You can only change your own password");
+        }
+
+        System.out.println("✅ ACCÈS AUTORISÉ POUR CHANGEMENT MOT DE PASSE");
+    }
     @Override
     public Optional<Employee> getEmployeeById(String id) {
         System.out.println("🔄 EmployeeServiceImpl.getEmployeeById called for ID: " + id);

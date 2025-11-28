@@ -57,41 +57,36 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // ORIGINES AUTORISÉES
+
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:4200", 
-            "http://localhost:5173", 
-            "http://localhost:5174"
+                "http://localhost:4200",
+                "http://localhost:5173",
+                "http://localhost:5174"
         ));
-        
-        // MÉTHODES AUTORISÉES
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
-        
-        // HEADERS AUTORISÉS
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", 
-            "Content-Type",
-            "Accept",
-            "Origin",
-            "X-Requested-With",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
-            "Cache-Control"
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "Cache-Control"
         ));
-        
-        // HEADERS EXPOSÉS
         configuration.setExposedHeaders(Arrays.asList(
-            "Authorization", 
-            "Content-Disposition",
-            "Content-Type",
-            "Content-Length",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
+                "Authorization",
+                "Content-Disposition",
+                "Content-Type"
         ));
-        
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+
+        System.out.println("🔐 CORS Configuration applied:");
+        System.out.println("   - Allowed Origins: " + configuration.getAllowedOrigins());
+        System.out.println("   - Allowed Methods: " + configuration.getAllowedMethods());
+        System.out.println("   - Allowed Headers: " + configuration.getAllowedHeaders());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

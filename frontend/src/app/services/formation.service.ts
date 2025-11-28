@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Observable, throwError} from 'rxjs';
+import {catchError, tap} from 'rxjs/operators';
 
 export interface Formation {
   id: string;
@@ -48,44 +49,58 @@ export class FormationService {
 
   constructor(private http: HttpClient) { }
 
-  // ✅ MODIFIÉ : Ajouter des headers manuels pour tester
+  // ✅ TEMPORAIRE: Utiliser des headers manuels pour debugger
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('authToken');
-    console.log('🔐 FormationService - Token from localStorage:', token ? `PRESENT (${token.length} chars)` : 'NULL');
-    
+    console.log('🔐 FormationService - Manual headers - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
+
     if (token) {
       return new HttpHeaders({
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       });
     }
-    
+
+    console.warn('⚠️ FormationService - No token found for manual headers');
     return new HttpHeaders({
       'Content-Type': 'application/json'
     });
   }
 
-  createFormation(request: FormationRequest, createdById: string): Observable<Formation> {
-    const params = new HttpParams().set('createdById', createdById);
+  getAllFormations(): Observable<Formation[]> {
+    console.log('🔄 FormationService - Getting all formations WITH MANUAL HEADERS');
     const headers = this.getAuthHeaders();
-    
-    console.log('📨 FormationService - Headers for create:', headers.keys());
-    
-    return this.http.post<Formation>(this.apiUrl, request, { params, headers });
+
+    console.log('🔐 FormationService - Headers keys:', headers.keys());
+    console.log('🔐 FormationService - Auth header:', headers.get('Authorization')?.substring(0, 30) + '...');
+
+    return this.http.get<Formation[]>(this.apiUrl, { headers }).pipe(
+      tap(formations => {
+        console.log('✅ Formations loaded successfully:', formations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Error loading formations:', error);
+
+        // Debug détaillé
+        if (error.status === 401) {
+          console.error('🔐 401 Unauthorized avec headers manuels!');
+          console.error('   - Token utilisé:', headers.get('Authorization')?.substring(0, 30) + '...');
+        }
+
+        return throwError(() => error);
+      })
+    );
   }
 
-  getAllFormations(): Observable<Formation[]> {
-    const headers = this.getAuthHeaders();
-    
-    console.log('📨 FormationService - Headers for getAll:', headers.keys());
-    console.log('🔑 Authorization Header:', headers.get('Authorization')?.substring(0, 30) + '...');
-    
-    return this.http.get<Formation[]>(this.apiUrl, { headers });
-  }
+
 
   getFormationById(id: string): Observable<Formation> {
     const headers = this.getAuthHeaders();
     return this.http.get<Formation>(`${this.apiUrl}/${id}`, { headers });
+  }
+  createFormation(request: FormationRequest, createdById: string): Observable<Formation> {
+    const params = new HttpParams().set('createdById', createdById);
+    return this.http.post<Formation>(this.apiUrl, request, { params });
   }
 
   updateFormation(id: string, request: FormationRequest): Observable<Formation> {
