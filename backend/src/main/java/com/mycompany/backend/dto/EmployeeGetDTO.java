@@ -21,7 +21,10 @@ public class EmployeeGetDTO {
     private String position;
     private String status;
     private List<String> roleNames;
-
+    private String department;
+    private Integer age;
+    private String performance;
+    private Integer satisfaction;
     // Getters et Setters
     public String getId() {
         return id;
@@ -33,6 +36,38 @@ public class EmployeeGetDTO {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(String performance) {
+        this.performance = performance;
+    }
+
+    public Integer getSatisfaction() {
+        return satisfaction;
+    }
+
+    public void setSatisfaction(Integer satisfaction) {
+        this.satisfaction = satisfaction;
     }
 
     public void setUsername(String username) {

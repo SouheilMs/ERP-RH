@@ -24,6 +24,10 @@ public class Employee {
     private String photoUrl;
     private String photoId;
 
+    private String department;
+    private Integer age;
+    private String performance;
+    private Integer satisfaction;
     // Informations pour la fiche de paie tunisienne
     private String cin;
     private String cnssNumber;
@@ -155,6 +159,38 @@ public class Employee {
 
     public Integer getSeniorityBlocks() { return seniorityBlocks; }
     public void setSeniorityBlocks(Integer seniorityBlocks) { this.seniorityBlocks = seniorityBlocks; }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(String performance) {
+        this.performance = performance;
+    }
+
+    public Integer getSatisfaction() {
+        return satisfaction;
+    }
+
+    public void setSatisfaction(Integer satisfaction) {
+        this.satisfaction = satisfaction;
+    }
 
     public Set<Formation> getFormations() { return formations; }
     public void setFormations(Set<Formation> formations) { this.formations = formations; }

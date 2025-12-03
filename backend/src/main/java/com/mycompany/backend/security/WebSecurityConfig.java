@@ -58,13 +58,17 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // ORIGINES AUTORISÉES
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "http://localhost:5173",
                 "http://localhost:5174"
         ));
 
+        // MÉTHODES AUTORISÉES
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+
+        // HEADERS AUTORISÉS
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
@@ -75,51 +79,49 @@ public class WebSecurityConfig {
                 "Access-Control-Request-Headers",
                 "Cache-Control"
         ));
+
+        // HEADERS EXPOSÉS
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition",
-                "Content-Type"
+                "Content-Type",
+                "Content-Length",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"
         ));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-
-        System.out.println("🔐 CORS Configuration applied:");
-        System.out.println("   - Allowed Origins: " + configuration.getAllowedOrigins());
-        System.out.println("   - Allowed Methods: " + configuration.getAllowedMethods());
-        System.out.println("   - Allowed Headers: " + configuration.getAllowedHeaders());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(authz -> authz
-            // ✅ D'ABORD toutes les URLs publiques
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/api/test/**").permitAll()
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-            
-            // ✅ ENSUITE les URLs qui nécessitent une authentification
-            .requestMatchers("/api/job-offers/**").authenticated()
-            .requestMatchers("/api/formations/**").authenticated()
-            
-            // ✅ ENFIN toutes les autres URLs
-            .anyRequest().authenticated()
-        )
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint(unauthorizedHandler)
-        )
-        .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        )
-        .authenticationProvider(authenticationProvider())
-        .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-    return http.build();
-}
+                        .requestMatchers("/api/job-offers/**").authenticated()
+                        .requestMatchers("/api/formations/**").authenticated()
+
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(unauthorizedHandler)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 }

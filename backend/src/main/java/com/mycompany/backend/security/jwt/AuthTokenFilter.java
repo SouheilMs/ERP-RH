@@ -20,7 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
-
     @Autowired
     private JwtUtils jwtUtils;
 
@@ -32,43 +31,34 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
         try {
             String jwt = parseJwt(request);
-            
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
                 
-                logger.info("✅ Token JWT valide pour l'utilisateur: {}", username);
-                
-                // ✅ SUPPRIMER CETTE LIGNE - debugToken n'existe pas
-                // jwtUtils.debugToken(jwt);
-                
+                logger.info(" Token JWT valide pour l'utilisateur: {}", username);
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     try {
-                        // ✅ UTILISER UNIQUEMENT loadUserByUsername
+                        // UTILISER UNIQUEMENT loadUserByUsername
                         UserDetails userDetails = employeeDetailsService.loadUserByUsername(username);
                         
-                        logger.info("👤 UserDetails chargé - Username: {}", userDetails.getUsername());
-                        logger.info("🎯 Authorities: {}", userDetails.getAuthorities());
-                        
+                        logger.info(" UserDetails chargé - Username: {}", userDetails.getUsername());
+                        logger.info(" Authorities: {}", userDetails.getAuthorities());
                         UsernamePasswordAuthenticationToken authentication = 
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        
-                        logger.info("✅ Authentification configurée dans SecurityContext pour: {}", username);
+                        logger.info(" Authentification configurée dans SecurityContext pour: {}", username);
                     } catch (UsernameNotFoundException e) {
-                        logger.error("❌ Utilisateur non trouvé avec username: {}", username);
-                        // Ne pas essayer avec email - simplement logger l'erreur
+                        logger.error(" Utilisateur non trouvé avec username: {}", username);
                     }
                 }
             } else {
-                logger.warn("❌ Token JWT invalide ou manquant");
+                logger.warn(" Token JWT invalide ou manquant");
             }
         } catch (Exception e) {
-            logger.error("❌ Erreur lors de l'authentification JWT: {}", e.getMessage());
+            logger.error(" Erreur lors de l'authentification JWT: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -79,11 +69,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             String token = headerAuth.substring(7);
-            logger.debug("✅ Token JWT extrait, longueur: {}", token.length());
+            logger.debug(" Token JWT extrait, longueur: {}", token.length());
             return token;
         }
 
-        logger.debug("❌ Pas de token Bearer trouvé");
+        logger.debug(" Pas de token Bearer trouvé");
         return null;
     }
 }

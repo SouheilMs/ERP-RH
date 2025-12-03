@@ -51,8 +51,6 @@ public class FormationResponseDTO {
         this.cost = formation.getCost();
         this.category = formation.getCategory();
         this.skills = formation.getSkills();
-
-        // ✅ CORRECTION : Gestion sécurisée des participants
         if (formation.getParticipants() != null) {
             this.participants = formation.getParticipants().stream()
                     .filter(participant -> participant != null && participant.getId() != null) // Filtrer les nulls
@@ -63,8 +61,6 @@ public class FormationResponseDTO {
             this.participants = new HashSet<>();
             this.currentParticipants = 0;
         }
-
-        // ✅ CORRECTION : Gestion sécurisée du createdBy
         if (formation.getCreatedBy() != null) {
             this.createdBy = formation.getCreatedBy().getId();
         } else {
