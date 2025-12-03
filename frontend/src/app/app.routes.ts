@@ -37,7 +37,6 @@ export const routes: Routes = [
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
 
-      // ✅ CORRECTION : Routes Job avec ordre correct
       {
         path: 'jobs/new',
         component: JobFormComponent,

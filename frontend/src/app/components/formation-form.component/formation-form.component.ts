@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormationService, FormationRequest } from '../../services/formation.service';
 import { AuthService } from '../../services/auth.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; // ✅ AJOUT: HttpClient
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-formation-form',
@@ -39,14 +39,14 @@ export class FormationFormComponent implements OnInit {
     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient // ✅ AJOUT: HttpClient
+    private http: HttpClient
   ) {
     this.formationForm = this.createForm();
     this.timeSlots = this.generateTimeSlots();
   }
 
   ngOnInit(): void {
-    // ✅ CORRECTION: Vérifier si l'utilisateur est connecté d'abord
+
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
@@ -54,7 +54,7 @@ export class FormationFormComponent implements OnInit {
 
     this.debugAuth();
 
-    // ✅ CORRECTION: Initialiser correctement le composant
+
     this.formationId = this.route.snapshot.paramMap.get('id');
     this.isEdit = !!this.formationId;
 
@@ -65,20 +65,19 @@ export class FormationFormComponent implements OnInit {
 
   debugAuth(): void {
     const token = localStorage.getItem('authToken');
-    console.log('🔐 FormationForm - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
-    console.log('🔐 FormationForm - User:', localStorage.getItem('user'));
-    console.log('🔐 FormationForm - isHR:', this.authService.isHR());
-    console.log('🔐 FormationForm - isHRManager:', this.authService.isHRManager());
+    console.log(' FormationForm - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
+    console.log(' FormationForm - User:', localStorage.getItem('user'));
+    console.log('FormationForm - isHR:', this.authService.isHR());
+    console.log(' FormationForm - isHRManager:', this.authService.isHRManager());
 
-    // ✅ CORRECTION: Tester seulement si nécessaire
-    // this.testFormationRequest();
+
   }
 
   testFormationRequest(): void {
     const token = localStorage.getItem('authToken');
 
     if (!token) {
-      console.error('❌ No token found for manual test');
+      console.error(' No token found for manual test');
       return;
     }
 
@@ -87,16 +86,16 @@ export class FormationFormComponent implements OnInit {
       'Content-Type': 'application/json'
     });
 
-    console.log('🧪 Testing formation request manually...');
-    console.log('🔐 Headers:', headers.keys());
+    console.log(' Testing formation request manually...');
+    console.log(' Headers:', headers.keys());
 
     this.http.get('http://localhost:8081/api/formations', { headers }).subscribe({
       next: (response) => {
-        console.log('✅ Manual test SUCCESS:', response);
+        console.log(' Manual test SUCCESS:', response);
       },
       error: (error) => {
-        console.error('❌ Manual test FAILED:', error);
-        console.log('🔍 Error details:', {
+        console.error(' Manual test FAILED:', error);
+        console.log(' Error details:', {
           status: error.status,
           statusText: error.statusText
         });
@@ -206,7 +205,6 @@ export class FormationFormComponent implements OnInit {
               errorMessage = error.message;
             } else if (error?.status === 401) {
               errorMessage = 'Non autorisé - Veuillez vous reconnecter';
-              // ✅ CORRECTION: Rediriger vers login si 401
               this.authService.logout();
             } else if (error?.status === 403) {
               errorMessage = 'Accès refusé - Vous n\'avez pas les permissions nécessaires';

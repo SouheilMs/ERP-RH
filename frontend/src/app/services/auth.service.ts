@@ -43,8 +43,8 @@ export class AuthService {
   private userRolesSubject = new BehaviorSubject<string[]>(this.getStoredUserRoles());
 
   constructor() {
-    console.log('🔄 AuthService initialisé');
-    console.log('🔐 Token initial:', this.getToken() ? 'PRÉSENT' : 'NULL');
+    console.log(' AuthService initialisé');
+    console.log('Token initial:', this.getToken() ? 'PRÉSENT' : 'NULL');
   }
 
   // Méthodes d'authentification
@@ -55,9 +55,7 @@ export class AuthService {
       );
   }
 
-  canViewFormations(): boolean {
-    return this.isHR() || this.isHRManager();
-  }
+
   // login(loginRequest: LoginRequest): Observable<JwtResponse> {
   //   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
   //     .pipe(
@@ -77,14 +75,14 @@ export class AuthService {
   // }
 
   login(loginRequest: LoginRequest): Observable<JwtResponse> {
-    console.log('🔄 Tentative de login vers:', `${this.apiUrl}/signin`);
+    console.log(' Tentative de login vers:', `${this.apiUrl}/signin`);
 
     return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
       .pipe(
         tap((response: JwtResponse) => {
-          console.log('✅ Réponse login reçue:', response);
+          console.log(' Réponse login reçue:', response);
 
-          if (response.token) {  // ✅ CORRECTION : Utiliser "token" au lieu de "accessToken"
+          if (response.token) {
             // Stocker le token correctement
             localStorage.setItem('authToken', response.token);
 
@@ -99,14 +97,13 @@ export class AuthService {
             this.isLoggedInSubject.next(true);
             this.userRolesSubject.next(response.roles);
 
-            console.log('🔐 Token stocké avec succès');
-            console.log('👤 User ID:', response.id);
-            console.log('🎯 Roles:', response.roles);
+            console.log(' Token stocké avec succès');
+            console.log(' User ID:', response.id);
+            console.log('Roles:', response.roles);
 
-            // ✅ Débogage du token
             this.decodeToken();
           } else {
-            console.error('❌ Pas de token dans la réponse');
+            console.error(' Pas de token dans la réponse');
             throw new Error('No token received');
           }
         }),
@@ -121,21 +118,92 @@ export class AuthService {
   }
 
   logout(): void {
-    console.log('🚪 Déconnexion en cours...');
+    console.log(' Déconnexion en cours...');
 
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     this.isLoggedInSubject.next(false);
     this.userRolesSubject.next([]);
 
-    console.log('🧹 Données localStorage nettoyées');
-    console.log('🔓 Nouvel état isLoggedIn:', false);
+    console.log(' Données localStorage nettoyées');
+    console.log(' Nouvel état isLoggedIn:', false);
 
     this.router.navigate(['/login']);
   }
 
   // ================= MÉTHODES POUR GÉRER LES RÔLES ET PERMISSIONS =================
 
+  canCreateEmployees(): boolean {
+    // SEUL LE RH MANAGER PEUT CRÉER DES EMPLOYÉS
+    const canCreate = this.isHRManager();
+    console.log(' canCreateEmployees:', canCreate);
+    return canCreate;
+  }
+
+  canDeleteEmployees(): boolean {
+    // SEUL LE RH MANAGER PEUT SUPPRIMER DES EMPLOYÉS
+    const canDelete = this.isHRManager();
+    console.log(' canDeleteEmployees:', canDelete);
+    return canDelete;
+  }
+
+  canEditEmployees(): boolean {
+    // RH ET RH MANAGERS PEUVENT ÉDITER LES EMPLOYÉS
+    const canEdit = this.isHR() || this.isHRManager();
+    console.log(' canEditEmployees:', canEdit);
+    return canEdit;
+  }
+
+  canViewEmployeeList(): boolean {
+    // RH ET RH MANAGERS PEUVENT VOIR LA LISTE DES EMPLOYÉS
+    return this.isHR() || this.isHRManager();
+  }
+  canManageJobOffers(): boolean {
+    return this.isHR() || this.isHRManager();
+  }
+
+  canCreateJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canEditJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canDeleteJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canManageFormations(): boolean {
+    return this.isHR() || this.isHRManager();
+  }
+
+  canCreateFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canEditFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canDeleteFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canAssignFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+// Vérifie si l'utilisateur peut gérer une formation spécifique
+  canManageFormation(formationId?: string): boolean {
+    // Si c'est un RH ou HR Manager, il peut gérer toutes les formations
+    return this.canManageFormations();
+  }
+
+// Vérifie si l'utilisateur peut gérer une offre d'emploi spécifique
+  canManageJobOffer(jobId?: string): boolean {
+    return this.canManageJobOffers();
+  }
   getUserRole(): string {
     const user = this.getUser();
     return user?.roles?.[0] || '';
@@ -147,69 +215,80 @@ export class AuthService {
   }
 
 
-// Dans AuthService, modifiez getCurrentUserId()
   getCurrentUserId(): string | null {
     const user = this.getUser();
-    console.log('🔍 getCurrentUserId - user data:', user);
+    console.log(' getCurrentUserId - user data:', user);
 
     if (user && user.id) {
-      console.log('✅ User ID found:', user.id);
+      console.log('User ID found:', user.id);
       return user.id;
     }
 
-    console.log('❌ User ID not found - user object:', user);
+    console.log(' User ID not found - user object:', user);
     return null;
   }
 
-// Et dans getUser()
   getUser(): any {
     const userJson = localStorage.getItem('user');
-    console.log('🔍 getUser - raw JSON from localStorage:', userJson);
+    console.log(' getUser - raw JSON from localStorage:', userJson);
 
     try {
       const user = userJson ? JSON.parse(userJson) : null;
-      console.log('🔍 getUser - parsed user:', user);
+      console.log(' getUser - parsed user:', user);
       return user;
     } catch (error) {
-      console.error('❌ Erreur parsing user data:', error);
+      console.error(' Erreur parsing user data:', error);
       return null;
     }
   }
-  // ✅ CORRECTION : Méthodes de vérification de rôle plus précises
+
+
+  isEmployee(): boolean {
+    return this.getUserRoles().includes('ROLE_EMPLOYEE');
+  }
+
+
   isHR(): boolean {
     const roles = this.getUserRoles();
-    const isHR = roles.includes('ROLE_HR');
+    const isHR = roles.includes('ROLE_RH') || roles.includes('ROLE_HR');
     console.log('🔍 isHR() check:', { roles, isHR });
     return isHR;
   }
 
   isHRManager(): boolean {
     const roles = this.getUserRoles();
-    const isHRManager = roles.includes('ROLE_HRMANAGER');
+    const isHRManager = roles.includes('ROLE_HRMANAGER') || roles.includes('ROLE_HR_MANAGER');
     console.log('🔍 isHRManager() check:', { roles, isHRManager });
     return isHRManager;
   }
 
-  isEmployee(): boolean {
-    return this.getUserRoles().includes('ROLE_EMPLOYEE');
-  }
-
-  // ✅ NOUVELLE MÉTHODE : Vérifier si c'est RH ou Manager
   isHRorManager(): boolean {
     return this.isHR() || this.isHRManager();
   }
 
+// vérifier si l'utilisateur peut voir les formations
+  canViewFormations(): boolean {
+    return this.isHRorManager();
+  }
   // Vérifier si l'utilisateur peut accéder au dashboard
   canAccessDashboard(): boolean {
     return this.isHRorManager();
   }
 
-  // Vérifier si l'utilisateur peut voir la liste des employés
-  canViewEmployeeList(): boolean {
-    return this.isHRorManager();
+  canAccessFormations(): boolean {
+    const roles = this.getUserRoles();
+    console.log('🔐 canAccessFormations - User roles:', roles);
+
+    // Liste de tous les rôles qui peuvent accéder aux formations
+    const allowedRoles = [
+      'ROLE_RH', 'ROLE_HR',
+      'ROLE_HRMANAGER', 'ROLE_HR_MANAGER',
+      'ROLE_ADMIN', 'ROLE_MANAGER'
+    ];
+
+    return allowedRoles.some(role => roles.includes(role));
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut voir les offres d'emploi
   canViewJobs(): boolean {
     return this.isHRorManager();
   }
@@ -231,7 +310,7 @@ export class AuthService {
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
-    console.log('🔐 canAccessEmployeeProfile check:');
+    console.log(' canAccessEmployeeProfile check:');
     console.log('   - Employee ID:', employeeId);
     console.log('   - Current User ID:', currentUserId);
     console.log('   - Is HR/Manager:', isHRorManager);
@@ -247,7 +326,7 @@ export class AuthService {
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
-    console.log('🔐 canViewPayslipHistory Check:');
+    console.log(' canViewPayslipHistory Check:');
     console.log('   - Employee ID:', employeeId);
     console.log('   - Current User ID:', currentUserId);
     console.log('   - isHR/Manager:', isHRorManager);
@@ -268,16 +347,16 @@ export class AuthService {
   }
 
   canEditEmployeeProfile(employeeId: string): boolean {
-    // SEULS LES RH PEUVENT ÉDITER LES PROFILS (pas leur propre profil via l'interface admin)
+    // SEULS LES RH PEUVENT ÉDITER LES PROFILS
     const currentUserId = this.getCurrentUserId();
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
-    // Les RH peuvent éditer tous les profils sauf le leur via l'interface admin
+    // Les RH peuvent éditer tous les profils
     // Les employés ne peuvent éditer que leur propre profil via "Mon Profil"
     const canEdit = isHRorManager && !isOwnProfile;
 
-    console.log('🔐 canEditEmployeeProfile:');
+    console.log(' canEditEmployeeProfile:');
     console.log('   - Employee ID:', employeeId);
     console.log('   - Current User ID:', currentUserId);
     console.log('   - Is HR/Manager:', isHRorManager);
@@ -295,11 +374,10 @@ export class AuthService {
 
     const canUpload = isHRorManager && !isOwnProfile;
 
-    console.log('🔐 canUploadEmployeePhoto:', canUpload);
+    console.log(' canUploadEmployeePhoto:', canUpload);
     return canUpload;
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut créer/modifier des offres d'emploi
   canManageJobs(): boolean {
     return this.isHRorManager();
   }
@@ -323,7 +401,7 @@ export class AuthService {
     return this.userRolesSubject.asObservable();
   }
   debugCurrentUser(): void {
-    console.log('🐛 DEBUG CURRENT USER:');
+    console.log(' DEBUG CURRENT USER:');
     console.log('  - Token:', this.getToken() ? 'PRESENT' : 'NULL');
     console.log('  - User:', this.getUser());
     console.log('  - Roles:', this.getUserRoles());
@@ -334,20 +412,20 @@ export class AuthService {
   // ================= MÉTHODES DE DEBUG =================
 
   debugAuth(): void {
-    console.log('🐛 DEBUG AUTH SERVICE:');
-    console.log('🔐 Token:', this.getToken());
-    console.log('👤 User:', this.getUser());
-    console.log('🔓 isLoggedIn:', this.isLoggedIn());
-    console.log('🎯 Roles:', this.getUserRoles());
-    console.log('💾 localStorage authToken:', localStorage.getItem('authToken'));
-    console.log('💾 localStorage user:', localStorage.getItem('user'));
-    console.log('👑 isHR:', this.isHR());
-    console.log('👨‍💼 isHRManager:', this.isHRManager());
-    console.log('👤 isEmployee:', this.isEmployee());
-    console.log('👥 isHRorManager:', this.isHRorManager());
-    console.log('📋 canViewEmployeeList:', this.canViewEmployeeList());
-    console.log('💼 canViewJobs:', this.canViewJobs());
-    console.log('🛠️ canManageJobs:', this.canManageJobs());
+    console.log(' DEBUG AUTH SERVICE:');
+    console.log(' Token:', this.getToken());
+    console.log(' User:', this.getUser());
+    console.log(' isLoggedIn:', this.isLoggedIn());
+    console.log(' Roles:', this.getUserRoles());
+    console.log(' localStorage authToken:', localStorage.getItem('authToken'));
+    console.log(' localStorage user:', localStorage.getItem('user'));
+    console.log('isHR:', this.isHR());
+    console.log(' isHRManager:', this.isHRManager());
+    console.log(' isEmployee:', this.isEmployee());
+    console.log('isHRorManager:', this.isHRorManager());
+    console.log('canViewEmployeeList:', this.canViewEmployeeList());
+    console.log(' canViewJobs:', this.canViewJobs());
+    console.log(' canManageJobs:', this.canManageJobs());
   }
 
   decodeToken(): void {
@@ -355,10 +433,10 @@ export class AuthService {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('🔓 Token payload:', payload);
-        console.log('⏰ Token expiration:', new Date(payload.exp * 1000));
+        console.log(' Token payload:', payload);
+        console.log(' Token expiration:', new Date(payload.exp * 1000));
       } catch (error) {
-        console.error('❌ Error decoding token:', error);
+        console.error(' Error decoding token:', error);
       }
     }
   }
@@ -375,7 +453,7 @@ export class AuthService {
   }
 
   private handleError(error: any) {
-    console.error('❌ Erreur AuthService:', error);
+    console.error(' Erreur AuthService:', error);
     let errorMessage = 'Une erreur est survenue!';
 
     if (error.status === 401) {
@@ -394,19 +472,18 @@ export class AuthService {
     const currentUserId = this.getCurrentUserId();
     const isOwnProfile = currentUserId === employeeId;
 
-    console.log('🔐 canChangePassword Check:');
+    console.log('canChangePassword Check:');
     console.log('   - Employee ID:', employeeId);
     console.log('   - Current User ID:', currentUserId);
     console.log('   - Is Own Profile:', isOwnProfile);
     console.log('   - Result:', isOwnProfile);
 
-    // ✅ SEULEMENT si c'est son propre profil
     return isOwnProfile;
   }
   debugToken(): void {
     const token = this.getToken();
     if (token) {
-      console.log('🔐 Token Debug:');
+      console.log(' Token Debug:');
       console.log('   - Présent:', !!token);
       console.log('   - Longueur:', token.length);
 
@@ -418,26 +495,26 @@ export class AuthService {
         console.log('   - Email:', payload.email);
         console.log('   - Roles:', payload.roles);
       } catch (error) {
-        console.error('❌ Erreur décodage token:', error);
+        console.error(' Erreur décodage token:', error);
       }
     } else {
-      console.warn('⚠️ Aucun token trouvé');
+      console.warn(' Aucun token trouvé');
     }
   }
   debugLoginResponse(loginRequest: LoginRequest): void {
-    console.log('🧪 DEBUG: Testing login response format');
+    console.log(' DEBUG: Testing login response format');
 
     this.http.post<any>(`${this.apiUrl}/signin`, loginRequest).subscribe({
       next: (rawResponse) => {
-        console.log('🔍 RAW LOGIN RESPONSE:', rawResponse);
-        console.log('📋 Response keys:', Object.keys(rawResponse));
-        console.log('🔐 Token field name:',
+        console.log('RAW LOGIN RESPONSE:', rawResponse);
+        console.log(' Response keys:', Object.keys(rawResponse));
+        console.log(' Token field name:',
           rawResponse.accessToken ? 'accessToken' :
             rawResponse.token ? 'token' :
               'UNKNOWN');
       },
       error: (error) => {
-        console.error('❌ Debug login failed:', error);
+        console.error(' Debug login failed:', error);
       }
     });
   }

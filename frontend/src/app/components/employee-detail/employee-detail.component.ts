@@ -135,17 +135,17 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private checkPermissions(employeeId: string) {
     const currentUser = this.authService.getUser();
 
-    // ✅ CORRECTION : Vérifier si l'utilisateur voit son propre profil
+    //  Vérifier si l'utilisateur voit son propre profil
     this.isViewingOwnProfile = currentUser?.id === employeeId;
 
-    // ✅ CORRECTION : Les RH peuvent voir tous les profils
+    // Les RH peuvent voir tous les profils
     this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
 
-    // ✅ CORRECTION : TOUS les utilisateurs peuvent modifier leur PROPRE profil
+    //  TOUS les utilisateurs peuvent modifier leur PROPRE profil
     // Les RH peuvent aussi modifier les autres profils
     this.canEdit = this.isViewingOwnProfile || (this.canViewAllInfo && !this.isViewingOwnProfile);
 
-    console.log('🔐 Permissions Check:');
+    console.log(' Permissions Check:');
     console.log('   - Employee ID:', employeeId);
     console.log('   - Current User ID:', currentUser?.id);
     console.log('   - isViewingOwnProfile:', this.isViewingOwnProfile);
@@ -170,12 +170,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   canUploadPhoto(): boolean {
-    // ✅ CORRECTION : Seuls les RH peuvent uploader des photos pour les autres employés
+    // Seuls les RH peuvent uploader des photos pour les autres employés
     return this.canViewAllInfo && !this.isViewingOwnProfile;
   }
 
   canSeeReadonlyInfo(): boolean {
-    // ✅ CORRECTION : Lecture seule pour son propre profil ou si pas RH
+    // Lecture seule pour son propre profil ou si pas RH
     return this.isViewingOwnProfile || !this.canViewAllInfo;
   }
 
@@ -183,10 +183,10 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     return this.canViewAllInfo || this.isViewingOwnProfile || this.isMyProfilePage;
   }
 
-  // ✅ NOUVELLE MÉTHODE : Permissions pour les fiches de paie
+  //  Permissions pour les fiches de paie
   canViewPayslipHistory(): boolean {
-    // ✅ Employé : peut voir SON historique de fiches de paie
-    // ✅ RH/Manager : peut voir TOUS les historiques de fiches de paie + le sien
+    // Employé : peut voir SON historique de fiches de paie
+    // RH/Manager : peut voir TOUS les historiques de fiches de paie + le sien
     return this.canViewAllInfo || this.isViewingOwnProfile;
   }
 
@@ -1081,3 +1081,4 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.showErrorModal = false;
     this.errorMessage = '';
   }}
+

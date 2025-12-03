@@ -28,11 +28,11 @@ export class EmployeeListComponent implements OnInit {
   filteredEmployees: Employee[] = [];
   showAddModal = false;
 
-  // ✅ Permission checking variables
+  //  Permission checking variables
   canAddEmployees = false;
   canViewEmployees = false;
 
-  // ✅ Pagination properties
+  //  Pagination properties
   currentPage: number = 1;
   pageSize: number = 10;
   totalPages: number = 1;
@@ -47,12 +47,12 @@ export class EmployeeListComponent implements OnInit {
     this.loadEmployees();
   }
 
-  // ✅ Check user permissions
+  //  Check user permissions
   private checkPermissions(): void {
     this.canAddEmployees = this.authService.isHRorManager();
     this.canViewEmployees = this.authService.canViewEmployeeList();
 
-    console.log('🔐 EmployeeListComponent - Permissions checked:');
+    console.log(' EmployeeListComponent - Permissions checked:');
     console.log('   - canAddEmployees:', this.canAddEmployees);
     console.log('   - canViewEmployees:', this.canViewEmployees);
     console.log('   - User roles:', this.authService.getUserRoles());
@@ -61,20 +61,19 @@ export class EmployeeListComponent implements OnInit {
 
     // If user doesn't have permissions, show message
     if (!this.canViewEmployees) {
-      this.errorMessage = '❌ You do not have permissions to view the employee list.';
+      this.errorMessage = ' You do not have permissions to view the employee list.';
       const currentUserId = this.authService.getCurrentUserId();
       if (currentUserId) {
-        console.log('🔄 Redirecting to personal profile');
-        // this.router.navigate(['/employees', currentUserId]);
+        console.log(' Redirecting to personal profile');
       }
     }
   }
 
   // Load employees
   loadEmployees(): void {
-    // ✅ CHECK PERMISSIONS BEFORE LOADING
+    //  CHECK PERMISSIONS BEFORE LOADING
     if (!this.canViewEmployees) {
-      this.errorMessage = '❌ You do not have permissions to view the employee list.';
+      this.errorMessage = ' You do not have permissions to view the employee list.';
       return;
     }
 
@@ -88,15 +87,15 @@ export class EmployeeListComponent implements OnInit {
         this.updatePagination();
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('✅ Employees loaded:', this.employees.length);
+        console.log(' Employees loaded:', this.employees.length);
       },
       error: (err) => {
-        console.error("❌ Retrieval error details:", err);
+        console.error(" Retrieval error details:", err);
 
-        // ✅ GESTION D'ERREUR AMÉLIORÉE
+        //  GESTION D'ERREUR AMÉLIORÉE
         if (err.status === 200 && err.error && typeof err.error === 'string') {
           // Le serveur retourne du texte au lieu du JSON
-          console.error('❌ Server returned text instead of JSON');
+          console.error(' Server returned text instead of JSON');
           this.errorMessage = 'Format de réponse incorrect du serveur.';
         } else if (err.status === 401) {
           this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
@@ -136,14 +135,14 @@ export class EmployeeListComponent implements OnInit {
 
   // Open add modal
   openAddModal(): void {
-    // ✅ CHECK PERMISSIONS BEFORE OPENING
+    //  CHECK PERMISSIONS BEFORE OPENING
     if (!this.canAddEmployees) {
-      this.errorMessage = '❌ You do not have permissions to add employees.';
-      console.warn('🚫 Attempt to add employee without permissions');
+      this.errorMessage = ' You do not have permissions to add employees.';
+      console.warn(' Attempt to add employee without permissions');
       return;
     }
 
-    console.log('✅ Opening add employee modal - Permissions OK');
+    console.log(' Opening add employee modal - Permissions OK');
     this.showAddModal = true;
   }
 
@@ -156,26 +155,26 @@ export class EmployeeListComponent implements OnInit {
   onEmployeeAdded(): void {
     this.closeAddModal();
     this.loadEmployees();
-    this.successMessage = "✅ Employee added successfully!";
+    this.successMessage = " Employee added successfully!";
     setTimeout(() => this.successMessage = '', 4000);
   }
 
   // Export Excel
   exportExcel(): void {
     if (!this.canAddEmployees) {
-      this.errorMessage = '❌ You do not have permissions to export.';
+      this.errorMessage = ' You do not have permissions to export.';
       return;
     }
 
     this.employeeService.exportEmployees().subscribe({
       next: (blob: Blob) => {
         saveAs(blob, `employees_${new Date().toISOString().split('T')[0]}.xlsx`);
-        this.successMessage = "✅ Excel export successful!";
+        this.successMessage = " Excel export successful!";
         setTimeout(() => this.successMessage = '', 4000);
       },
       error: (err) => {
-        console.error("❌ Excel export error:", err);
-        this.errorMessage = "❌ Error during Excel export.";
+        console.error(" Excel export error:", err);
+        this.errorMessage = " Error during Excel export.";
         setTimeout(() => this.errorMessage = '', 4000);
       }
     });
@@ -184,7 +183,7 @@ export class EmployeeListComponent implements OnInit {
   // Import Excel
   importExcel(event: any): void {
     if (!this.canAddEmployees) {
-      this.errorMessage = '❌ You do not have permissions to import.';
+      this.errorMessage = ' You do not have permissions to import.';
       return;
     }
 
@@ -193,7 +192,7 @@ export class EmployeeListComponent implements OnInit {
 
     // Check file type
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      this.errorMessage = '❌ Please select an Excel file (.xlsx or .xls)';
+      this.errorMessage = ' Please select an Excel file (.xlsx or .xls)';
       event.target.value = '';
       return;
     }
@@ -202,14 +201,14 @@ export class EmployeeListComponent implements OnInit {
     this.employeeService.importEmployees(file).subscribe({
       next: (res) => {
         this.loadEmployees();
-        this.successMessage = "✅ Import successful!";
+        this.successMessage = " Import successful!";
         this.loading = false;
         setTimeout(() => this.successMessage = '', 4000);
         event.target.value = '';
       },
       error: (err) => {
-        console.error("❌ Excel import error:", err);
-        this.errorMessage = "❌ Error during import.";
+        console.error(" Excel import error:", err);
+        this.errorMessage = " Error during import.";
         this.loading = false;
         setTimeout(() => this.errorMessage = '', 4000);
         event.target.value = '';
@@ -222,7 +221,7 @@ export class EmployeeListComponent implements OnInit {
     if (!id) return;
 
     if (!this.canAddEmployees) {
-      this.errorMessage = '❌ You do not have permissions to delete employees.';
+      this.errorMessage = ' You do not have permissions to delete employees.';
       return;
     }
 
@@ -237,13 +236,13 @@ export class EmployeeListComponent implements OnInit {
         this.filteredEmployees = this.filteredEmployees.filter(e => e.id !== id);
         this.updatePagination();
         this.loading = false;
-        this.successMessage = "✅ Employee deleted successfully!";
+        this.successMessage = " Employee deleted successfully!";
         setTimeout(() => this.successMessage = '', 4000);
       },
       error: (err) => {
-        console.error("❌ Deletion error:", err);
+        console.error(" Deletion error:", err);
         this.loading = false;
-        this.errorMessage = "❌ Unable to delete.";
+        this.errorMessage = " Unable to delete.";
         setTimeout(() => this.errorMessage = '', 4000);
       }
     });
@@ -253,7 +252,7 @@ export class EmployeeListComponent implements OnInit {
     return emp.id!;
   }
 
-  // ✅ New method to get status text
+  //  New method to get status text
   getStatusText(status: string | undefined): string {
     if (!status) return 'Inactive';
 
@@ -267,7 +266,7 @@ export class EmployeeListComponent implements OnInit {
     return statusMap[status] || status;
   }
 
-  // ✅ PAGINATION METHODS
+  //  PAGINATION METHODS
   updatePagination(): void {
     this.totalPages = Math.ceil(this.filteredEmployees.length / this.pageSize);
 

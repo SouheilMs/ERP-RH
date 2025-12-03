@@ -220,7 +220,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   private resetComponent() {
-    console.log('🔄 Réinitialisation du composant pour le nouvel employé');
+    console.log(' Réinitialisation du composant pour le nouvel employé');
 
     this.payslipHistory = [];
     this.availableYears = [];
@@ -871,7 +871,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 🔥 MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
+  // MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
   getTargetMonth(): number {
     if (this.selectedYear < this.currentYear) {
       return 12;

@@ -17,7 +17,7 @@
         <h2>{{ employee.username }}</h2>
         <p><strong>Email:</strong> {{ employee.email }}</p>
         <p><strong>Phone:</strong> {{ employee.phone || '-' }}</p>
-        <p><strong>Position:</strong> {{ employee.position || '-' }}</p>
+        <p><strong>Status:</strong> {{ employee.status || '-' }}</p>
         <p><strong>Hire Date:</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
       </div>
 
@@ -113,7 +113,7 @@
             </div>
             <div *ngIf="passwordForm.newPassword && !passwordErrors.new && validatePassword(passwordForm.newPassword)"
                  class="success-message">
-               Valid password
+              Valid password
             </div>
           </div>
 
@@ -133,7 +133,7 @@
             </div>
             <div *ngIf="passwordForm.confirmPassword && !passwordErrors.confirm && passwordForm.newPassword === passwordForm.confirmPassword"
                  class="success-message">
-               Passwords match
+              Passwords match
             </div>
           </div>
         </div>
@@ -541,3 +541,4 @@
     </div>
   </div>
 </div>
+
