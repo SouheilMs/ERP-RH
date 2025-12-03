@@ -2,13 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NotificationComponent } from '../notification/notification';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role?: string;
-}
+import { AuthService, CurrentUser } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,47 +12,32 @@ interface User {
   styleUrls: ['./navbar.css']
 })
 export class NavbarComponent implements OnInit {
-  currentUser: User | null = null;
+  currentUser: CurrentUser | null = null;
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
   isManager = false;
   isAdmin = false;
+  isEmployee = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
-    this.loadCurrentUser();
-    this.checkUserRole();
+    // Subscribe to current user
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.checkUserRole();
+    });
   }
 
-  loadCurrentUser(): void {
-    // TODO: Replace with actual auth service
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      this.currentUser = JSON.parse(userJson);
-    } else {
-      // Fallback for demo
-      this.currentUser = {
-        id: localStorage.getItem('employeeId') || '1',
-        username: localStorage.getItem('username') || 'User',
-        email: localStorage.getItem('email') || 'user@example.com',
-        role: localStorage.getItem('role') || 'EMPLOYEE'
-      };
-    }
-  }
-
-  /**
-   * Check user role for conditional menu items
-   */
   checkUserRole(): void {
-    const role = this.currentUser?.role || localStorage.getItem('role') || 'EMPLOYEE';
-    this.isAdmin = role === 'ADMIN';
-    this.isManager = role === 'MANAGER' || this.isAdmin;
+    this.isAdmin = this.authService.isAdmin();
+    this.isManager = this.authService.isManager();
+    this.isEmployee = this.authService.isEmployee();
   }
 
-  /**
-   * Get user initials for avatar
-   */
   getUserInitials(): string {
     if (!this.currentUser?.username) return 'U';
 
@@ -69,66 +48,35 @@ export class NavbarComponent implements OnInit {
     return this.currentUser.username.substring(0, 2).toUpperCase();
   }
 
-  /**
-   * Toggle mobile menu
-   */
   toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
     this.isUserMenuOpen = false;
   }
 
-  /**
-   * Close mobile menu
-   */
   closeMobileMenu(): void {
     this.isMobileMenuOpen = false;
   }
 
-  /**
-   * Toggle user dropdown menu
-   */
   toggleUserMenu(): void {
     this.isUserMenuOpen = !this.isUserMenuOpen;
     this.isMobileMenuOpen = false;
   }
 
-  /**
-   * Close user menu
-   */
   closeUserMenu(): void {
     this.isUserMenuOpen = false;
   }
 
-  /**
-   * Close all menus
-   */
   closeAllMenus(): void {
     this.isMobileMenuOpen = false;
     this.isUserMenuOpen = false;
   }
 
-  /**
-   * Logout user
-   */
   logout(): void {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('employeeId');
-    localStorage.removeItem('username');
-    localStorage.removeItem('email');
-    localStorage.removeItem('role');
-    localStorage.removeItem('currentUser');
-
-    // Close menus
+    this.authService.logout();
     this.closeAllMenus();
-
-    // Navigate to login
     this.router.navigate(['/login']);
   }
 
-  /**
-   * Close menus on window resize
-   */
   @HostListener('window:resize', ['$event'])
   onResize(event: any): void {
     if (event.target.innerWidth > 768) {
@@ -136,9 +84,6 @@ export class NavbarComponent implements OnInit {
     }
   }
 
-  /**
-   * Close dropdowns when clicking outside
-   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;

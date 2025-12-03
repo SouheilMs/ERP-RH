@@ -14,6 +14,8 @@ import { JobListComponent } from './components/job-list.component/job-list.compo
 import { JobFormComponent } from './components/job-form.component/job-form.component';
 import { FormationListComponent } from './components/formation-list.component/formation-list.component';
 import { FormationFormComponent } from './components/formation-form.component/formation-form.component';
+import {RequestsListComponent} from './components/requests-list/requests-list';
+import {ManageRequestsComponent} from './components/manage-requests/manage-requests';
 
 
 
@@ -23,7 +25,6 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'conge', component: SubmitCongeComponent},
 
   // Protected routes (with authentication)
   {
@@ -50,6 +51,11 @@ export const routes: Routes = [
       { path: 'formations', component: FormationListComponent },
       { path: 'formations/new', component: FormationFormComponent },
       { path: 'formations/edit/:id', component: FormationFormComponent },
+
+      // Leave requests management
+      { path: 'conges/submit', component: SubmitCongeComponent},
+      { path: 'conges/my-requests', component: RequestsListComponent },
+      { path: 'conges/manage', component: ManageRequestsComponent },
 
       // Default protected route
       { path: '', redirectTo: 'employees', pathMatch: 'full' }

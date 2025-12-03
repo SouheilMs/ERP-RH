@@ -1,16 +1,14 @@
 package com.mycompany.backend.controllers;
 
+import com.mycompany.backend.dto.CongeRequestDTO;
+import com.mycompany.backend.dto.CongeStatusUpdateDTO;
 import com.mycompany.backend.entities.Conge;
-import com.mycompany.backend.payload.request.CongeRequestDTO;
-import com.mycompany.backend.payload.response.CongeStatusUpdateDTO;
 import com.mycompany.backend.services.CongeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/conges")
@@ -20,56 +18,60 @@ public class CongeController {
     @Autowired
     private CongeService congeService;
 
-    @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<Conge>> getEmployeeConges(@PathVariable String employeeId) {
-        List<Conge> conges = congeService.getEmployeeConges(employeeId);
-        return ResponseEntity.ok(conges);
-    }
-
-    @GetMapping("/{congeId}")
-    public ResponseEntity<?> getCongeById(@PathVariable String id) {
-        Optional<Conge> conge = congeService.getCongeById(id);
-        if (conge.isPresent()) {
-            return ResponseEntity.ok(conge.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Conge not found");
-        }
-    }
-
-    @PostMapping("/submit/{employeeId}")
-    public ResponseEntity<?> submitCongeRequest(
-            @PathVariable String employeeId,
-            @RequestBody CongeRequestDTO requestDTO) {
-        try {
-            Conge conge = congeService.submitCongeRequest(employeeId, requestDTO);
-            return ResponseEntity.ok(conge);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    @PostMapping("/submit")
+    public ResponseEntity<Conge> submitConge(
+            @RequestParam String employeeId,
+            @RequestBody CongeRequestDTO request) {
+        Conge conge = congeService.submitConge(employeeId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(conge);
     }
 
     @PutMapping("/{congeId}/status")
-    public ResponseEntity<?> updateCongeStatus(
+    public ResponseEntity<Conge> updateCongeStatus(
             @PathVariable String congeId,
             @RequestParam String managerId,
-            @RequestBody CongeStatusUpdateDTO statusDTO) {
-        try {
-            Conge updatedConge = congeService.updateCongeStatus(congeId, managerId, statusDTO);
-            return ResponseEntity.ok(updatedConge);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+            @RequestBody CongeStatusUpdateDTO statusUpdate) {
+        Conge updatedConge = congeService.updateCongeStatus(congeId, managerId, statusUpdate);
+        return ResponseEntity.ok(updatedConge);
     }
 
-    @DeleteMapping("/{congeId}/employee/{employeeId}")
-    public ResponseEntity<?> deleteConge(
+    @GetMapping("/pending")
+    public ResponseEntity<List<Conge>> getAllPendingConges() {
+        return ResponseEntity.ok(congeService.getAllPendingConges());
+    }
+
+    @GetMapping("/pending-manager")
+    public ResponseEntity<List<Conge>> getManagerPendingConges() {
+        return ResponseEntity.ok(congeService.getManagerPendingConges());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Conge>> getAllConges() {
+        return ResponseEntity.ok(congeService.getAllConges());
+    }
+
+    @GetMapping("/{congeId}")
+    public ResponseEntity<Conge> getCongeById(@PathVariable String congeId) {
+        return congeService.getCongeById(congeId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{congeId}")
+    public ResponseEntity<Void> deleteConge(
             @PathVariable String congeId,
-            @PathVariable String employeeId) {
-        try {
-            congeService.deleteConge(congeId, employeeId);
-            return ResponseEntity.ok("Conge request deleted successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+            @RequestParam String employeeId) {
+        congeService.deleteConge(congeId, employeeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Conge>> getCongesByStatus(@PathVariable String status) {
+        return ResponseEntity.ok(congeService.getCongesByStatus(status));
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<Conge>> getCongesByEmployeeId(@PathVariable String employeeId) {
+        return ResponseEntity.ok(congeService.getCongesByEmployeeId(employeeId));
     }
 }

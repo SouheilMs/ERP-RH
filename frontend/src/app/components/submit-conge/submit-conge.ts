@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CongeService, CongeRequest } from '../../services/conge.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-submit-conge',
   standalone: true,
-  imports: [ ReactiveFormsModule ],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './submit-conge.html',
-  styleUrl: './submit-conge.css',
+  styleUrls: ['./submit-conge.css']
 })
 export class SubmitCongeComponent implements OnInit {
   congeForm!: FormGroup;
@@ -23,9 +25,17 @@ export class SubmitCongeComponent implements OnInit {
     private congeService: CongeService,
     private router: Router
   ) {}
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
-    this.employeeId = localStorage.getItem('employeeId') || '';
+    // Get employee ID from authentication service
+    this.employeeId = this.authService.getCurrentUserId() || '';
+
+    if (!this.employeeId) {
+      console.error('No employee ID found. User might not be logged in.');
+      this.router.navigate(['/login']);
+      return;
+    }
 
     this.initForm();
     this.setupDateWatchers();
@@ -93,6 +103,15 @@ export class SubmitCongeComponent implements OnInit {
     return this.congeForm.get('reason');
   }
 
+  formatDate(value: any): string {
+    if (!value) return '';
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+    const date = new Date(value);
+    return date.toISOString().split('T')[0];
+  }
+
   onSubmit(): void {
     if (this.congeForm.valid) {
       this.isLoading = true;
@@ -101,8 +120,8 @@ export class SubmitCongeComponent implements OnInit {
 
       const request: CongeRequest = {
         type: this.congeForm.value.type,
-        startDate: this.congeForm.value.startDate,
-        endDate: this.congeForm.value.endDate,
+        startDate: this.formatDate(this.congeForm.value.startDate),
+        endDate: this.formatDate(this.congeForm.value.endDate),
         reason: this.congeForm.value.reason
       };
 

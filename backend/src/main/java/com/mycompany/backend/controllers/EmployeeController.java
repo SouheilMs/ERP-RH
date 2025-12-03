@@ -1,10 +1,7 @@
 package com.mycompany.backend.controllers;
 
 import com.mycompany.backend.dto.*;
-import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.entities.Payslip;
-import com.mycompany.backend.entities.Formation;
-import com.mycompany.backend.entities.Role;
+import com.mycompany.backend.entities.*;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.PayslipRepository;
@@ -509,5 +506,26 @@ public class EmployeeController {
         dto.setCertificateId(formation.getCertificateId());
 
         return dto;
+    }
+
+    @GetMapping("/rh")
+    public EmployeeGetDTO getSingleRh() {
+        return employeeService.getSingleRh();
+    }
+
+    //get all rh
+    @GetMapping("/all-rh")
+    public List<EmployeeGetDTO> getAllRh() {
+        List<Employee> rhs = employeeRepository.findAll().stream()
+                .filter(employee -> employee.getRoles().stream()
+                        .anyMatch(role -> role.getName().equals(ERole.ROLE_HR))).toList();
+        return rhs.stream()
+                .map(EmployeeGetDTO::EmployeeToEmployeeDto)
+                .toList();
+    }
+
+    @GetMapping("/hr-managers")
+    public EmployeeGetDTO getSingleHrManager() {
+        return employeeService.getSingleRhManager();
     }
 }

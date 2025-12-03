@@ -1,14 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { WebSocketService, Notification } from '../../services/websocket.service';
+import { WebSocketService } from '../../services/websocket.service';
+import type { Notification } from '../../services/websocket.service';
 import { NotificationService } from '../../services/notification.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-notification',
-  templateUrl: './notification.html',
-  styleUrls: ['./notification.css'],
   standalone: true,
+  imports: [CommonModule],
+  templateUrl: './notification.html',
+  styleUrls: ['./notification.css']
 })
 export class NotificationComponent implements OnInit, OnDestroy {
   notifications: Notification[] = [];
@@ -20,49 +24,47 @@ export class NotificationComponent implements OnInit, OnDestroy {
   private notificationSubscription?: Subscription;
   private connectionSubscription?: Subscription;
   private unreadCountSubscription?: Subscription;
+  private authService = inject(AuthService);
 
   constructor(
     private webSocketService: WebSocketService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
-    // TODO: Get actual user ID from authentication service
-    this.userId = localStorage.getItem('employeeId') || '';
+    // Get user ID from authentication service
+    this.userId = this.authService.getCurrentUserId() || '';
 
+    if (!this.userId) {
+      console.warn('No user ID found for notifications');
+      return;
+    }
     // Connect to WebSocket
     this.webSocketService.connect(this.userId);
-
-    // Subscribe to connection status
     this.connectionSubscription = this.webSocketService.getConnectionStatus()
-      .subscribe(status => {
-        this.isConnected = status;
-      });
-
-    // Subscribe to real-time notifications
+        .subscribe(status => {
+          this.isConnected = status;
+          if (status) {
+            // Load after connection
+            this.loadNotifications();
+          }
+        });
     this.notificationSubscription = this.webSocketService.getNotifications()
-      .subscribe(notification => {
-        if (notification) {
-          console.log('New notification received:', notification);
-
-          // Add to notifications list
-          this.notifications.unshift(notification);
-
-          // Increment unread count
-          this.notificationService.incrementUnreadCount();
-        }
-      });
-
-    // Subscribe to unread count
+        .subscribe(notification => {
+          if (notification) {
+            this.notifications.unshift(notification);
+            this.notificationService.incrementUnreadCount();
+            this.showBrowserNotification(notification);
+            this.playNotificationSound();
+          }
+        });
     this.unreadCountSubscription = this.notificationService.getUnreadCountObservable()
-      .subscribe(count => {
-        this.unreadCount = count;
-      });
+        .subscribe(count => {
+          this.unreadCount = count;
+        });
+    }
 
-    // Load existing notifications
-    this.loadNotifications();
-  }
 
   ngOnDestroy(): void {
     this.notificationSubscription?.unsubscribe();
@@ -129,5 +131,29 @@ export class NotificationComponent implements OnInit, OnDestroy {
     if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
 
     return date.toLocaleDateString();
+  }
+
+  private showBrowserNotification(notification: Notification): void {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/assets/notification-icon.png'
+      });
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification(notification.title, {
+            body: notification.message,
+            icon: '/assets/notification-icon.png'
+          });
+        }
+      });
+    }
+  }
+
+  private playNotificationSound(): void {
+    const audio = new Audio('/assets/notification-sound.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(err => console.log('Could not play sound:', err));
   }
 }

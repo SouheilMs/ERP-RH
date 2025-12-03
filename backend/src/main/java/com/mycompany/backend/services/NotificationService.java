@@ -1,15 +1,20 @@
 package com.mycompany.backend.services;
 
+import com.mycompany.backend.entities.Conge;
 import com.mycompany.backend.entities.Notification;
-
 import java.util.List;
 
 public interface NotificationService {
 
-    Notification sendNotification(String recipientId, String senderId, String senderName,
-                                  String type, String title, String message, String relatedEntityId);
+    void notifyManagerHrAboutNewLeaveRequest(Conge conge);
 
-    void broadcastToManagers(Notification notification);
+    void notifyHrAboutManagerApproval(Conge conge, String managerId, String managerName);
+
+    void notifyEmployeeAboutManagerRejection(Conge conge, String managerId, String managerName);
+
+    void notifyEmployeeAboutHrApproval(Conge conge, String hrId, String hrName);
+
+    void notifyEmployeeAboutHrRejection(Conge conge, String hrId, String hrName);
 
     List<Notification> getUserNotifications(String userId);
 
@@ -17,5 +22,7 @@ public interface NotificationService {
 
     long getUnreadCount(String userId);
 
-    Notification markAsRead(String notificationId);
+    void markAsRead(String notificationId);
+
+    void markAllAsRead(String userId);
 }

@@ -1,8 +1,9 @@
 package com.mycompany.backend.services.Impl;
 
-import com.mycompany.backend.payload.request.CongeRequestDTO;
-import com.mycompany.backend.payload.response.CongeStatusUpdateDTO;
+import com.mycompany.backend.dto.CongeRequestDTO;
+import com.mycompany.backend.dto.CongeStatusUpdateDTO;
 import com.mycompany.backend.entities.Conge;
+import com.mycompany.backend.entities.ERole;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.repositories.CongeRepository;
 import com.mycompany.backend.repositories.EmployeeRepository;
@@ -10,8 +11,9 @@ import com.mycompany.backend.services.CongeService;
 import com.mycompany.backend.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,44 +29,109 @@ public class CongeServiceImpl implements CongeService {
     @Autowired
     private NotificationService notificationService;
 
-    public Conge submitCongeRequest(String employeeId, CongeRequestDTO requestDTO) {
-        // Get employee information
-        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
-        if (employeeOpt.isEmpty()) {
-            throw new RuntimeException("Employee not found");
-        }
+    public Conge submitConge(String employeeId, CongeRequestDTO request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        Employee employee = employeeOpt.get();
-
-        // Validate dates
-        if (requestDTO.getEndDate().isBefore(requestDTO.getStartDate())) {
-            throw new RuntimeException("End date cannot be before start date");
-        }
-
-        // Create new conge
         Conge conge = new Conge();
         conge.setEmployeeId(employeeId);
-        conge.setEmployeeName(employee.getUsername()); // or employee.getFullName() if available
-        conge.setType(requestDTO.getType());
-        conge.setStartDate(requestDTO.getStartDate());
-        conge.setEndDate(requestDTO.getEndDate());
-        conge.setReason(requestDTO.getReason());
+        conge.setEmployeeName(employee.getUsername());
+        conge.setType(request.getType());
+        conge.setStartDate(request.getStartDate());
+        conge.setEndDate(request.getEndDate());
+        conge.setReason(request.getReason());
         conge.setStatus("PENDING");
         conge.setSubmissionDate(LocalDateTime.now());
-
-        // Calculate duration
         conge.calculateDuration();
 
-        return congeRepository.save(conge);
+        Conge savedConge = congeRepository.save(conge);
+
+        // Send notification to Manager HR
+        notificationService.notifyManagerHrAboutNewLeaveRequest(savedConge);
+
+        return savedConge;
     }
 
-    public List<Conge> getEmployeeConges(String employeeId) {
-        return congeRepository.findByEmployeeId(employeeId);
+    public Conge updateCongeStatus(String congeId, String managerId, CongeStatusUpdateDTO statusUpdate) {
+        Conge conge = congeRepository.findById(congeId)
+                .orElseThrow(() -> new RuntimeException("Conge not found"));
+
+        Employee manager = employeeRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        String currentStatus = conge.getStatus();
+        String newStatus = statusUpdate.getStatus();
+
+        // Manager HR processing
+        if (manager.getRoles().stream()
+                .anyMatch(role -> role.getName() .equals(ERole.ROLE_HRMANAGER)) && "PENDING".equals(currentStatus)) {
+            if ("APPROVED_MANAGER".equals(newStatus)) {
+                conge.setStatus("APPROVED_MANAGER");
+                conge.setManagerResponseDate(LocalDateTime.now());
+                conge.setManagerRespondedBy(manager.getUsername());
+
+                Conge savedConge = congeRepository.save(conge);
+
+                // Notify HR about manager approval
+                notificationService.notifyHrAboutManagerApproval(savedConge, managerId, manager.getUsername());
+
+                return savedConge;
+            } else if ("REJECTED_MANAGER".equals(newStatus)) {
+                conge.setStatus("REJECTED_MANAGER");
+                conge.setManagerResponseDate(LocalDateTime.now());
+                conge.setManagerRespondedBy(manager.getUsername());
+                conge.setManagerRejectionReason(statusUpdate.getRejectionReason());
+
+                Conge savedConge = congeRepository.save(conge);
+
+                // Notify employee about manager rejection
+                notificationService.notifyEmployeeAboutManagerRejection(savedConge, managerId, manager.getUsername());
+
+                return savedConge;
+            }
+        }
+
+        // HR processing
+        if (manager.getRoles().stream()
+                .anyMatch(role -> role.getName() .equals(ERole.ROLE_HR)) && "APPROVED_MANAGER".equals(currentStatus)) {
+            if ("APPROVED_RH".equals(newStatus)) {
+                conge.setStatus("APPROVED_RH");
+                conge.setRhResponseDate(LocalDateTime.now());
+                conge.setRhRespondedBy(manager.getUsername());
+
+                Conge savedConge = congeRepository.save(conge);
+
+                // Notify employee about HR approval
+                notificationService.notifyEmployeeAboutHrApproval(savedConge, managerId, manager.getUsername());
+
+                return savedConge;
+            } else if ("REJECTED_RH".equals(newStatus)) {
+                conge.setStatus("REJECTED_RH");
+                conge.setRhResponseDate(LocalDateTime.now());
+                conge.setRhRespondedBy(manager.getUsername());
+                conge.setRhRejectionReason(statusUpdate.getRejectionReason());
+
+                Conge savedConge = congeRepository.save(conge);
+
+                // Notify employee about HR rejection
+                notificationService.notifyEmployeeAboutHrRejection(savedConge, managerId, manager.getUsername());
+
+                return savedConge;
+            }
+        }
+
+        throw new RuntimeException("Invalid status transition");
+    }
+
+    public long calculateDuration(LocalDate startDate, LocalDate endDate) {
+        return ChronoUnit.DAYS.between(startDate, endDate) + 1;
     }
 
     public List<Conge> getAllPendingConges() {
-        return congeRepository.findByStatusOrderBySubmissionDateDesc("PENDING");
+        return congeRepository.findByStatus("PENDING");
     }
+
+    public List<Conge> getManagerPendingConges() { return congeRepository.findByStatus("APPROVED_MANAGER"); }
 
     public List<Conge> getAllConges() {
         return congeRepository.findAll();
@@ -74,55 +141,22 @@ public class CongeServiceImpl implements CongeService {
         return congeRepository.findById(congeId);
     }
 
-    public Conge updateCongeStatus(String congeId, String managerId, CongeStatusUpdateDTO statusDTO) {
-        Optional<Conge> congeOpt = congeRepository.findById(congeId);
-
-        if (congeOpt.isEmpty()) {
-            throw new RuntimeException("Conge not found");
-        }
-
-        Conge conge = congeOpt.get();
-
-        // Check if conge is already processed
-        if (!conge.getStatus().equals("PENDING")) {
-            throw new RuntimeException("This conge request has already been processed");
-        }
-
-        // Get manager information
-        Optional<Employee> managerOpt = employeeRepository.findById(managerId);
-        String managerName = managerOpt.map(Employee::getUsername).orElse("Unknown");
-
-        // Update status
-        conge.setStatus(statusDTO.getStatus());
-        conge.setResponseDate(LocalDateTime.now());
-        conge.setRespondedBy(managerName);
-
-        if (statusDTO.getStatus().equals("REJECTED")) {
-            conge.setRejectionReason(statusDTO.getRejectionReason());
-        }
-
-        return congeRepository.save(conge);
-    }
-
     public void deleteConge(String congeId, String employeeId) {
-        Optional<Conge> congeOpt = congeRepository.findById(congeId);
+        Conge conge = congeRepository.findById(congeId)
+                .orElseThrow(() -> new RuntimeException("Conge not found"));
 
-        if (congeOpt.isEmpty()) {
-            throw new RuntimeException("Conge not found");
-        }
-
-        Conge conge = congeOpt.get();
-
-        // Verify that the conge belongs to the employee
         if (!conge.getEmployeeId().equals(employeeId)) {
             throw new RuntimeException("Unauthorized to delete this conge");
         }
 
-        // Only allow deletion of pending requests
-        if (!conge.getStatus().equals("PENDING")) {
-            throw new RuntimeException("Cannot delete a processed conge request");
-        }
-
         congeRepository.deleteById(congeId);
+    }
+
+    public List<Conge> getCongesByStatus(String status) {
+        return congeRepository.findByStatus(status);
+    }
+
+    public List<Conge> getCongesByEmployeeId(String employeeId) {
+        return congeRepository.findByEmployeeId(employeeId);
     }
 }

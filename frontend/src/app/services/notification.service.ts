@@ -8,24 +8,24 @@ import { Notification } from './websocket.service';
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:8081/api';
+  private apiUrl = 'http://localhost:8081/api/notifications';
   private unreadCountSubject = new BehaviorSubject<number>(0);
 
   constructor(private http: HttpClient) {}
 
   getUserNotifications(userId: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.apiUrl}/notifications/user/${userId}`);
+    return this.http.get<Notification[]>(`${this.apiUrl}/user/${userId}`);
   }
 
   getUnreadNotifications(userId: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.apiUrl}/notifications/user/${userId}/unread`)
+    return this.http.get<Notification[]>(`${this.apiUrl}/user/${userId}/unread`)
       .pipe(
         tap(notifications => this.unreadCountSubject.next(notifications.length))
       );
   }
 
   getUnreadCount(userId: string): Observable<number> {
-    return this.http.get<number>(`${this.apiUrl}/notifications/user/${userId}/unread-count`)
+    return this.http.get<number>(`${this.apiUrl}/user/${userId}/unread-count`)
       .pipe(
         tap(count => this.unreadCountSubject.next(count))
       );
@@ -43,8 +43,8 @@ export class NotificationService {
     this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
   }
 
-  markAsRead(notificationId: string): Observable<Notification> {
-    return this.http.put<Notification>(`${this.apiUrl}/notifications/${notificationId}/read`, {})
+  markAsRead(notificationId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${notificationId}/read`, {})
       .pipe(
         tap(() => {
           const currentCount = this.unreadCountSubject.value;
@@ -52,6 +52,13 @@ export class NotificationService {
             this.unreadCountSubject.next(currentCount - 1);
           }
         })
+      );
+  }
+
+  markAllAsRead(userId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/user/${userId}/read-all`, {})
+      .pipe(
+        tap(() => this.unreadCountSubject.next(0))
       );
   }
 }

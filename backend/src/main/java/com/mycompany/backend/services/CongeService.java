@@ -1,25 +1,31 @@
 package com.mycompany.backend.services;
 
 import com.mycompany.backend.entities.Conge;
-import com.mycompany.backend.payload.request.CongeRequestDTO;
-import com.mycompany.backend.payload.response.CongeStatusUpdateDTO;
-
+import com.mycompany.backend.dto.CongeRequestDTO;
+import com.mycompany.backend.dto.CongeStatusUpdateDTO;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 public interface CongeService {
 
-    List<Conge> getEmployeeConges(String employeeId);
+    Conge submitConge(String employeeId, CongeRequestDTO request);
 
-    Optional<Conge> getCongeById(String congeId);
+    Conge updateCongeStatus(String congeId, String managerId, CongeStatusUpdateDTO statusUpdate);
 
     List<Conge> getAllPendingConges();
 
+    List<Conge> getManagerPendingConges();
+
     List<Conge> getAllConges();
 
-    Conge submitCongeRequest(String employeeId, CongeRequestDTO requestDTO);
+    Optional<Conge> getCongeById(String congeId);
 
-    Conge updateCongeStatus(String congeId, String managerId, CongeStatusUpdateDTO statusDTO);
+    long calculateDuration(LocalDate startDate, LocalDate endDate);
 
     void deleteConge(String congeId, String employeeId);
+
+    List<Conge> getCongesByStatus(String status);
+
+    List<Conge> getCongesByEmployeeId(String employeeId);
 }

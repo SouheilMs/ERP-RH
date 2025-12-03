@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, StompConfig } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -26,53 +26,60 @@ export class WebSocketService {
 
   constructor() {}
 
-  connect(userId: string): void {
-    const socket = new SockJS('http://localhost:8081/ws-endpoint');
+  connect(userId: string, userRoles?: string[]): void {
 
-    this.stompClient = new Client({
-      webSocketFactory: () => socket as any,
-      debug: (str) => {
-        console.log('STOMP: ' + str);
-      },
+    const endpoint = 'http://localhost:8081/ws-endpoint';
+
+    const stompConfig: StompConfig = {
+      webSocketFactory: () => new SockJS(endpoint),
+      debug: (str) => console.log(str),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-    });
+    };
 
-    this.stompClient.onConnect = (frame) => {
-      console.log('Connected: ' + frame);
+    this.stompClient = new Client(stompConfig);
+
+    this.stompClient.onConnect = () => {
+      console.log('Connected via SockJS');
       this.connectionStatusSubject.next(true);
 
-      // Subscribe to user-specific notifications
-      this.stompClient?.subscribe(`/user/${userId}/queue/notifications`, (message: IMessage) => {
-        const notification = JSON.parse(message.body);
-        console.log('Received notification:', notification);
-        this.notificationSubject.next(notification);
+      // USER NOTIFICATIONS
+      this.stompClient?.subscribe(`/user/${userId}/queue/notifications`, (msg) => {
+        const notif = JSON.parse(msg.body);
+        this.notificationSubject.next(notif);
       });
 
-      // Subscribe to manager broadcasts (if user is a manager)
-      this.stompClient?.subscribe('/topic/managers', (message: IMessage) => {
-        const notification = JSON.parse(message.body);
-        console.log('Received manager notification:', notification);
-        this.notificationSubject.next(notification);
-      });
+      // ROLE CHECKS
+      const isRH = userRoles?.some(r => r.toLowerCase().includes('rh') || r.toLowerCase().includes('role_rh'));
+      const isManager = userRoles?.some(r => r.toLowerCase().includes('manager')) && !isRH;
+
+      // RH topic
+      if (isRH) {
+        this.stompClient?.subscribe('/topic/rh', (msg) => {
+          const notif = JSON.parse(msg.body);
+          this.notificationSubject.next(notif);
+        });
+      }
+
+      // Manager topic
+      if (isManager) {
+        this.stompClient?.subscribe('/topic/managers', (msg) => {
+          const notif = JSON.parse(msg.body);
+          this.notificationSubject.next(notif);
+        });
+      }
     };
 
-    this.stompClient.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-      console.error('Additional details: ' + frame.body);
-      this.connectionStatusSubject.next(false);
-    };
+    this.stompClient.onWebSocketError = (err) =>
+      console.error('WebSocket error:', err);
 
     this.stompClient.activate();
   }
 
   disconnect(): void {
-    if (this.stompClient !== null) {
-      this.stompClient.deactivate();
-      this.connectionStatusSubject.next(false);
-      console.log('Disconnected');
-    }
+    this.stompClient?.deactivate();
+    this.connectionStatusSubject.next(false);
   }
 
   getNotifications(): Observable<Notification | null> {
@@ -81,9 +88,5 @@ export class WebSocketService {
 
   getConnectionStatus(): Observable<boolean> {
     return this.connectionStatusSubject.asObservable();
-  }
-
-  isConnected(): boolean {
-    return this.stompClient?.connected || false;
   }
 }

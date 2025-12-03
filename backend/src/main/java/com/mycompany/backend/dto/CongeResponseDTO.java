@@ -1,4 +1,4 @@
-package com.mycompany.backend.payload.response;
+package com.mycompany.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
