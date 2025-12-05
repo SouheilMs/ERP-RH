@@ -60,7 +60,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private PermissionService permissionService;
 
-    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS - MODIFIÉES
+    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS
     private void checkCreateEmployeePermission() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!permissionService.canCreateEmployees(authentication)) {
@@ -607,7 +607,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
         // Vérifier les permissions pour générer des fiches de paie
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (!permissionService.canManageEmployees(authentication)) {
             // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
             if (!isViewingOwnProfile(employeeId)) {

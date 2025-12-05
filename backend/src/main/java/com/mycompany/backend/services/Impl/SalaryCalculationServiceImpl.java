@@ -13,7 +13,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
     public Map<String, Object> calculateCompleteSalary(Employee employee, Map<String, Object> seniorityInfo) {
         Map<String, Object> result = new HashMap<>();
 
-        // Si seniorityInfo n'est pas fourni, le calculer
+
         if (seniorityInfo == null) {
             seniorityInfo = calculateSeniorityBonus(employee);
         }
@@ -71,9 +71,9 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         return result;
     }
 
-    // ---------------------------------------------------------
+
     // CALCUL DE LA PRIME D'ANCIENNETÉ (SEULEMENT PRIME 9 DINARS)
-    // ---------------------------------------------------------
+
     @Override
     public Map<String, Object> calculateSeniorityBonus(Employee employee) {
         return calculateSeniorityBonusForPeriod(employee, new Date());
@@ -111,7 +111,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
             // On retire les 18 premiers mois qui ne donnent pas de prime
             int monthsAfterInitialPeriod = totalMonthsOfService - 18;
 
-            // CORRECTION : Chaque période de 18 mois COMPLÈTE donne 9 dinars
+            //  Chaque période de 18 mois COMPLÈTE donne 9 dinars
             bonusPeriods = monthsAfterInitialPeriod / 18;
             nineDinarsBonus = bonusPeriods * 9.0;
 
@@ -124,7 +124,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
                     totalMonthsOfService + " mois (besoin de > 18 mois)");
         }
 
-        // SUPPRIMER LA PRIME TRADITIONNELLE - TOUJOURS 0
+
         double traditionalSeniorityBonus = 0.0;
 
         //  TOTAL = SEULEMENT LA PRIME 9 DINARS

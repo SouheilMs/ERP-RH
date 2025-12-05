@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/formations")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:4200"})
 public class FormationController {
 
     private final FormationService formationService;
