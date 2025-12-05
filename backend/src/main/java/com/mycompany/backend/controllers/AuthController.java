@@ -53,7 +53,6 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            logger.info("🔐 Tentative de connexion pour: {}", loginRequest.getEmail());
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
@@ -66,7 +65,6 @@ public class AuthController {
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
 
-            logger.info("✅ Connexion réussie pour: {}", employeeDetails.getEmail());
 
             return ResponseEntity.ok(new JwtResponse(jwt,
                     employeeDetails.getId().toString(),
@@ -75,12 +73,9 @@ public class AuthController {
                     roles));
 
         } catch (BadCredentialsException e) {
-            logger.error("❌ Identifiants invalides pour: {}", loginRequest.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse("Error: Invalid email or password!"));
         } catch (Exception e) {
-            logger.error("❌ Erreur lors de l'authentification: {}", e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: Authentication failed - " + e.getMessage()));
         }
@@ -89,7 +84,6 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         try {
-            logger.info("👤 Tentative d'inscription pour: {}", signUpRequest.getEmail());
 
             if (employeeRepository.existsByUsername(signUpRequest.getUsername())) {
                 return ResponseEntity
@@ -150,13 +144,10 @@ public class AuthController {
                     })
                     .collect(Collectors.toSet());
 
-            logger.info("✅ Inscription réussie pour: {}", employee.getEmail());
 
             return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
 
         } catch (Exception e) {
-            logger.error("❌ Erreur lors de l'inscription: {}", e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: Registration failed - " + e.getMessage()));
         }
@@ -165,7 +156,6 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
         try {
-            logger.info("🔑 Réinitialisation mot de passe pour: {}", resetRequest.getEmail());
 
             Employee employee = employeeRepository.findByEmail(resetRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Error: User not found."));
@@ -173,13 +163,10 @@ public class AuthController {
             employee.setPassword(encoder.encode(resetRequest.getPassword()));
             employeeRepository.save(employee);
 
-            logger.info("✅ Mot de passe réinitialisé pour: {}", resetRequest.getEmail());
 
             return ResponseEntity.ok(new MessageResponse("Password reset successfully!"));
 
         } catch (Exception e) {
-            logger.error("❌ Erreur réinitialisation mot de passe: {}", e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: Password reset failed - " + e.getMessage()));
         }
@@ -187,10 +174,8 @@ public class AuthController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGlobalException(Exception e) {
-        logger.error("❌ Erreur non gérée dans AuthController: {}", e.getMessage());
-        e.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new MessageResponse("Error: Internal server error - " + e.getMessage()));
     }
-	
+
 }

@@ -70,7 +70,7 @@ public class TestController {
         response.put("timestamp", java.time.LocalDateTime.now().toString());
 
         // Log pour débogage
-        System.out.println("✅ Public endpoint accessed successfully");
+        System.out.println(" Public endpoint accessed successfully");
 
         return ResponseEntity.ok(response);
     }

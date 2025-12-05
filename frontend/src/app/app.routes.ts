@@ -19,7 +19,7 @@ import { jobGuard } from './guards/job.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  
+
   // Routes publiques
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
@@ -37,19 +37,18 @@ export const routes: Routes = [
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
 
-      // ✅ CORRECTION : Routes Job avec ordre correct
-      { 
-        path: 'jobs/new', 
+      {
+        path: 'jobs/new',
         component: JobFormComponent,
         canActivate: [jobGuard]
       },
-      { 
-        path: 'jobs/:id/edit', 
+      {
+        path: 'jobs/:id/edit',
         component: JobFormComponent,
         canActivate: [jobGuard]
       },
-      { 
-        path: 'jobs', 
+      {
+        path: 'jobs',
         component: JobListComponent,
         canActivate: [jobGuard]
       },
@@ -57,22 +56,22 @@ export const routes: Routes = [
       { path: 'my-profile', component: EmployeeDetailComponent, data: { isMyProfile: true } },
 
       // Routes Formations
-      { 
-        path: 'formations', 
+      {
+        path: 'formations',
         component: FormationListComponent,
         canActivate: [formationGuard]
       },
-      { 
-        path: 'formations/new', 
+      {
+        path: 'formations/new',
         component: FormationFormComponent,
         canActivate: [formationGuard]
       },
-      { 
-        path: 'formations/edit/:id', 
+      {
+        path: 'formations/edit/:id',
         component: FormationFormComponent,
         canActivate: [formationGuard]
       },
-      
+
       { path: '', redirectTo: 'employees', pathMatch: 'full' }
     ]
   },

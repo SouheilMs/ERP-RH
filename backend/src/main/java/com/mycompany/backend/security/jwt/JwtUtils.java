@@ -34,7 +34,7 @@ public class JwtUtils {
                 .collect(Collectors.toList());
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getEmail())  // ✅ UTILISER EMAIL COMME SUBJECT
+                .setSubject(userPrincipal.getEmail())  //  UTILISER EMAIL COMME SUBJECT
                 .claim("email", userPrincipal.getEmail())
                 .claim("username", userPrincipal.getUsername())
                 .claim("roles", roles)
@@ -51,7 +51,7 @@ public class JwtUtils {
                 .parseClaimsJws(token)
                 .getBody();
 
-        // ✅ Retourner le subject (qui est maintenant l'email)
+        //  Retourner le subject (qui est maintenant l'email)
         return claims.getSubject();
     }
 

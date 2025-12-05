@@ -22,7 +22,7 @@ public class EmailServiceImpl implements EmailService {
                 "Voici vos identifiants :\n" +
                 "Email : " + toEmail + "\n" +
                 "Mot de passe : " + password + "\n\n" +
-                "⚠️ Veuillez changer votre mot de passe après votre première connexion.\n\n" +
+                " Veuillez changer votre mot de passe après votre première connexion.\n\n" +
                 "Cordialement,\nL’équipe RH");
 
         mailSender.send(message);

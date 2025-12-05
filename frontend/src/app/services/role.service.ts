@@ -32,7 +32,7 @@ export class RoleService {
   ) { }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('❌ API Error:', error);
+    console.error(' API Error:', error);
 
     let errorMessage = 'Une erreur est survenue';
 
@@ -72,10 +72,10 @@ export class RoleService {
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
 
-    console.log('🔐 Creating auth headers with token:', token ? 'PRESENT' : 'NULL');
+    console.log(' Creating auth headers with token:', token ? 'PRESENT' : 'NULL');
     if (token) {
-      console.log('🔐 Token length:', token.length);
-      console.log('🔐 Token start:', token.substring(0, 20) + '...');
+      console.log(' Token length:', token.length);
+      console.log(' Token start:', token.substring(0, 20) + '...');
     }
 
     if (token) {
@@ -92,16 +92,16 @@ export class RoleService {
 
   // READ - Récupérer tous les rôles
   getAllRoles(): Observable<Role[]> {
-    console.log('🔄 FETCHING ROLES FROM API');
+    console.log(' FETCHING ROLES FROM API');
 
     const headers = this.getAuthHeaders();
-    console.log('📨 Headers to send:', headers);
+    console.log('Headers to send:', headers);
 
     return this.http.get<Role[]>(this.apiUrl, { headers })
       .pipe(
         tap(roles => {
-          console.log('✅ ROLES API SUCCESS - Count:', roles?.length || 0);
-          console.log('📋 Roles received:', roles);
+          console.log(' ROLES API SUCCESS - Count:', roles?.length || 0);
+          console.log('Roles received:', roles);
         }),
         catchError(this.handleError)
       );
@@ -109,7 +109,7 @@ export class RoleService {
 
   // CREATE - Créer un nouveau rôle
   createRole(roleName: string): Observable<Role> {
-    console.log('🔄 CREATING ROLE:', roleName);
+    console.log(' CREATING ROLE:', roleName);
 
     const headers = this.getAuthHeaders();
     const roleDTO: RoleDTO = { roleName };
@@ -117,7 +117,7 @@ export class RoleService {
     return this.http.post<Role>(this.apiUrl, roleDTO, { headers })
       .pipe(
         tap(role => {
-          console.log('✅ ROLE CREATED SUCCESS:', role);
+          console.log(' ROLE CREATED SUCCESS:', role);
         }),
         catchError(this.handleError)
       );
@@ -125,7 +125,7 @@ export class RoleService {
 
   // UPDATE - Mettre à jour un rôle
   updateRole(id: string, roleName: string): Observable<Role> {
-    console.log('🔄 UPDATING ROLE:', id, roleName);
+    console.log(' UPDATING ROLE:', id, roleName);
 
     const headers = this.getAuthHeaders();
     const roleDTO: RoleDTO = { roleName };
@@ -133,7 +133,7 @@ export class RoleService {
     return this.http.put<Role>(`${this.apiUrl}/${id}`, roleDTO, { headers })
       .pipe(
         tap(role => {
-          console.log('✅ ROLE UPDATED SUCCESS:', role);
+          console.log(' ROLE UPDATED SUCCESS:', role);
         }),
         catchError(this.handleError)
       );
@@ -141,7 +141,7 @@ export class RoleService {
 
   // DELETE - Supprimer un rôle par ID
   deleteRole(id: string): Observable<string> {
-    console.log('🔄 DELETING ROLE:', id);
+    console.log(' DELETING ROLE:', id);
 
     const headers = this.getAuthHeaders();
 
@@ -150,7 +150,7 @@ export class RoleService {
       headers
     }).pipe(
       tap(response => {
-        console.log('✅ ROLE DELETED SUCCESS:', response);
+        console.log(' ROLE DELETED SUCCESS:', response);
       }),
       catchError(this.handleError)
     );
@@ -158,14 +158,14 @@ export class RoleService {
 
   // GET - Récupérer un rôle par ID
   getRoleById(id: string): Observable<Role> {
-    console.log('🔄 GETTING ROLE BY ID:', id);
+    console.log(' GETTING ROLE BY ID:', id);
 
     const headers = this.getAuthHeaders();
 
     return this.http.get<Role>(`${this.apiUrl}/${id}`, { headers })
       .pipe(
         tap(role => {
-          console.log('✅ ROLE BY ID SUCCESS:', role);
+          console.log(' ROLE BY ID SUCCESS:', role);
         }),
         catchError(this.handleError)
       );
@@ -173,14 +173,14 @@ export class RoleService {
 
   // GET - Récupérer un rôle par nom
   getRoleByName(roleName: string): Observable<Role> {
-    console.log('🔄 GETTING ROLE BY NAME:', roleName);
+    console.log(' GETTING ROLE BY NAME:', roleName);
 
     const headers = this.getAuthHeaders();
 
     return this.http.get<Role>(`${this.apiUrl}/name/${roleName}`, { headers })
       .pipe(
         tap(role => {
-          console.log('✅ ROLE BY NAME SUCCESS:', role);
+          console.log(' ROLE BY NAME SUCCESS:', role);
         }),
         catchError(this.handleError)
       );
@@ -188,14 +188,14 @@ export class RoleService {
 
   // GET - Vérifier si un rôle existe
   roleExists(roleName: string): Observable<boolean> {
-    console.log('🔄 CHECKING IF ROLE EXISTS:', roleName);
+    console.log(' CHECKING IF ROLE EXISTS:', roleName);
 
     const headers = this.getAuthHeaders();
 
     return this.http.get<boolean>(`${this.apiUrl}/exists/${roleName}`, { headers })
       .pipe(
         tap(exists => {
-          console.log('✅ ROLE EXISTS CHECK SUCCESS:', exists);
+          console.log(' ROLE EXISTS CHECK SUCCESS:', exists);
         }),
         catchError(this.handleError)
       );
@@ -203,7 +203,7 @@ export class RoleService {
 
   // DELETE - Supprimer tous les rôles
   deleteAllRoles(): Observable<string> {
-    console.log('🔄 DELETING ALL ROLES');
+    console.log(' DELETING ALL ROLES');
 
     const headers = this.getAuthHeaders();
 
@@ -212,7 +212,7 @@ export class RoleService {
       headers
     }).pipe(
       tap(response => {
-        console.log('✅ ALL ROLES DELETED SUCCESS:', response);
+        console.log(' ALL ROLES DELETED SUCCESS:', response);
       }),
       catchError(this.handleError)
     );
@@ -220,11 +220,11 @@ export class RoleService {
 
   // Méthode de debug pour vérifier l'état de l'authentification
   debugAuth(): void {
-    console.log('🐛 DEBUG ROLE SERVICE AUTH:');
-    console.log('🔐 Token:', this.authService.getToken());
-    console.log('👤 User:', this.authService.getUser());
-    console.log('🎯 User Roles:', this.authService.getUserRoles());
-    console.log('👑 isHR:', this.authService.isHR());
-    console.log('👨‍💼 isHRManager:', this.authService.isHRManager());
+    console.log(' DEBUG ROLE SERVICE AUTH:');
+    console.log('Token:', this.authService.getToken());
+    console.log(' User:', this.authService.getUser());
+    console.log(' User Roles:', this.authService.getUserRoles());
+    console.log(' isHR:', this.authService.isHR());
+    console.log(' isHRManager:', this.authService.isHRManager());
   }
 }

@@ -57,4 +57,5 @@ public interface EmployeeService {
 
     // Méthode pour récupérer la dernière fiche
     Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month);
+    ResponseEntity<?> changePassword(String employeeId, String currentPassword, String newPassword);
 }

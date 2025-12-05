@@ -17,11 +17,10 @@
         <h2>{{ employee.username }}</h2>
         <p><strong>Email:</strong> {{ employee.email }}</p>
         <p><strong>Phone:</strong> {{ employee.phone || '-' }}</p>
-        <p><strong>Status:</strong> {{ employee.status || '-' }}</p>
+        <p><strong>Position:</strong> {{ employee.position || '-' }}</p>
         <p><strong>Hire Date:</strong> {{ employee.hireDate | date:'yyyy-MM-dd' }}</p>
       </div>
 
-      <!-- Dans la section profil de employee-detail.component.html -->
       <div class="payslip-action">
         <button class="payslip-btn" (click)="viewPayslipHistory()">
           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="payslip-icon" viewBox="0 0 16 16">
@@ -38,10 +37,23 @@
   <div class="employee-form" *ngIf="canSeeUpdateForm()">
     <h3>Update Information</h3>
     <form (ngSubmit)="onUpdateSubmit($event)">
-      <div class="form-row">
+
+      <!-- ================= FIELDS FOR ALL USERS (OWN PROFILE) ================= -->
+      <div *ngIf="isViewingOwnProfile" class="form-row">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input id="username" type="text" [(ngModel)]="employee.username" name="username" required maxlength="50">
+        </div>
         <div class="form-group">
           <label for="email">Email:</label>
           <input id="email" type="email" [(ngModel)]="employee.email" name="email" required maxlength="50">
+        </div>
+      </div>
+
+      <div *ngIf="isViewingOwnProfile" class="form-row">
+        <div class="form-group">
+          <label for="address">Address:</label>
+          <input id="address" type="text" [(ngModel)]="employee.address" name="address" required maxlength="100">
         </div>
         <div class="form-group">
           <label for="phone">Phone:</label>
@@ -55,17 +67,104 @@
                  placeholder="Ex: 50123456"
                  [class.invalid]="phoneError"
                  [class.valid]="employee.phone && !phoneError">
+          <div *ngIf="phoneError" class="error-message">{{ phoneError }}</div>
+        </div>
 
-          <div *ngIf="phoneError" class="error-message">
-            {{ phoneError }}
+      </div>
+
+
+
+      <!-- ================= PASSWORD CHANGE SECTION (OWN PROFILE ONLY) ================= -->
+      <div *ngIf="isViewingOwnProfile" class="password-section">
+        <h4>Change Password</h4>
+        <small class="section-description">Fill out only if you want to change your password</small>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="currentPassword">Current Password:</label>
+            <input
+              id="currentPassword"
+              type="password"
+              [(ngModel)]="passwordForm.currentPassword"
+              name="currentPassword"
+              placeholder="Enter your current password"
+              [class.invalid]="passwordErrors.current"
+              [class.valid]="passwordForm.currentPassword && !passwordErrors.current">
+            <div *ngIf="passwordErrors.current" class="error-message">
+              {{ passwordErrors.current }}
+            </div>
           </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="newPassword">New Password:</label>
+            <input
+              id="newPassword"
+              type="password"
+              [(ngModel)]="passwordForm.newPassword"
+              name="newPassword"
+              (input)="onNewPasswordChange()"
+              placeholder="New password"
+              [class.invalid]="passwordErrors.new"
+              [class.valid]="passwordForm.newPassword && !passwordErrors.new && validatePassword(passwordForm.newPassword)">
+            <div *ngIf="passwordErrors.new" class="error-message">
+              {{ passwordErrors.new }}
+            </div>
+            <div *ngIf="passwordForm.newPassword && !passwordErrors.new && validatePassword(passwordForm.newPassword)"
+                 class="success-message">
+              Valid password
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password:</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              [(ngModel)]="passwordForm.confirmPassword"
+              name="confirmPassword"
+              (input)="onConfirmPasswordChange()"
+              placeholder="Confirm new password"
+              [class.invalid]="passwordErrors.confirm"
+              [class.valid]="passwordForm.confirmPassword && !passwordErrors.confirm && passwordForm.newPassword === passwordForm.confirmPassword">
+            <div *ngIf="passwordErrors.confirm" class="error-message">
+              {{ passwordErrors.confirm }}
+            </div>
+            <div *ngIf="passwordForm.confirmPassword && !passwordErrors.confirm && passwordForm.newPassword === passwordForm.confirmPassword"
+                 class="success-message">
+              Passwords match
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- ================= HR FIELDS ONLY (OTHER EMPLOYEES) ================= -->
+      <div *ngIf="!isViewingOwnProfile && canViewAllInfo" class="form-row">
+        <div class="form-group">
+          <label for="cin">CIN:</label>
+          <input id="cin" type="text" [(ngModel)]="employee.cin" name="cin" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label for="cnssNumber">CNSS Number:</label>
+          <input id="cnssNumber" type="text" [(ngModel)]="employee.cnssNumber" name="cnssNumber" maxlength="30">
         </div>
       </div>
 
-      <div class="form-row">
+      <div *ngIf="!isViewingOwnProfile && canViewAllInfo" class="form-row">
         <div class="form-group">
-          <label for="address">Address:</label>
-          <input id="address" type="text" [(ngModel)]="employee.address" name="address" required maxlength="100">
+          <label for="position">Position:</label>
+          <input id="position"
+                 type="text"
+                 [(ngModel)]="employee.position"
+                 name="position"
+                 (blur)="validatePosition()"
+                 maxlength="15"
+                 [class.invalid]="positionError"
+                 [class.valid]="employee.position && !positionError">
+          <div *ngIf="positionError" class="error-message">{{ positionError }}</div>
         </div>
         <div class="form-group">
           <label for="salary">Salary:</label>
@@ -78,30 +177,24 @@
                  step="0.01"
                  [class.invalid]="salaryError"
                  [class.valid]="employee.salary && !salaryError">
-
-          <div *ngIf="salaryError" class="error-message">
-            {{ salaryError }}
-          </div>
+          <div *ngIf="salaryError" class="error-message">{{ salaryError }}</div>
         </div>
       </div>
 
-      <div class="form-row">
+      <div *ngIf="!isViewingOwnProfile && canViewAllInfo" class="form-row">
         <div class="form-group">
-          <label for="position">Position:</label>
-          <input id="position"
-                 type="text"
-                 [(ngModel)]="employee.position"
-                 name="position"
-                 (blur)="validatePosition()"
-                 maxlength="15"
-                 [class.invalid]="positionError"
-                 [class.valid]="employee.status && !positionError">
-
-          <div *ngIf="positionError" class="error-message">
-            {{ positionError }}
-          </div>
+          <label for="rib">RIB:</label>
+          <input id="rib" type="text" [(ngModel)]="employee.rib" name="rib" maxlength="30">
         </div>
-        <div class="form-group date-input-group">
+        <div class="form-group">
+          <label for="bankName">Bank Name:</label>
+          <input id="bankName" type="text" [(ngModel)]="employee.bankName" name="bankName" maxlength="50">
+        </div>
+      </div>
+
+      <!-- Hire Date in HR section -->
+      <div *ngIf="!isViewingOwnProfile && canViewAllInfo" class="form-row">
+        <div class="form-group">
           <label for="hireDate">Hire Date:</label>
           <input id="hireDate"
                  type="date"
@@ -110,17 +203,17 @@
                  (blur)="validateHireDate()"
                  [max]="getMaxHireDate()"
                  [class.invalid]="hireDateError"
-                 [class.valid]="employee.hireDate && !hireDateError"
-                 class="date-input">
-
-          <div *ngIf="hireDateError" class="error-message">
-            {{ hireDateError }}
-          </div>
+                 [class.valid]="employee.hireDate && !hireDateError">
+          <div *ngIf="hireDateError" class="error-message">{{ hireDateError }}</div>
+        </div>
+        <div class="form-group">
+          <label for="address">Address:</label>
+          <input id="address" type="text" [(ngModel)]="employee.address" name="address" maxlength="50">
         </div>
       </div>
 
-      <!-- Change photo section in form -->
-      <div class="photo-upload-section">
+      <!-- Photo section (only for HR on other employees) -->
+      <div *ngIf="!isViewingOwnProfile && canViewAllInfo" class="photo-upload-section">
         <h4>Change Profile Photo</h4>
         <div class="photo-upload-form">
           <input type="file" (change)="onPhotoSelected($event)" accept="image/*">
@@ -179,7 +272,7 @@
           </div>
           <div class="formation-right">
             <button class="delete-btn" (click)="deleteFormation(f.id)" title="Delete formation">
-               Delete
+              Delete
             </button>
           </div>
         </div>
@@ -204,7 +297,7 @@
           (load)="onFormationPdfLoad()">
         </iframe>
         <div *ngIf="!currentFormationPdfUrl && formationPdfLoading" class="pdf-loading">
-           Loading certificate...
+          Loading certificate...
         </div>
       </div>
     </div>
@@ -419,6 +512,20 @@
     </div>
   </div>
 
+  <!-- Success Modal for Password Change -->
+  <div class="modal success-modal" *ngIf="showPasswordSuccess">
+    <div class="modal-content">
+      <span class="close-btn" (click)="showPasswordSuccess = false">&times;</span>
+      <div class="success-icon">✅</div>
+      <div class="success-message">
+        <p>Password changed successfully!</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="success-btn" (click)="showPasswordSuccess = false">OK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Error Modal -->
   <div class="modal error-modal" *ngIf="showErrorModal">
     <div class="modal-content">
@@ -434,3 +541,4 @@
     </div>
   </div>
 </div>
+

@@ -56,7 +56,6 @@ export class PdfGenerationService {
     return doc;
   }
 
- // EXTRACTION : Extrait une date à partir du texte de la période
   private extractDateFromPeriod(periodText: string): Date {
     try {
       const [monthName, yearStr] = periodText.split(' ');
@@ -67,7 +66,7 @@ export class PdfGenerationService {
       const monthIndex = monthNames.findIndex(name => name === monthName);
 
       if (monthIndex !== -1 && !isNaN(year)) {
-        return new Date(year, monthIndex, 15); // Milieu du mois pour éviter les problèmes de jours
+        return new Date(year, monthIndex, 15);
       }
     } catch (error) {
       console.error('Erreur extraction date période:', error);
@@ -77,9 +76,7 @@ export class PdfGenerationService {
     return new Date();
   }
 
- // EXTRACTION : Crée un employé "propre" sans données d'ancienneté pré-calculées
   private createCleanEmployeeForCalculation(employee: Employee): Employee {
-    // Créer un nouvel objet avec seulement les propriétés nécessaires au calcul
     const cleanEmployee: Employee = {
       id: employee.id,
       username: employee.username,
@@ -103,7 +100,6 @@ export class PdfGenerationService {
       transportAllowance: employee.transportAllowance,
       familyAllowance: employee.familyAllowance,
       otherBonuses: employee.otherBonuses,
-      // NE PAS inclure les propriétés d'ancienneté pour forcer un nouveau calcul
       seniorityBonus: undefined,
       yearsOfService: undefined,
       monthsOfService: undefined,

@@ -424,6 +424,57 @@
   background: transparent;
 }
 
+/* Bouton View */
+.view-btn {
+  color: #5a6fd8;
+  border: 2px solid #5a6fd8;
+}
+
+.view-btn:hover {
+  background: #5a6fd8;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(90, 111, 216, 0.3);
+}
+
+/* Bouton Edit */
+.edit-btn {
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.edit-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Bouton Delete */
+.delete-btn {
+  color: #e53e3e;
+  border: 2px solid #e53e3e;
+}
+
+.delete-btn:hover {
+  background: #e53e3e;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.delete-btn:disabled:hover {
+  background: transparent;
+  color: #e53e3e;
+  box-shadow: none;
+}
+
 .action-btn::before {
   content: attr(title);
   position: absolute;
@@ -450,37 +501,10 @@
   bottom: -30px;
 }
 
-.edit-btn {
-  color: #667eea;
-  border: 2px solid #667eea;
-}
-
-.edit-btn:hover {
-  background: #667eea;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.delete-btn {
-  color: #e53e3e;
-  border: 2px solid #e53e3e;
-}
-
-.delete-btn:hover {
-  background: #e53e3e;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.delete-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.delete-btn:disabled:hover {
-  background: transparent;
-  color: #e53e3e;
+/* Animation des icônes au survol */
+.action-btn:hover svg {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
 }
 
 /* États de chargement */
@@ -542,6 +566,122 @@
   color: #718096;
   margin: 0;
   font-size: 16px;
+}
+
+/* Pagination Section */
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: #f7fafc;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.pagination-info {
+  color: #718096;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+}
+
+.page-number {
+  padding: 8px 12px;
+  background: white;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+}
+
+.page-number:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  transform: translateY(-1px);
+}
+
+.page-number.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.page-number:disabled {
+  background: transparent;
+  color: #a0aec0;
+  border-color: #e2e8f0;
+  cursor: default;
+  transform: none;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #718096;
+  font-size: 14px;
+}
+
+.page-size-select {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #4a5568;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-size-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
 /* Responsive */
@@ -614,6 +754,25 @@
     font-size: 11px;
     padding: 6px 12px;
   }
+
+  /* Pagination responsive */
+  .pagination-section {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .pagination-controls {
+    order: 1;
+  }
+
+  .pagination-info {
+    order: 2;
+  }
+
+  .page-size-selector {
+    order: 3;
+  }
 }
 
 @media (max-width: 480px) {
@@ -635,5 +794,17 @@
 
   .search-input-wrapper {
     max-width: 100%;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .page-numbers {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 10px;
   }
 }

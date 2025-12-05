@@ -10,7 +10,7 @@ describe('FormationCardComponent', () => {
     await TestBed.configureTestingModule({
       imports: [FormationCardComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(FormationCardComponent);
     component = fixture.componentInstance;
@@ -21,3 +21,4 @@ describe('FormationCardComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+
