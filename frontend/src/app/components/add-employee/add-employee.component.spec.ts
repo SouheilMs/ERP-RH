@@ -43,7 +43,7 @@ describe('AddEmployeeComponent', () => {
     component.saveEmployee();
 
     expect(component.errorMessage)
-      .toBe('Tous les champs obligatoires doivent être remplis.');
+      .toBe('All required fields must be completed.');
   });
 
   it('should call API and close modal on success', () => {
@@ -52,7 +52,26 @@ describe('AddEmployeeComponent', () => {
       email: 'john@example.com',
       password: '12345',
       phone: '',
-      status: 'Active'
+      gender: '',
+      photoUrl: '',
+      photoFile: null,
+      hireDate: '',
+      salary: null,
+      position: 'SOFTWARE_DEVELOPER',
+      customPosition: '',
+      status: 'ACTIVE',
+      cin: '12345678',
+      cnssNumber: '123456789',
+      matricule: 'EMP001',
+      workingDays: 22,
+      actualWorkingDays: 22,
+      address: '',
+      city: '',
+      rib: '',
+      bankName: '',
+      transportAllowance: 0,
+      familyAllowance: 0,
+      otherBonuses: 0
     };
 
     const closeSpy = spyOn(component, 'closeModal');
@@ -73,13 +92,54 @@ describe('AddEmployeeComponent', () => {
       email: 'john@example.com',
       password: '12345',
       phone: '',
-      status: 'Active'
+      gender: '',
+      photoUrl: '',
+      photoFile: null,
+      hireDate: '',
+      salary: null,
+      position: 'SOFTWARE_DEVELOPER',
+      customPosition: '',
+      status: 'ACTIVE',
+      cin: '12345678',
+      cnssNumber: '123456789',
+      matricule: 'EMP001',
+      workingDays: 22,
+      actualWorkingDays: 22,
+      address: '',
+      city: '',
+      rib: '',
+      bankName: '',
+      transportAllowance: 0,
+      familyAllowance: 0,
+      otherBonuses: 0
     };
 
     component.saveEmployee();
 
     const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
-    req.flush('Erreur', { status: 500, statusText: 'Server Error' });
-    expect(component.errorMessage).toBe('⚠️ Erreur lors de l’ajout de l’employé.');
+    req.flush('Error', { status: 500, statusText: 'Server Error' });
+    expect(component.errorMessage).toBe('An error occurred while adding the employee.');
+  });
+
+  it('should handle file selection', () => {
+    const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
+    const event = { target: { files: [file] } };
+
+    component.onFileSelected(event);
+
+    expect(component.selectedFile).toBe(file);
+    expect(component.employee.photoFile).toBe(file);
+  });
+
+  it('should remove photo', () => {
+    component.employee.photoUrl = 'test-url';
+    component.employee.photoFile = new File([''], 'test.jpg');
+    component.selectedFile = new File([''], 'test.jpg');
+
+    component.removePhoto();
+
+    expect(component.employee.photoUrl).toBe('');
+    expect(component.employee.photoFile).toBeNull();
+    expect(component.selectedFile).toBeNull();
   });
 });

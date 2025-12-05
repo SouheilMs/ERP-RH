@@ -1,0 +1,122 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <div class="navbar-brand">
+      <a routerLink="/" class="brand-link">
+        <i class="logo-icon">🏢</i>
+        <span class="brand-text">HR VISION</span>
+      </a>
+    </div>
+
+    <!-- Barre de recherche globale dans le navbar -->
+    <div class="navbar-search">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          class="search-input"
+          placeholder="Search in dashboard..."
+          autocomplete="off">
+        @if (searchTerm) {
+          <button class="clear-search" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Menu principal -->
+    <div class="navbar-menu">
+      <ul class="nav-links">
+       
+      </ul>
+    </div>
+
+    <!-- Section utilisateur -->
+    <div class="navbar-user">
+      <div class="user-menu">
+        <button class="user-toggle" (click)="toggleUserMenu()">
+          <div class="user-avatar">
+            <i class="fas fa-user avatar-icon"></i>
+          </div>
+          <span class="user-name">{{ userName }}</span>
+          <i class="fas fa-chevron-down dropdown-icon"></i>
+        </button>
+        
+        <div class="user-dropdown" [class.show]="isUserMenuOpen">
+          <a routerLink="/profile" class="dropdown-item">
+            <i class="fas fa-user item-icon"></i>
+            My Profile
+          </a>
+          <a routerLink="/settings" class="dropdown-item">
+            <i class="fas fa-cog item-icon"></i>
+            Settings
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout-btn" (click)="logout()">
+            <i class="fas fa-sign-out-alt item-icon"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton menu mobile -->
+    <button class="mobile-toggle" (click)="toggleMobileMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <!-- Menu mobile -->
+  <div class="mobile-menu" [class.show]="isMobileMenuOpen">
+    <!-- Barre de recherche mobile -->
+    <div class="mobile-search">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          class="search-input"
+          placeholder="Search in dashboard..."
+          autocomplete="off">
+        @if (searchTerm) {
+          <button class="clear-search" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <ul class="mobile-links">
+      <li class="mobile-item">
+        <a routerLink="/dashboard" class="mobile-link" (click)="toggleMobileMenu()">
+          <i class="fas fa-tachometer-alt"></i>
+          Dashboard
+        </a>
+      </li>
+      <li class="mobile-item">
+        <a routerLink="/employees" class="mobile-link" (click)="toggleMobileMenu()">
+          <i class="fas fa-users"></i>
+          Employees
+        </a>
+      </li>
+      <li class="mobile-item">
+        <a routerLink="/roles" class="mobile-link" (click)="toggleMobileMenu()">
+          <i class="fas fa-user-tag"></i>
+          Roles
+        </a>
+      </li>
+      <li class="mobile-item">
+        <button class="mobile-link logout-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </li>
+    </ul>
+  </div>
+</nav>

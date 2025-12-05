@@ -1,20 +1,40 @@
-<div class="dashboard-layout">
+<app-navbar></app-navbar>
 
+<div class="dashboard-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2>ERP RH</h2>
-
     <ul>
-
       <li>
-        <a routerLink="/employees" routerLinkActive="active">Liste des employés</a>
+        <a routerLink="/employees" routerLinkActive="active">
+          <i class="fas fa-users me-2"></i>
+          Employees List
+        </a>
+      </li>
+      <li>
+        <a routerLink="/roles" routerLinkActive="active">
+          <i class="fas fa-bullseye me-2"></i>
+          Roles List
+        </a>
+      </li>
+      <!-- Add Job Offers to sidebar -->
+      <li>
+        <a routerLink="/jobs" routerLinkActive="active">
+          <i class="fas fa-briefcase me-2"></i>
+          Job Offers
+        </a>
+      </li>
+      <!-- Add Formations to sidebar -->
+      <li>
+        <a routerLink="/formations" class="nav-link">
+          <i class="fas fa-chalkboard-teacher"></i>
+               Formations
+        </a>
       </li>
     </ul>
   </aside>
 
-  <!-- Contenu principal -->
+  <!-- Main content -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
-
 </div>

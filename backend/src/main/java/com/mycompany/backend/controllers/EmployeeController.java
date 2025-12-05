@@ -1,17 +1,19 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.dto.EmployeeDTO;
-import com.mycompany.backend.dto.LeaveBalanceDTO;
+import com.mycompany.backend.dto.*;
 import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.entities.formation;
+import com.mycompany.backend.entities.Payslip;
+import com.mycompany.backend.entities.Formation;
+import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
+import com.mycompany.backend.repositories.PayslipRepository;
 import com.mycompany.backend.services.EmployeeService;
 import com.mycompany.backend.services.GridFsService;
-import com.mycompany.backend.services.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +22,7 @@ import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -35,41 +36,121 @@ public class EmployeeController {
     private FormationRepository formationRepository;
 
     @Autowired
-    private EmployeeService employeeService;
+    private PayslipRepository payslipRepository;
 
     @Autowired
-    private StorageService storageService;
+    private EmployeeService employeeService;
 
     @Autowired
     private GridFsService gridFsService;
 
     // -------------------- EMPLOYÉ --------------------
-
-    // Liste tous les employés
     @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
-        return ResponseEntity.ok(employeeService.getAllEmployees());
+    public ResponseEntity<List<EmployeeGetDTO>> getAllEmployees() {
+        List<Employee> employees = employeeService.getAllEmployees();
+        List<EmployeeGetDTO> response = EmployeeGetDTO.EmployeesToEmployeeDtos(employees);
+        return ResponseEntity.ok(response);
     }
 
-    // Récupérer un employé par ID
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
+    public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
         return employeeService.getEmployeeById(id)
+                .map(this::convertToDetailDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Créer un employé
     @PostMapping("/Add-employee")
     public ResponseEntity<?> registerNewEmployee(@RequestBody @Valid EmployeeDTO employeeDTO,
                                                  final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
+    // ✅ AJOUTEZ CE NOUVEAU ENDPOINT - Ligne 55 (après le POST existant)
+    @PostMapping("/add-with-photo")
+    public ResponseEntity<Map<String, Object>> addEmployeeWithPhoto(@RequestBody EmployeeDTO employeeDTO) {
+        try {
+            System.out.println("=== ADD EMPLOYEE WITH PHOTO ===");
+            System.out.println("Username: " + employeeDTO.getUsername());
+            System.out.println("Email: " + employeeDTO.getEmail());
+            System.out.println("Photo provided: " + (employeeDTO.getPhotoUrl() != null));
 
-    // Mettre à jour un employé
+            // Vérifier si l'email existe déjà
+            if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("message", "An employee with this email already exists");
+                errorResponse.put("error", "EMAIL_EXISTS");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            }
+
+            // Créer l'employé directement avec le repository
+            Employee employee = new Employee();
+            employee.setUsername(employeeDTO.getUsername());
+            employee.setEmail(employeeDTO.getEmail());
+            employee.setPhone(employeeDTO.getPhone());
+
+            // Utiliser BCrypt pour encoder le mot de passe
+            String encodedPassword = new BCryptPasswordEncoder().encode(employeeDTO.getPassword());
+            employee.setPassword(encodedPassword);
+
+            employee.setHireDate(employeeDTO.getHireDate() != null ? employeeDTO.getHireDate() : new Date());
+            employee.setSalary(employeeDTO.getSalary());
+            employee.setStatus(employeeDTO.getStatus() != null ? employeeDTO.getStatus() : "ACTIVE");
+
+            // Gestion du genre
+            if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
+                employee.setGender(employeeDTO.getGender().toUpperCase());
+            }
+
+            // Informations fiche de paie
+            employee.setCin(employeeDTO.getCin());
+            employee.setCnssNumber(employeeDTO.getCnssNumber());
+            employee.setPosition(employeeDTO.getPosition());
+            employee.setAddress(employeeDTO.getAddress());
+            employee.setCity(employeeDTO.getCity());
+            employee.setMatricule(employeeDTO.getMatricule());
+            employee.setRib(employeeDTO.getRib());
+            employee.setBankName(employeeDTO.getBankName());
+            employee.setWorkingDays(employeeDTO.getWorkingDays() != null ? employeeDTO.getWorkingDays() : 22);
+            employee.setActualWorkingDays(employeeDTO.getActualWorkingDays() != null ? employeeDTO.getActualWorkingDays() : 22);
+            employee.setTransportAllowance(employeeDTO.getTransportAllowance() != null ? employeeDTO.getTransportAllowance() : 0.0);
+            employee.setFamilyAllowance(employeeDTO.getFamilyAllowance() != null ? employeeDTO.getFamilyAllowance() : 0.0);
+            employee.setOtherBonuses(employeeDTO.getOtherBonuses() != null ? employeeDTO.getOtherBonuses() : 0.0);
+
+            // ✅ GESTION DE LA PHOTO
+            if (employeeDTO.getPhotoUrl() != null && !employeeDTO.getPhotoUrl().isEmpty()) {
+                employee.setPhotoUrl(employeeDTO.getPhotoUrl());
+                employee.setPhotoId(employeeDTO.getPhotoId() != null ? employeeDTO.getPhotoId() : "photo_" + System.currentTimeMillis());
+                System.out.println("✅ Photo set for employee");
+            }
+
+            // Sauvegarder l'employé
+            Employee savedEmployee = employeeRepository.save(employee);
+            System.out.println("✅ Employee saved with ID: " + savedEmployee.getId());
+
+            // Retourner la réponse en JSON
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Employee created successfully with photo");
+            response.put("employeeId", savedEmployee.getId());
+            response.put("photoSaved", savedEmployee.getPhotoUrl() != null);
+            response.put("username", savedEmployee.getUsername());
+            response.put("email", savedEmployee.getEmail());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creating employee with photo: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Error creating employee: " + e.getMessage());
+            errorResponse.put("error", "SERVER_ERROR");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String id,
-                                                   @RequestBody Employee employeeDetails) {
+    public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
+                                                            @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -80,7 +161,7 @@ public class EmployeeController {
         employee.setSalary(employeeDetails.getSalary());
         employee.setStatus(employeeDetails.getStatus());
         employee.setHireDate(employeeDetails.getHireDate());
-        employee.setCin(employeeDetails.getCin());
+
         employee.setCnssNumber(employeeDetails.getCnssNumber());
         employee.setPosition(employeeDetails.getPosition());
         employee.setAddress(employeeDetails.getAddress());
@@ -95,11 +176,11 @@ public class EmployeeController {
         employee.setOtherBonuses(employeeDetails.getOtherBonuses());
 
         Employee updated = employeeService.saveEmployee(employee);
+        EmployeeDetailDTO response = convertToDetailDTO(updated);
 
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(response);
     }
 
-    // Supprimer un employé
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteEmployee(@PathVariable String id) {
         employeeService.deleteEmployee(id);
@@ -107,36 +188,28 @@ public class EmployeeController {
     }
 
     // -------------------- PHOTO --------------------
-
-    // Upload photo
     @PostMapping("/{id}/upload-photo")
-    public ResponseEntity<Employee> uploadPhoto(@PathVariable String id,
-                                                @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
+                                                         @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
-            // Supprimer l'ancienne photo si elle existe
             if (employee.getPhotoId() != null) {
                 gridFsService.deleteFile(employee.getPhotoId());
             }
 
-            // Stocker la nouvelle photo dans GridFS
             String photoId = employeeService.storeEmployeePhoto(id, file);
             employee.setPhotoId(photoId);
-
-            // Sauvegarder l'employé dans MongoDB pour que tous les binômes voient le changement
             employeeRepository.save(employee);
 
-            return ResponseEntity.ok(employee);
+            EmployeeDetailDTO response = convertToDetailDTO(employee);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erreur upload photo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
-
-
-    // Get employee photo by employee ID
     @GetMapping("/{id}/photo")
     public ResponseEntity<byte[]> getEmployeePhoto(@PathVariable String id) throws IOException {
         Employee emp = employeeRepository.findById(id)
@@ -153,7 +226,6 @@ public class EmployeeController {
     }
 
     // -------------------- EXPORT / IMPORT --------------------
-
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportEmployees() throws IOException {
         ByteArrayOutputStream out = employeeService.exportToExcel();
@@ -174,9 +246,10 @@ public class EmployeeController {
                     .body("Erreur lors de l'import : " + e.getMessage());
         }
     }
-// -------------------- FORMATION --------------------
+
+    // -------------------- FORMATION --------------------
     @PostMapping("/{id}/formations")
-    public ResponseEntity<formation> addFormation(
+    public ResponseEntity<FormationDTO> addFormation(
             @PathVariable String id,
             @RequestParam("name") String name,
             @RequestParam("location") String location,
@@ -187,135 +260,337 @@ public class EmployeeController {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
-        formation f = new formation();
-        f.setName(name);
+        Formation f = new Formation();
+        f.setTitle(name);
         f.setLocation(location);
         f.setStartDate(LocalDate.parse(startDate));
         f.setEndDate(LocalDate.parse(endDate));
-        f.setEmployee(emp);
+        f.setCreatedBy(emp);
+        f.getParticipants().add(emp);
 
         if (certificate != null && !certificate.isEmpty()) {
-            // Supprimer ancien certificat si déjà existant (optionnel)
             if(f.getCertificateId() != null) {
                 gridFsService.deleteFile(f.getCertificateId());
             }
 
-            // Stocker le PDF dans GridFS
             String fileId = employeeService.storeFormationFile(certificate);
             f.setCertificateId(fileId);
         }
 
-        formation savedFormation = formationRepository.save(f);
-
-        // Ajouter la formation à l'employé et sauvegarder
+        Formation savedFormation = formationRepository.save(f);
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
-        return ResponseEntity.ok(savedFormation);
+        FormationDTO response = convertToFormationDTO(savedFormation);
+        return ResponseEntity.ok(response);
     }
-// Récupérer le certificat de formation (PDF) par ID
+
     @GetMapping("/formations/certificate/{id}")
     public ResponseEntity<byte[]> getFormationCertificate(@PathVariable String id) throws IOException {
         GridFsResource resource = gridFsService.getFile(id);
         byte[] data = resource.getInputStream().readAllBytes();
 
-        // En-têtes pour afficher dans le navigateur
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(resource.getContentType()));
         headers.setContentLength(data.length);
         headers.setContentDisposition(ContentDisposition.inline().filename(resource.getFilename()).build());
-
-        // En-têtes de sécurité
         headers.set("X-Content-Type-Options", "nosniff");
         headers.set("X-Frame-Options", "SAMEORIGIN");
 
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
-    // Supprimer une formation et son PDF
     @DeleteMapping("/{employeeId}/formations/{formationId}")
     public ResponseEntity<String> deleteFormation(
             @PathVariable String employeeId,
             @PathVariable String formationId) {
 
-        // Vérifier si l'employé existe
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found");
         }
         Employee employee = employeeOpt.get();
 
-        // Trouver la formation
-        Optional<formation> formationOpt = formationRepository.findById(formationId);
+        Optional<Formation> formationOpt = formationRepository.findById(formationId);
         if (formationOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Formation not found");
         }
-        formation f = formationOpt.get();
+        Formation f = formationOpt.get();
 
-        // Supprimer le PDF si existant
         if (f.getCertificateId() != null) {
             try {
                 gridFsService.deleteFile(f.getCertificateId());
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Erreur suppression fichier certificat: " + e.getMessage());
             }
         }
 
-        // Supprimer la formation de l'employé
         employee.getFormations().removeIf(form -> form.getId().equals(formationId));
         employeeRepository.save(employee);
-
-        // Supprimer la formation du repository
         formationRepository.deleteById(formationId);
 
         return ResponseEntity.ok("Formation supprimée avec succès");
     }
-    // -------------------- FICHE DE PAIE --------------------
-    @GetMapping("/{id}/payslip")
-    public ResponseEntity<byte[]> generatePaySlip(@PathVariable String id) {
+
+    // -------------------- HISTORIQUE FICHES DE PAIE --------------------
+    @GetMapping("/{id}/payslips/by-year")
+    public ResponseEntity<List<Payslip>> getEmployeePayslipsByYear(
+            @PathVariable String id,
+            @RequestParam int year) {
         try {
-            byte[] pdf = employeeService.generatePaySlipPDF(id);
-
-            // En-têtes pour afficher dans le navigateur plutôt que téléchargement
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDisposition(ContentDisposition.inline().filename("fiche_paie_" + id + ".pdf").build());
-
-            // En-têtes de sécurité
-            headers.set("X-Content-Type-Options", "nosniff");
-            headers.set("X-Frame-Options", "SAMEORIGIN");
-
-            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+            System.out.println("API - Recherche fiches pour employé: " + id + ", année: " + year);
+            List<Payslip> payslips = employeeService.getEmployeePayslipsByYear(id, year);
+            System.out.println("API - Fiches retournées: " + payslips.size() + " pour " + year);
+            return ResponseEntity.ok(payslips);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("API - Erreur recherche fiches: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/{id}/payslips")
+    public ResponseEntity<List<Payslip>> getEmployeePayslips(@PathVariable String id) {
+        try {
+            System.out.println("Récupération de TOUTES les fiches pour: " + id);
+            List<Payslip> payslips = employeeService.getEmployeePayslips(id);
+            System.out.println(payslips.size() + " fiche(s) trouvée(s)");
+            return ResponseEntity.ok(payslips);
+        } catch (Exception e) {
+            System.err.println("Erreur récupération toutes les fiches: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/{employeeId}/payslips/years")
+    public ResponseEntity<List<Integer>> getAvailableYears(@PathVariable String employeeId) {
+        try {
+            System.out.println("API - Recherche années disponibles pour: " + employeeId);
+            List<Integer> years = employeeService.getAvailableYears(employeeId);
+            System.out.println("API - Années retournées: " + years);
+            return ResponseEntity.ok(years);
+        } catch (Exception e) {
+            System.err.println("API - Erreur années disponibles: " + e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @PostMapping("/{employeeId}/payslip/generate")
+    public ResponseEntity<?> generatePayslipForMonth(
+            @PathVariable String employeeId,
+            @RequestParam Integer month,
+            @RequestParam Integer year) {
+
+        try {
+            System.out.println("API - Génération fiche pour employé: " + employeeId + ", " + month + "/" + year);
+
+            Optional<Employee> employeeOpt = employeeService.getEmployeeById(employeeId);
+            if (employeeOpt.isEmpty()) {
+                System.err.println("API - Employé non trouvé: " + employeeId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employé non trouvé");
+            }
+
+            Employee employee = employeeOpt.get();
+
+            if (!employeeService.isMonthAvailableForEmployee(employee, year, month)) {
+                String errorMsg = "Impossible de générer une fiche pour " + month + "/" + year +
+                        " - Employé embauché le " + employee.getHireDate();
+                System.err.println(errorMsg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+            }
+
+            if (employeeService.isMonthInFuture(year, month)) {
+                String errorMsg = "Impossible de générer une fiche pour " + month + "/" + year + " - Mois futur";
+                System.err.println(errorMsg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+            }
+
+            byte[] pdf = employeeService.generatePaySlipPDF(employeeId, month, year);
+
+            Thread.sleep(300);
+            Optional<Payslip> payslipOpt = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
+
+            if (payslipOpt.isPresent()) {
+                Payslip payslip = payslipOpt.get();
+                System.out.println("API - Fiche générée avec succès: " + payslip.getPeriod());
+                return ResponseEntity.ok(payslip);
+            } else {
+                System.err.println("API - Fiche non trouvée après génération");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Fiche non trouvée après génération");
+            }
+
+        } catch (Exception e) {
+            System.err.println("API - Erreur génération fiche: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la génération: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/payslips/generate-test")
+    public ResponseEntity<Map<String, Object>> generateTestPayslips(@PathVariable String id) {
+        try {
+            System.out.println("Génération fiches de test pour: " + id);
+
+            Map<String, Object> result = employeeService.generateTestPayslips(id);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération test: " + e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", e.getMessage());
+            errorResult.put("count", 0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    @PostMapping("/{id}/payslips/generate-year")
+    public ResponseEntity<Map<String, Object>> generatePayslipsForYear(
+            @PathVariable String id,
+            @RequestParam int year) {
+        try {
+            System.out.println("Génération fiches pour l'année " + year + " - Employé: " + id);
+
+            Map<String, Object> result = employeeService.generatePayslipsForYear(id, year);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération année: " + e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", e.getMessage());
+            errorResult.put("generatedCount", 0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    @GetMapping("/{id}/payslip")
+    public ResponseEntity<byte[]> generatePaySlip(
+            @PathVariable String id,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+
+        System.out.println("=== CREATING PAYSLIP RECORD ===");
+        System.out.println("Employee ID: " + id);
+        System.out.println("Month: " + month);
+        System.out.println("Year: " + year);
+
+        try {
+            byte[] pdf = employeeService.generatePaySlipPDF(id, month, year);
+
+            System.out.println("Payslip record created successfully");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body("{\"message\": \"Payslip record created successfully\"}".getBytes());
+
+        } catch (Exception e) {
+            System.err.println("ERROR creating payslip record: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    @GetMapping("/{employeeId}/leave-balances")
-    public ResponseEntity<?> getEmployeeLeaveBalances(@PathVariable String employeeId) {
+
+    @GetMapping("/payslips/{payslipId}/download")
+    public ResponseEntity<byte[]> downloadHistoricalPayslip(@PathVariable String payslipId) {
         try {
-            List<LeaveBalanceDTO> leaveBalances = employeeService.getEmployeeLeaveBalances(employeeId);
-            return ResponseEntity.ok(leaveBalances);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+            Optional<Payslip> payslipOpt = employeeService.getPayslipById(payslipId);
+            if (payslipOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Payslip payslip = payslipOpt.get();
+
+            String message = "PDF généré côté frontend pour la période: " + payslip.getPeriod();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.TEXT_PLAIN);
+            headers.setContentDisposition(ContentDisposition.attachment()
+                    .filename("Fiche_Paie_" + payslip.getPeriod().replace(" ", "_") + ".txt").build());
+
+            return new ResponseEntity<>(message.getBytes(), headers, HttpStatus.OK);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving leave balances");
+            System.err.println("Erreur téléchargement fiche: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @GetMapping("/{employeeId}/leave-balances/{leaveType}")
-    public ResponseEntity<?> getEmployeeLeaveBalanceByType(
-            @PathVariable String employeeId,
-            @PathVariable String leaveType) {
-        try {
-            LeaveBalanceDTO leaveBalance = employeeService.getEmployeeLeaveBalanceByType(employeeId, leaveType);
-            return ResponseEntity.ok(leaveBalance);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving leave balance");
+    // ================= HELPER METHODS =================
+    private EmployeeDetailDTO convertToDetailDTO(Employee employee) {
+        if (employee == null) {
+            return null;
         }
+
+        EmployeeDetailDTO dto = new EmployeeDetailDTO();
+        dto.setId(employee.getId());
+        dto.setUsername(employee.getUsername());
+        dto.setEmail(employee.getEmail());
+        dto.setPhone(employee.getPhone());
+        dto.setSalary(employee.getSalary());
+        dto.setStatus(employee.getStatus());
+        dto.setHireDate(employee.getHireDate());
+        dto.setPhotoUrl(employee.getPhotoUrl());
+        dto.setPhotoId(employee.getPhotoId());
+
+        // Informations fiche de paie
+        dto.setCin(employee.getCin());
+        dto.setCnssNumber(employee.getCnssNumber());
+        dto.setPosition(employee.getPosition());
+        dto.setAddress(employee.getAddress());
+        dto.setCity(employee.getCity());
+        dto.setMatricule(employee.getMatricule());
+        dto.setRib(employee.getRib());
+        dto.setBankName(employee.getBankName());
+        dto.setWorkingDays(employee.getWorkingDays());
+        dto.setActualWorkingDays(employee.getActualWorkingDays());
+        dto.setTransportAllowance(employee.getTransportAllowance());
+        dto.setFamilyAllowance(employee.getFamilyAllowance());
+        dto.setOtherBonuses(employee.getOtherBonuses());
+
+        // Ancienneté
+        dto.setYearsOfService(employee.getYearsOfService());
+        dto.setMonthsOfService(employee.getMonthsOfService());
+        dto.setBonusPeriods(employee.getBonusPeriods());
+        dto.setSeniorityBonus(employee.getSeniorityBonus());
+        dto.setTraditionalSeniorityBonus(employee.getTraditionalSeniorityBonus());
+        dto.setNineDinarsBonus(employee.getNineDinarsBonus());
+        dto.setSeniorityBlocks(employee.getSeniorityBlocks());
+
+        // Extract role names safely
+        List<String> roleNames = new ArrayList<>();
+        if (employee.getRoles() != null) {
+            for (Role role : employee.getRoles()) {
+                if (role != null && role.getRoleName() != null) {
+                    roleNames.add(role.getRoleName());
+                }
+            }
+        }
+        dto.setRoleNames(roleNames);
+
+        // Convert formations to DTOs
+        List<FormationDTO> formationDTOs = new ArrayList<>();
+        if (employee.getFormations() != null) {
+            for (Formation formation : employee.getFormations()) {
+                formationDTOs.add(convertToFormationDTO(formation));
+            }
+        }
+        dto.setFormations(formationDTOs);
+
+        return dto;
     }
 
+    private FormationDTO convertToFormationDTO(Formation formation) {
+        if (formation == null) {
+            return null;
+        }
 
+        FormationDTO dto = new FormationDTO();
+        dto.setId(formation.getId());
+        dto.setName(formation.getTitle());
+        dto.setLocation(formation.getLocation());
+        dto.setStartDate(formation.getStartDate());
+        dto.setEndDate(formation.getEndDate());
+        dto.setCertificateId(formation.getCertificateId());
+
+        return dto;
+    }
 }

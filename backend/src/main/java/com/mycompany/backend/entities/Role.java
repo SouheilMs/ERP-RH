@@ -1,23 +1,16 @@
 package com.mycompany.backend.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "roles")
 public class Role {
   @Id
-  @JsonIgnore
   private String id;
-
-  @JsonIgnore
   private ERole name;
-
-  @JsonIgnore
   private String customName;
 
-  public Role() {
-  }
+  public Role() {}
 
   public Role(ERole name) {
     this.name = name;
@@ -27,7 +20,7 @@ public class Role {
     this.customName = customName;
   }
 
-  // Getters et setters
+  // Getters and Setters - NO @JsonIgnore
   public String getId() {
     return id;
   }
@@ -52,7 +45,6 @@ public class Role {
     this.customName = customName;
   }
 
-  // Méthode pour obtenir le nom du rôle
   public String getRoleName() {
     if (name != null) {
       return name.name();
@@ -60,13 +52,6 @@ public class Role {
     return customName;
   }
 
-  // Méthode pour vérifier si c'est un rôle personnalisé
-  @JsonIgnore
-  public boolean isCustomRole() {
-    return customName != null && !customName.isEmpty();
-  }
-
-  // Méthode pour définir le nom du rôle
   public void setRoleName(String roleName) {
     ERole eRole = ERole.fromString(roleName);
     if (eRole != null) {
@@ -76,5 +61,10 @@ public class Role {
       this.customName = roleName;
       this.name = null;
     }
+  }
+
+  // @JsonIgnore
+  public boolean isCustomRole() {
+    return customName != null && !customName.isEmpty();
   }
 }

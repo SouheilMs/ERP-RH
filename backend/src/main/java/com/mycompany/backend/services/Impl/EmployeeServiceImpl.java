@@ -4,23 +4,20 @@ import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.dto.LeaveBalanceDTO;
 import com.mycompany.backend.entities.Conge;
 import com.mycompany.backend.entities.Employee;
+import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Role;
 import com.mycompany.backend.entities.ERole;
 import com.mycompany.backend.repositories.CongeRepository;
 import com.mycompany.backend.repositories.EmployeeRepository;
+import com.mycompany.backend.repositories.PayslipRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.RoleRepository;
 import com.mycompany.backend.services.EmailService;
 import com.mycompany.backend.services.EmployeeService;
 import com.mycompany.backend.services.GridFsService;
+import com.mycompany.backend.services.SalaryCalculationService;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -33,9 +30,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
+
 import java.util.concurrent.TimeUnit;
+
+import java.util.stream.Collectors;
+
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -48,6 +48,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private PayslipRepository payslipRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -63,6 +66,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private GridFsService gridFsService;
+
+    @Autowired
+    private SalaryCalculationService salaryCalculationService;
 
     @Override
     public List<Employee> getAllEmployees() {
@@ -101,6 +107,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, HttpServletRequest request) {
+
         if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
             return ResponseEntity.badRequest().body("Employee with provided email already exists!");
         }
@@ -116,11 +123,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
             String gender = employeeDTO.getGender().toUpperCase();
             if (!isValidGender(gender)) {
-                return ResponseEntity.badRequest().body("Invalid gender value. Use: MALE, FEMALE, or OTHER");
+                return ResponseEntity.badRequest().body("Invalid gender value. Use: MALE, FEMALE");
             }
         }
 
-        // Nouveaux champs
         employee.setCin(employeeDTO.getCin());
         employee.setCnssNumber(employeeDTO.getCnssNumber());
         employee.setPosition(employeeDTO.getPosition());
@@ -134,9 +140,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setTransportAllowance(employeeDTO.getTransportAllowance());
         employee.setFamilyAllowance(employeeDTO.getFamilyAllowance());
         employee.setOtherBonuses(employeeDTO.getOtherBonuses());
+
         if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
             employee.setGender(employeeDTO.getGender().toUpperCase());
         }
+
+
+        Map<String, Object> seniorityInfo = salaryCalculationService.calculateSeniorityBonus(employee);
+        employee.setYearsOfService((Integer) seniorityInfo.get("yearsOfService"));
+        employee.setMonthsOfService((Integer) seniorityInfo.get("monthsOfService"));
+        employee.setBonusPeriods((Integer) seniorityInfo.get("bonusPeriods"));
+        employee.setTraditionalSeniorityBonus((Double) seniorityInfo.get("traditionalSeniorityBonus"));
+        employee.setNineDinarsBonus((Double) seniorityInfo.get("nineDinarsBonus"));
+        employee.setSeniorityBonus((Double) seniorityInfo.get("seniorityBonus"));
+
+
         Set<Role> roles = new HashSet<>();
         Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
                 .orElseThrow(() -> new RuntimeException("Error: Role not found."));
@@ -154,9 +172,65 @@ public class EmployeeServiceImpl implements EmployeeService {
         } catch (Exception e) {
             System.err.println("Failed to send email: " + e.getMessage());
         }
+        Map<String, Object> successResponse = new HashMap<>();
+        successResponse.put("message", "Employee created successfully");
+        successResponse.put("employeeId", savedEmployee.getId());
+        successResponse.put("username", savedEmployee.getUsername());
+        successResponse.put("email", savedEmployee.getEmail());
 
         return ResponseEntity.ok("Employee registered successfully!");
 
+    }
+
+    @Override
+    public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
+        try {
+            if (!employeeRepository.existsById(employeeId)) {
+                System.err.println("Employé non trouvé: " + employeeId);
+                return Collections.emptyList();
+            }
+
+            System.out.println("Recherche fiches pour employé: " + employeeId + ", année: " + year);
+
+            List<Payslip> payslips = payslipRepository.findByEmployeeIdAndYearOrderByMonthDesc(employeeId, year);
+
+            if (payslips.isEmpty()) {
+                System.out.println("Tentative avec méthode alternative...");
+                payslips = payslipRepository.findByEmployeeIdAndYearRobust(employeeId, year);
+            }
+
+            if (payslips.isEmpty()) {
+                System.out.println("Fallback final - Filtrage côté serveur...");
+                List<Payslip> allPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
+                payslips = allPayslips.stream()
+                        .filter(p -> p.getYear() == year)
+                        .collect(Collectors.toList());
+            }
+
+            System.out.println("Fiches trouvées: " + payslips.size());
+            return payslips;
+
+        } catch (Exception e) {
+            System.err.println("Erreur récupération fiches: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<Payslip> getEmployeePayslips(String employeeId) {
+        try {
+            if (!employeeRepository.existsById(employeeId)) {
+                System.err.println("Employé non trouvé: " + employeeId);
+                return Collections.emptyList();
+            }
+
+            List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
+            System.out.println("Fiches récupérées pour " + employeeId + ": " + payslips.size());
+            return payslips;
+        } catch (Exception e) {
+            System.err.println("Erreur récupération toutes les fiches: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -178,26 +252,45 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
-        cell.setCellType(CellType.STRING);
-        return cell.getStringCellValue();
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf((int) cell.getNumericCellValue());
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
+        }
     }
-//  exportToExcel avec des en-têtes étendues
+
     @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
         List<Employee> employees = employeeRepository.findAll();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Employees");
 
-        // En-têtes étendues
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
         Row header = sheet.createRow(0);
-        header.createCell(0).setCellValue("ID");
-        header.createCell(1).setCellValue("Email");
-        header.createCell(2).setCellValue("Nom");
-        header.createCell(3).setCellValue("Téléphone");
-        header.createCell(4).setCellValue("Salaire");
-        header.createCell(5).setCellValue("Poste");
-        header.createCell(6).setCellValue("CIN");
-        header.createCell(7).setCellValue("CNSS");
+        String[] headers = {"ID", "Email", "Nom", "Téléphone", "Salaire", "Poste", "CIN", "CNSS", "Date d'embauche"};
+
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
 
         int rowNum = 1;
         for (Employee emp : employees) {
@@ -210,25 +303,39 @@ public class EmployeeServiceImpl implements EmployeeService {
             row.createCell(5).setCellValue(emp.getPosition() != null ? emp.getPosition() : "");
             row.createCell(6).setCellValue(emp.getCin() != null ? emp.getCin() : "");
             row.createCell(7).setCellValue(emp.getCnssNumber() != null ? emp.getCnssNumber() : "");
+            row.createCell(8).setCellValue(emp.getHireDate() != null ? emp.getHireDate().toString() : "");
         }
 
-        for (int i = 0; i < 8; i++) sheet.autoSizeColumn(i);
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
         workbook.close();
         return out;
     }
-// Gestion des fichiers (photos et formations)
+
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
         try {
-            return gridFsService.saveFile(file);
+            Optional<Employee> employeeOpt = employeeRepository.findById(id);
+            if (employeeOpt.isEmpty()) {
+                throw new RuntimeException("Employee not found with id: " + id);
+            }
+
+            String fileId = gridFsService.saveFile(file);
+
+            Employee employee = employeeOpt.get();
+            employee.setPhotoId(fileId);
+            employeeRepository.save(employee);
+
+            return fileId;
         } catch (IOException e) {
-            throw new RuntimeException("Erreur GridFS", e);
+            throw new RuntimeException("Erreur lors de l'enregistrement de la photo", e);
         }
     }
-// Génération du PDF du bulletin de salaire
+
     @Override
     public String storeFormationFile(MultipartFile file) {
         try {
@@ -237,234 +344,389 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Erreur lors de l'enregistrement du fichier formation", e);
         }
     }
-// Génération du PDF du bulletin de salaire
+
     @Override
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
-        Employee emp = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
+        return generatePaySlipPDF(employeeId, null, null);
+    }
 
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             PDDocument document = new PDDocument()) {
+    @Override
+    public Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month) {
+        try {
+            System.out.println("Recherche dernière fiche pour employé: " + employeeId);
 
-            PDPage page = new PDPage(PDRectangle.A4);
-            document.addPage(page);
+            if (year != null && month != null) {
+                System.out.println("Recherche fiche spécifique: " + month + "/" + year);
+                Optional<Payslip> payslip = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
 
-            PDPageContentStream content = new PDPageContentStream(document, page);
-            float pageWidth = page.getMediaBox().getWidth();
-            float margin = 50;
-            float yPosition = 750;
+                if (payslip.isPresent()) {
+                    System.out.println("Fiche spécifique trouvée: " + payslip.get().getPeriod());
+                } else {
+                    System.out.println("Aucune fiche trouvée pour " + month + "/" + year);
+                }
 
-            // ================= EN-TÊTE =================
-            content.setFont(PDType1Font.HELVETICA_BOLD, 16);
-            drawCenteredText(content, "FICHE DE PAIE - TUNISIE", pageWidth, yPosition);
-            yPosition -= 20;
+                return payslip;
+            } else {
+                System.out.println("Recherche dernière fiche créée");
+                List<Payslip> payslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId);
 
-            // Informations entreprise
-            content.setFont(PDType1Font.HELVETICA, 10);
-            drawCenteredText(content, "ENTREPRISE TUNISIENNE SARL", pageWidth, yPosition);
-            yPosition -= 12;
-            drawCenteredText(content, "Avenue Habib Bourguiba - 1002 Tunis", pageWidth, yPosition);
-            yPosition -= 12;
-            drawCenteredText(content, "Tél: 71 000 000 - Matricule Fiscal: 12345678/A/M/000", pageWidth, yPosition);
-            yPosition -= 12;
-            drawCenteredText(content, "Code CNSS: TN12345678 - Numéro Employeur: 987654321", pageWidth, yPosition);
-            yPosition -= 15;
+                if (payslips.isEmpty()) {
+                    System.out.println("Aucune fiche existante pour cet employé");
+                    return Optional.empty();
+                }
 
-            // Ligne séparatrice
-            content.setLineWidth(1f);
-            content.moveTo(margin, yPosition);
-            content.lineTo(pageWidth - margin, yPosition);
-            content.stroke();
-            yPosition -= 20;
-
-            // ================= INFORMATIONS EMPLOYÉ =================
-            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
-            content.beginText();
-            content.newLineAtOffset(margin, yPosition);
-            content.showText("Période de paie: " + new SimpleDateFormat("MMMM yyyy").format(new Date()));
-            content.endText();
-            yPosition -= 20;
-
-            // Informations employé
-            content.setFont(PDType1Font.HELVETICA, 10);
-
-            // Ligne 1
-            drawEmployeeInfo(content, margin, yPosition,
-                    "Matricule:", emp.getMatricule() != null ? emp.getMatricule() : emp.getId(),
-                    "Nom & Prénom:", emp.getUsername());
-            yPosition -= 15;
-
-            // Ligne 2
-            drawEmployeeInfo(content, margin, yPosition,
-                    "CNSS:", emp.getCnssNumber() != null ? emp.getCnssNumber() : "Non renseigné",
-                    "Fonction:", emp.getPosition() != null ? emp.getPosition() : "-");
-            yPosition -= 15;
-
-            // Ligne 3
-            String hireDate = emp.getHireDate() != null ?
-                    new SimpleDateFormat("dd/MM/yyyy").format(emp.getHireDate()) : "-";
-            drawEmployeeInfo(content, margin, yPosition,
-                    "Date embauche:", hireDate,
-                    "N° CIN:", emp.getCin() != null ? emp.getCin() : "-");
-            yPosition -= 30;
-
-            // ================= CALCULS SALARIAUX =================
-            Double baseSalary = emp.getSalary() != null ? emp.getSalary() : 0.0;
-            Integer workingDays = emp.getWorkingDays() != null ? emp.getWorkingDays() : 22;
-            Integer actualDays = emp.getActualWorkingDays() != null ? emp.getActualWorkingDays() : workingDays;
-
-            // Salaire de base proportionnel
-            Double proportionalSalary = baseSalary * actualDays / workingDays;
-
-            // Cotisations sociales
-            Double cnssEmployee = proportionalSalary * 0.0918; // 9.18% employé
-            Double retirement = proportionalSalary * 0.035; // 3.5% retraite
-            Double healthInsurance = proportionalSalary * 0.02; // 2% assurance maladie
-
-            // Total des avantages
-            Double transport = emp.getTransportAllowance() != null ? emp.getTransportAllowance() : 0.0;
-            Double family = emp.getFamilyAllowance() != null ? emp.getFamilyAllowance() : 0.0;
-            Double bonuses = emp.getOtherBonuses() != null ? emp.getOtherBonuses() : 0.0;
-            Double totalBenefits = transport + family + bonuses;
-
-            // Salaire brut total
-            Double totalBrut = proportionalSalary + totalBenefits;
-
-            // Assiette IRPP
-            Double taxableIncome = totalBrut - cnssEmployee - retirement - healthInsurance;
-
-            // Calcul IRPP
-            Double irpp = calculateIRPP(taxableIncome);
-
-            // Net à payer
-            Double netSalary = taxableIncome - irpp;
-
-            // ================= TABLEAU DES GAINS =================
-            content.setFont(PDType1Font.HELVETICA_BOLD, 11);
-            content.beginText();
-            content.newLineAtOffset(margin, yPosition);
-            content.showText("GAINS ET AVANTAGES");
-            content.endText();
-            yPosition -= 20;
-
-            String[][] gainsData = {
-                    {"Salaire de base (" + actualDays + "/" + workingDays + " j)", String.format("%.3f", proportionalSalary)},
-                    {"Indemnité transport", String.format("%.3f", transport)},
-                    {"Allocation familiale", String.format("%.3f", family)},
-                    {"Autres primes", String.format("%.3f", bonuses)},
-                    {"TOTAL BRUT", String.format("%.3f", totalBrut)}
-            };
-
-            for (String[] row : gainsData) {
-                drawTableRow(content, margin, yPosition, row[0], row[1] + " TND");
-                yPosition -= 15;
+                Payslip latest = payslips.get(0);
+                System.out.println("Dernière fiche: " + latest.getPeriod() + " (ID: " + latest.getId() + ")");
+                return Optional.of(latest);
             }
-
-            yPosition -= 10;
-
-            // ================= TABLEAU DES RETENUES =================
-            content.setFont(PDType1Font.HELVETICA_BOLD, 11);
-            content.beginText();
-            content.newLineAtOffset(margin, yPosition);
-            content.showText("RETENUES SOCIALES");
-            content.endText();
-            yPosition -= 20;
-
-            String[][] deductionsData = {
-                    {"CNSS (9.18%)", String.format("%.3f", cnssEmployee)},
-                    {"Retraite (3.5%)", String.format("%.3f", retirement)},
-                    {"Assurance maladie (2%)", String.format("%.3f", healthInsurance)},
-                    {"Impôt sur le revenu (IRPP)", String.format("%.3f", irpp)},
-                    {"TOTAL RETENUES", String.format("%.3f", cnssEmployee + retirement + healthInsurance + irpp)}
-            };
-
-            for (String[] row : deductionsData) {
-                drawTableRow(content, margin, yPosition, row[0], row[1] + " TND");
-                yPosition -= 15;
-            }
-
-            yPosition -= 20;
-
-            // ================= NET À PAYER =================
-            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
-            content.beginText();
-            content.newLineAtOffset(margin, yPosition);
-            content.showText("NET À PAYER: " + String.format("%.3f", netSalary) + " TND");
-            content.endText();
-
-            // ================= SIGNATURES =================
-            yPosition -= 40;
-            content.setFont(PDType1Font.HELVETICA, 10);
-            content.beginText();
-            content.newLineAtOffset(margin + 30, yPosition);
-            content.showText("Signature employé");
-            content.newLineAtOffset(300, 0);
-            content.showText("Signature employeur");
-            content.endText();
-
-            // Lignes de signatures
-            content.setLineWidth(0.5f);
-            content.moveTo(margin, yPosition - 10);
-            content.lineTo(margin + 150, yPosition - 10);
-            content.moveTo(margin + 200, yPosition - 10);
-            content.lineTo(margin + 350, yPosition - 10);
-            content.stroke();
-
-            content.close();
-            document.save(out);
-
-            return out.toByteArray();
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la recherche de fiche: " + e.getMessage());
+            return Optional.empty();
         }
     }
 
-    // Méthode utilitaire pour le texte centré
-    private void drawCenteredText(PDPageContentStream content, String text, float pageWidth, float y) throws IOException {
-        content.beginText();
-        float titleWidth = PDType1Font.HELVETICA.getStringWidth(text) / 1000 * 10;
-        content.newLineAtOffset((pageWidth - titleWidth) / 2, y);
-        content.showText(text);
-        content.endText();
+    @Override
+    public List<Integer> getAvailableYears(String employeeId) {
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isEmpty()) return Collections.emptyList();
+
+        Employee employee = employeeOpt.get();
+
+        System.out.println("CALCUL DES ANNÉES DISPONIBLES");
+        System.out.println("Employé: " + employee.getUsername());
+        System.out.println("Date d'embauche: " + employee.getHireDate());
+
+        List<Integer> yearsFromPayslips = payslipRepository.findByEmployeeIdOrderByYearDescMonthDesc(employeeId)
+                .stream()
+                .map(Payslip::getYear)
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+
+        System.out.println("Années depuis les fiches existantes: " + yearsFromPayslips);
+
+        List<Integer> yearsFromHireDate = this.generateAllYearsSinceHireDate(employee);
+        System.out.println("Toutes les années depuis l'embauche: " + yearsFromHireDate);
+
+        Set<Integer> allYears = new TreeSet<>(Comparator.reverseOrder());
+        allYears.addAll(yearsFromHireDate);
+        allYears.addAll(yearsFromPayslips);
+
+        List<Integer> finalYears = new ArrayList<>(allYears);
+        System.out.println("Années finales disponibles: " + finalYears);
+        System.out.println("FIN CALCUL ANNÉES");
+
+        return finalYears;
     }
 
-    // Méthode utilitaire pour les informations employé
-    private void drawEmployeeInfo(PDPageContentStream content, float margin, float y,
-                                  String label1, String value1, String label2, String value2) throws IOException {
-        content.beginText();
-        content.newLineAtOffset(margin, y);
-        content.showText(label1);
-        content.newLineAtOffset(50, 0);
-        content.showText(value1);
-        content.newLineAtOffset(200, 0);
-        content.showText(label2);
-        content.newLineAtOffset(50, 0);
-        content.showText(value2);
-        content.endText();
-    }
+    private List<Integer> generateAllYearsSinceHireDate(Employee employee) {
+        List<Integer> years = new ArrayList<>();
 
-    // Méthode utilitaire pour les lignes de tableau
-    private void drawTableRow(PDPageContentStream content, float margin, float y, String label, String value) throws IOException {
-        content.setFont(PDType1Font.HELVETICA, 10);
-        content.beginText();
-        content.newLineAtOffset(margin + 10, y);
-        content.showText(label);
-        content.newLineAtOffset(300, 0);
-        content.showText(value);
-        content.endText();
-    }
-
-    // Méthode pour calculer l'IRPP selon le barème tunisien
-    private Double calculateIRPP(Double taxableIncome) {
-        if (taxableIncome == null || taxableIncome <= 5000) {
-            return 0.0;
-        } else if (taxableIncome <= 20000) {
-            return (taxableIncome - 5000) * 0.26;
-        } else if (taxableIncome <= 30000) {
-            return (15000 * 0.26) + (taxableIncome - 20000) * 0.28;
-        } else if (taxableIncome <= 50000) {
-            return (15000 * 0.26) + (10000 * 0.28) + (taxableIncome - 30000) * 0.32;
-        } else {
-            return (15000 * 0.26) + (10000 * 0.28) + (20000 * 0.32) + (taxableIncome - 50000) * 0.35;
+        if (employee.getHireDate() == null) {
+            System.out.println("Pas de date d'embauche, utilisation de l'année courante");
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+            years.add(currentYear);
+            return years;
         }
+
+        Calendar hireDate = Calendar.getInstance();
+        hireDate.setTime(employee.getHireDate());
+        int hireYear = hireDate.get(Calendar.YEAR);
+
+        Calendar currentDate = Calendar.getInstance();
+        int currentYear = currentDate.get(Calendar.YEAR);
+
+        System.out.println("Période de travail: " + hireYear + " à " + currentYear);
+
+        for (int year = hireYear; year <= currentYear; year++) {
+            years.add(year);
+        }
+
+        System.out.println("Années de travail générées: " + years);
+        return years;
+    }
+
+    @Override
+    public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
+        try {
+            Employee emp = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
+
+            if (month == null || year == null) {
+                Calendar cal = Calendar.getInstance();
+                month = cal.get(Calendar.MONTH) + 1;
+                year = cal.get(Calendar.YEAR);
+            }
+
+            Map<String, Object> seniorityInfo = salaryCalculationService.calculateSeniorityBonus(emp);
+
+            if (seniorityInfo.get("seniorityBonus") == null) {
+                seniorityInfo.put("seniorityBonus", 0.0);
+            }
+
+            Map<String, Object> salaryInfo = salaryCalculationService.calculateCompleteSalary(emp, seniorityInfo);
+
+            Double netSalary = salaryInfo.get("netSalary") != null ? (Double) salaryInfo.get("netSalary") : 0.0;
+            Double totalBrut = salaryInfo.get("totalBrut") != null ? (Double) salaryInfo.get("totalBrut") : 0.0;
+
+            int yearsOfService = seniorityInfo.get("yearsOfService") != null ? (int) seniorityInfo.get("yearsOfService") : 0;
+            int monthsOfService = seniorityInfo.get("monthsOfService") != null ? (int) seniorityInfo.get("monthsOfService") : 0;
+            int bonusPeriods = seniorityInfo.get("bonusPeriods") != null ? (int) seniorityInfo.get("bonusPeriods") : 0;
+            double traditionalSeniorityBonus = seniorityInfo.get("traditionalSeniorityBonus") != null ? (double) seniorityInfo.get("traditionalSeniorityBonus") : 0.0;
+            double nineDinarsBonus = seniorityInfo.get("nineDinarsBonus") != null ? (double) seniorityInfo.get("nineDinarsBonus") : 0.0;
+            double totalSeniorityBonus = seniorityInfo.get("seniorityBonus") != null ? (double) seniorityInfo.get("seniorityBonus") : 0.0;
+
+            emp.setYearsOfService(yearsOfService);
+            emp.setMonthsOfService(monthsOfService);
+            emp.setBonusPeriods(bonusPeriods);
+            emp.setTraditionalSeniorityBonus(traditionalSeniorityBonus);
+            emp.setNineDinarsBonus(nineDinarsBonus);
+            emp.setSeniorityBonus(totalSeniorityBonus);
+            employeeRepository.save(emp);
+
+            String[] monthNames = {"Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+                    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"};
+            String period = monthNames[month - 1] + " " + year;
+
+            Optional<Payslip> existingPayslip = payslipRepository
+                    .findByEmployeeIdAndYearAndMonth(employeeId, year, month);
+
+            Payslip payslip;
+            if (existingPayslip.isPresent()) {
+                payslip = existingPayslip.get();
+                payslip.setNetSalary(netSalary);
+                payslip.setGrossSalary(totalBrut);
+                payslip.setSeniorityBonus(totalSeniorityBonus);
+                payslip.setYearsOfService(yearsOfService);
+                payslip.setMonthsOfService(monthsOfService);
+                payslip.setBonusPeriods(bonusPeriods);
+                payslip.setPeriod(period);
+                payslip.setGenerationDate(new Date());
+            } else {
+                payslip = new Payslip();
+                payslip.setEmployee(emp);
+                payslip.setPeriod(period);
+                payslip.setMonth(month);
+                payslip.setYear(year);
+                payslip.setNetSalary(netSalary);
+                payslip.setGrossSalary(totalBrut);
+                payslip.setSeniorityBonus(totalSeniorityBonus);
+                payslip.setYearsOfService(yearsOfService);
+                payslip.setMonthsOfService(monthsOfService);
+                payslip.setBonusPeriods(bonusPeriods);
+                payslip.setGenerationDate(new Date());
+            }
+
+            Payslip savedPayslip = payslipRepository.save(payslip);
+            System.out.println("Fiche sauvegardée: " + savedPayslip.getId());
+
+            String pdfContent = "FICHE DE PAIE - " + period + "\n" +
+                    "Employé: " + emp.getUsername() + "\n" +
+                    "Salaire net: " + netSalary + " TND\n" +
+                    "Salaire brut: " + totalBrut + " TND\n" +
+                    "Prime ancienneté: " + totalSeniorityBonus + " TND\n" +
+                    "Prime 9 dinars: " + nineDinarsBonus + " TND";
+
+            return pdfContent.getBytes();
+
+        } catch (Exception e) {
+            System.err.println("Erreur génération fiche: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la génération de la fiche de paie: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean isMonthAvailableForEmployee(Employee employee, int year, int month) {
+        if (employee.getHireDate() == null) {
+            System.out.println("Pas de date d'embauche - mois disponible");
+            return true;
+        }
+
+        Calendar hireDate = Calendar.getInstance();
+        hireDate.setTime(employee.getHireDate());
+        int hireYear = hireDate.get(Calendar.YEAR);
+        int hireMonth = hireDate.get(Calendar.MONTH) + 1;
+
+        System.out.println("Vérification mois " + month + "/" + year +
+                " vs embauche " + hireMonth + "/" + hireYear);
+
+        boolean isAvailable = (year > hireYear) || (year == hireYear && month >= hireMonth);
+
+        System.out.println("Résultat: " + (isAvailable ? "DISPONIBLE" : "NON DISPONIBLE"));
+
+        return isAvailable;
+    }
+
+    @Override
+    public boolean isMonthInFuture(int year, int month) {
+        Calendar currentDate = Calendar.getInstance();
+        int currentYear = currentDate.get(Calendar.YEAR);
+        int currentMonth = currentDate.get(Calendar.MONTH) + 1;
+
+        System.out.println("Vérification mois " + month + "/" + year +
+                " vs actuel " + currentMonth + "/" + currentYear);
+
+        if (year > currentYear) {
+            System.out.println(month + "/" + year + " est dans le futur (année future)");
+            return true;
+        }
+
+        if (year == currentYear && month > currentMonth) {
+            System.out.println(month + "/" + year + " est dans le futur (mois futur)");
+            return true;
+        }
+
+        System.out.println(month + "/" + year + " peut être généré");
+        return false;
+    }
+
+    @Override
+    public Payslip savePayslip(Payslip payslip) {
+        if (payslip.getEmployee() == null) {
+            throw new RuntimeException("Payslip must have an employee");
+        }
+        if (payslip.getMonth() == null || payslip.getYear() == null) {
+            throw new RuntimeException("Payslip must have month and year");
+        }
+
+        return payslipRepository.save(payslip);
+    }
+
+    @Override
+    public Optional<Payslip> getPayslipById(String payslipId) {
+        return payslipRepository.findById(payslipId);
+    }
+
+    @Override
+    public Map<String, Object> generatePayslipsForYear(String employeeId, int year) {
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isEmpty()) {
+            throw new RuntimeException("Employee not found with id: " + employeeId);
+        }
+
+        Employee employee = employeeOpt.get();
+        Map<String, Object> result = new HashMap<>();
+        List<Payslip> generatedPayslips = new ArrayList<>();
+        int successCount = 0;
+        int errorCount = 0;
+        int skippedCount = 0;
+        int futureMonthsCount = 0;
+
+        if (year > Calendar.getInstance().get(Calendar.YEAR)) {
+            throw new RuntimeException("Impossible de générer des fiches pour une année future: " + year);
+        }
+
+        System.out.println("Génération annuelle pour " + year + " - Employé: " + employee.getUsername());
+
+        for (int month = 1; month <= 12; month++) {
+            try {
+                if (isMonthInFuture(year, month)) {
+                    futureMonthsCount++;
+                    System.out.println("Mois futur ignoré: " + month + "/" + year);
+                    continue;
+                }
+
+                if (isMonthAvailableForEmployee(employee, year, month)) {
+                    byte[] pdfData = generatePaySlipPDF(employeeId, month, year);
+                    successCount++;
+
+                    Optional<Payslip> payslipOpt = payslipRepository
+                            .findByEmployeeIdAndYearAndMonth(employeeId, year, month);
+                    payslipOpt.ifPresent(generatedPayslips::add);
+
+                    System.out.println("Fiche générée: " + month + "/" + year);
+                } else {
+                    skippedCount++;
+                    System.out.println("Mois non disponible (avant embauche): " + month + "/" + year);
+                }
+            } catch (Exception e) {
+                errorCount++;
+                System.err.println("Erreur génération fiche " + month + "/" + year + ": " + e.getMessage());
+            }
+        }
+
+        result.put("generatedCount", successCount);
+        result.put("errorCount", errorCount);
+        result.put("skippedCount", skippedCount);
+        result.put("futureMonthsCount", futureMonthsCount);
+        result.put("payslips", generatedPayslips);
+
+        String message = "Génération terminée: " + successCount + " succès, " +
+                errorCount + " erreurs, " + skippedCount + " mois non disponibles";
+
+        if (futureMonthsCount > 0) {
+            message += ", " + futureMonthsCount + " mois futurs ignorés";
+        }
+
+        result.put("message", message);
+
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> generateTestPayslips(String employeeId) {
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isEmpty()) {
+            throw new RuntimeException("Employee not found with id: " + employeeId);
+        }
+
+        Employee employee = employeeOpt.get();
+        Map<String, Object> result = new HashMap<>();
+        List<Payslip> generatedPayslips = new ArrayList<>();
+        int successCount = 0;
+        int errorCount = 0;
+        int futureMonthsCount = 0;
+
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        int[] testMonths = {10, 11, 12};
+
+        System.out.println("Génération fiches de test pour " + employee.getUsername());
+
+        for (int month : testMonths) {
+            try {
+                if (isMonthInFuture(currentYear, month)) {
+                    futureMonthsCount++;
+                    System.out.println("Mois futur ignoré: " + month + "/" + currentYear);
+                    continue;
+                }
+
+                if (isMonthAvailableForEmployee(employee, currentYear, month)) {
+                    byte[] pdfData = generatePaySlipPDF(employeeId, month, currentYear);
+                    successCount++;
+
+                    Optional<Payslip> payslipOpt = payslipRepository
+                            .findByEmployeeIdAndYearAndMonth(employeeId, currentYear, month);
+                    payslipOpt.ifPresent(generatedPayslips::add);
+
+                    System.out.println("Fiche test générée: " + month + "/" + currentYear);
+                } else {
+                    System.out.println("Mois test non disponible: " + month + "/" + currentYear);
+                }
+            } catch (Exception e) {
+                errorCount++;
+                System.err.println("Erreur génération fiche test " + month + "/" + currentYear + ": " + e.getMessage());
+            }
+        }
+
+        result.put("count", successCount);
+        result.put("errorCount", errorCount);
+        result.put("futureMonthsCount", futureMonthsCount);
+        result.put("payslips", generatedPayslips);
+
+        String message = "Génération test terminée: " + successCount + " fiches créées";
+        if (futureMonthsCount > 0) {
+            message += ", " + futureMonthsCount + " mois futurs ignorés";
+        }
+        if (errorCount > 0) {
+            message += ", " + errorCount + " erreurs";
+        }
+
+        result.put("message", message);
+
+        return result;
     }
     @Override
     public List<LeaveBalanceDTO> getEmployeeLeaveBalances(String employeeId) {

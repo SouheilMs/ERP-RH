@@ -19,6 +19,7 @@ public class EmployeeGetDTO {
     private String email;
     private List<String> roleName;
 
+
     // Getters et Setters
     public String getId() {
         return id;
@@ -50,6 +51,7 @@ public class EmployeeGetDTO {
     public void setRoleName(List<String> roleName) {
         this.roleName = roleName;
     }
+
 
     public static EmployeeGetDTO EmployeeToEmployeeDto(Employee employee) {
         EmployeeGetDTO employeeGetDTO = new EmployeeGetDTO();

@@ -263,4 +263,89 @@
   .modal-actions button {
     width: 100%;
   }
+  /* Styles pour l'upload de photo */
+  .photo-upload-container {
+    margin-bottom: 15px;
+  }
+
+  .photo-preview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+    cursor: pointer;
+  }
+
+  .photo-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .btn-remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .photo-placeholder {
+    width: 120px;
+    height: 120px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    background-color: #f8f9fa;
+  }
+
+  .photo-placeholder:hover {
+    border-color: #007bff;
+    background-color: #e9ecef;
+  }
+
+  .photo-placeholder i {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+
+  .photo-placeholder span {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+  }
+
+  .file-input-hidden {
+    display: none;
+  }
+
+  .file-info {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .file-info small {
+    display: block;
+    color: #495057;
+  }
 }
