@@ -65,7 +65,7 @@ public class EmployeeController {
                                                  final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
-    // ✅ AJOUTEZ CE NOUVEAU ENDPOINT - Ligne 55 (après le POST existant)
+    // AJOUTEZ CE NOUVEAU ENDPOINT - Ligne 55 (après le POST existant)
     @PostMapping("/add-with-photo")
     public ResponseEntity<Map<String, Object>> addEmployeeWithPhoto(@RequestBody EmployeeDTO employeeDTO) {
         try {
@@ -116,16 +116,16 @@ public class EmployeeController {
             employee.setFamilyAllowance(employeeDTO.getFamilyAllowance() != null ? employeeDTO.getFamilyAllowance() : 0.0);
             employee.setOtherBonuses(employeeDTO.getOtherBonuses() != null ? employeeDTO.getOtherBonuses() : 0.0);
 
-            // ✅ GESTION DE LA PHOTO
+            //  GESTION DE LA PHOTO
             if (employeeDTO.getPhotoUrl() != null && !employeeDTO.getPhotoUrl().isEmpty()) {
                 employee.setPhotoUrl(employeeDTO.getPhotoUrl());
                 employee.setPhotoId(employeeDTO.getPhotoId() != null ? employeeDTO.getPhotoId() : "photo_" + System.currentTimeMillis());
-                System.out.println("✅ Photo set for employee");
+                System.out.println(" Photo set for employee");
             }
 
             // Sauvegarder l'employé
             Employee savedEmployee = employeeRepository.save(employee);
-            System.out.println("✅ Employee saved with ID: " + savedEmployee.getId());
+            System.out.println(" Employee saved with ID: " + savedEmployee.getId());
 
             // Retourner la réponse en JSON
             Map<String, Object> response = new HashMap<>();
@@ -138,7 +138,7 @@ public class EmployeeController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error creating employee with photo: " + e.getMessage());
+            System.err.println(" Error creating employee with photo: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, Object> errorResponse = new HashMap<>();
