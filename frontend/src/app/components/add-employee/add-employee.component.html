@@ -68,6 +68,15 @@
               <input type="number" id="salary" name="salary" [(ngModel)]="employee.salary" class="form-control" placeholder="Enter salary" step="0.01" min="0">
             </div>
           </div>
+          <!-- Rôle -->
+          <div class="form-group">
+            <label class="required">Rôle</label>
+            <select [(ngModel)]="employee.role" name="role" required>
+              <option *ngFor="let role of availableRoles" [value]="role.value">
+                {{ role.label }}
+              </option>
+            </select>
+          </div>
 
           <div class="form-row">
             <div class="form-group">

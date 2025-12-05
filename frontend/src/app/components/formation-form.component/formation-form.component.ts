@@ -152,14 +152,22 @@ export class FormationFormComponent implements OnInit {
           error: (error) => {
             console.error('Error saving formation:', error);
             
-            if (error.includes('Employee not found')) {
-              this.errorMessage = 'Error: User not logged in or not found. Please log in again.';
-            } else {
-              this.errorMessage = `Error during ${this.isEdit ? 'update' : 'creation'}: ${error}`;
+            let errorMessage = `Error during ${this.isEdit ? 'update' : 'creation'}`;
+            
+            if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
+            } else if (error?.status === 401) {
+              errorMessage = 'Non autorisé - Veuillez vous reconnecter';
+            } else if (error?.status === 403) {
+              errorMessage = 'Accès refusé - Vous n\'avez pas les permissions nécessaires';
             }
+            
+            this.errorMessage = errorMessage;
             this.submitting = false;
           }
-        });
+        }); // ✅ AJOUT DE LA PARENTHÈSE FERMANTE MANQUANTE
       } catch (error) {
         this.errorMessage = 'Error: User not logged in. Please log in again.';
         this.submitting = false;
@@ -168,7 +176,7 @@ export class FormationFormComponent implements OnInit {
       this.markFormGroupTouched();
       this.errorMessage = 'Please correct errors in the form';
     }
-  }
+  } // ✅ AJOUT DU CROCHET FERMANT MANQUANT
 
   private getCurrentUserId(): string {
     const currentUser = this.authService.getUser();

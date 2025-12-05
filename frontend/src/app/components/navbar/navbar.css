@@ -419,7 +419,7 @@
     padding: 0 1rem;
     gap: 1rem;
   }
-  
+
   .navbar-search {
     margin: 0 1rem;
     max-width: 300px;
@@ -430,23 +430,23 @@
   .navbar-menu {
     display: none;
   }
-  
+
   .navbar-user {
     display: none;
   }
-  
+
   .navbar-search {
     display: none;
   }
-  
+
   .mobile-toggle {
     display: flex;
   }
-  
+
   .navbar-container {
     padding: 0 1rem;
   }
-  
+
   .brand-text {
     font-size: 18px;
   }
@@ -456,19 +456,19 @@
   .navbar-container {
     padding: 0 0.5rem;
   }
-  
+
   .mobile-links {
     padding: 0.5rem;
   }
-  
+
   .brand-link {
     padding: 6px 12px;
   }
-  
+
   .brand-text {
     font-size: 16px;
   }
-  
+
   .logo-icon {
     font-size: 20px;
   }

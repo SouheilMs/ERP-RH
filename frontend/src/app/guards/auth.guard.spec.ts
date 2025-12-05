@@ -1,7 +1,7 @@
+// src/app/guards/auth.guard.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { CanActivateFn } from '@angular/router';
-
-import { authGuard } from './auth-guard';
+import { authGuard } from './auth.guard'; // ✅ Importer authGuard (fonction)
 
 describe('authGuard', () => {
   const executeGuard: CanActivateFn = (...guardParameters) => 

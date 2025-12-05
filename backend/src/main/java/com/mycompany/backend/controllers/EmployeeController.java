@@ -1,6 +1,9 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.dto.*;
+import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.EmployeeDetailDTO;
+import com.mycompany.backend.dto.FormationDTO;
+import com.mycompany.backend.dto.LeaveBalanceDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Formation;
@@ -13,7 +16,9 @@ import com.mycompany.backend.services.GridFsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,8 +28,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -46,18 +52,43 @@ public class EmployeeController {
 
     // -------------------- EMPLOYÉ --------------------
     @GetMapping
-    public ResponseEntity<List<EmployeeGetDTO>> getAllEmployees() {
-        List<Employee> employees = employeeService.getAllEmployees();
-        List<EmployeeGetDTO> response = EmployeeGetDTO.EmployeesToEmployeeDtos(employees);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
-        return employeeService.getEmployeeById(id)
-                .map(this::convertToDetailDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        System.out.println("=== GET EMPLOYEE BY ID CONTROLLER ===");
+        System.out.println("🔍 Employee ID requested: " + id);
+        
+        try {
+            // Vérifier l'authentification
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                System.out.println("👤 Authenticated user: " + auth.getName());
+                System.out.println("🎯 Authorities: " + auth.getAuthorities());
+                System.out.println("✅ Is authenticated: " + auth.isAuthenticated());
+            } else {
+                System.out.println("❌ No authentication found in controller!");
+            }
+            
+            Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
+            if (employeeOpt.isPresent()) {
+                System.out.println("✅ Employee found: " + employeeOpt.get().getUsername());
+                EmployeeDetailDTO response = convertToDetailDTO(employeeOpt.get());
+                return ResponseEntity.ok(response);
+            } else {
+                System.out.println("❌ Employee not found with ID: " + id);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (AccessDeniedException e) {
+            System.err.println("❌ ACCESS DENIED in controller: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (Exception e) {
+            System.err.println("❌ Error getting employee in controller: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/Add-employee")
@@ -65,92 +96,10 @@ public class EmployeeController {
                                                  final HttpServletRequest request) {
         return employeeService.registerNewEmployee(employeeDTO, request);
     }
-    // AJOUTEZ CE NOUVEAU ENDPOINT - Ligne 55 (après le POST existant)
-    @PostMapping("/add-with-photo")
-    public ResponseEntity<Map<String, Object>> addEmployeeWithPhoto(@RequestBody EmployeeDTO employeeDTO) {
-        try {
-            System.out.println("=== ADD EMPLOYEE WITH PHOTO ===");
-            System.out.println("Username: " + employeeDTO.getUsername());
-            System.out.println("Email: " + employeeDTO.getEmail());
-            System.out.println("Photo provided: " + (employeeDTO.getPhotoUrl() != null));
-
-            // Vérifier si l'email existe déjà
-            if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("message", "An employee with this email already exists");
-                errorResponse.put("error", "EMAIL_EXISTS");
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
-            }
-
-            // Créer l'employé directement avec le repository
-            Employee employee = new Employee();
-            employee.setUsername(employeeDTO.getUsername());
-            employee.setEmail(employeeDTO.getEmail());
-            employee.setPhone(employeeDTO.getPhone());
-
-            // Utiliser BCrypt pour encoder le mot de passe
-            String encodedPassword = new BCryptPasswordEncoder().encode(employeeDTO.getPassword());
-            employee.setPassword(encodedPassword);
-
-            employee.setHireDate(employeeDTO.getHireDate() != null ? employeeDTO.getHireDate() : new Date());
-            employee.setSalary(employeeDTO.getSalary());
-            employee.setStatus(employeeDTO.getStatus() != null ? employeeDTO.getStatus() : "ACTIVE");
-
-            // Gestion du genre
-            if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
-                employee.setGender(employeeDTO.getGender().toUpperCase());
-            }
-
-            // Informations fiche de paie
-            employee.setCin(employeeDTO.getCin());
-            employee.setCnssNumber(employeeDTO.getCnssNumber());
-            employee.setPosition(employeeDTO.getPosition());
-            employee.setAddress(employeeDTO.getAddress());
-            employee.setCity(employeeDTO.getCity());
-            employee.setMatricule(employeeDTO.getMatricule());
-            employee.setRib(employeeDTO.getRib());
-            employee.setBankName(employeeDTO.getBankName());
-            employee.setWorkingDays(employeeDTO.getWorkingDays() != null ? employeeDTO.getWorkingDays() : 22);
-            employee.setActualWorkingDays(employeeDTO.getActualWorkingDays() != null ? employeeDTO.getActualWorkingDays() : 22);
-            employee.setTransportAllowance(employeeDTO.getTransportAllowance() != null ? employeeDTO.getTransportAllowance() : 0.0);
-            employee.setFamilyAllowance(employeeDTO.getFamilyAllowance() != null ? employeeDTO.getFamilyAllowance() : 0.0);
-            employee.setOtherBonuses(employeeDTO.getOtherBonuses() != null ? employeeDTO.getOtherBonuses() : 0.0);
-
-            //  GESTION DE LA PHOTO
-            if (employeeDTO.getPhotoUrl() != null && !employeeDTO.getPhotoUrl().isEmpty()) {
-                employee.setPhotoUrl(employeeDTO.getPhotoUrl());
-                employee.setPhotoId(employeeDTO.getPhotoId() != null ? employeeDTO.getPhotoId() : "photo_" + System.currentTimeMillis());
-                System.out.println(" Photo set for employee");
-            }
-
-            // Sauvegarder l'employé
-            Employee savedEmployee = employeeRepository.save(employee);
-            System.out.println(" Employee saved with ID: " + savedEmployee.getId());
-
-            // Retourner la réponse en JSON
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Employee created successfully with photo");
-            response.put("employeeId", savedEmployee.getId());
-            response.put("photoSaved", savedEmployee.getPhotoUrl() != null);
-            response.put("username", savedEmployee.getUsername());
-            response.put("email", savedEmployee.getEmail());
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println(" Error creating employee with photo: " + e.getMessage());
-            e.printStackTrace();
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("message", "Error creating employee: " + e.getMessage());
-            errorResponse.put("error", "SERVER_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
-                                                            @RequestBody Employee employeeDetails) {
+                                                           @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -161,7 +110,7 @@ public class EmployeeController {
         employee.setSalary(employeeDetails.getSalary());
         employee.setStatus(employeeDetails.getStatus());
         employee.setHireDate(employeeDetails.getHireDate());
-
+        employee.setCin(employeeDetails.getCin());
         employee.setCnssNumber(employeeDetails.getCnssNumber());
         employee.setPosition(employeeDetails.getPosition());
         employee.setAddress(employeeDetails.getAddress());
@@ -190,7 +139,7 @@ public class EmployeeController {
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
-                                                         @RequestParam("file") MultipartFile file) {
+                                                        @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -278,6 +227,11 @@ public class EmployeeController {
         }
 
         Formation savedFormation = formationRepository.save(f);
+        
+        // Initialiser la collection si elle est null
+        if (emp.getFormations() == null) {
+            emp.setFormations(new HashSet<>());
+        }
         emp.getFormations().add(savedFormation);
         employeeRepository.save(emp);
 
@@ -325,8 +279,11 @@ public class EmployeeController {
             }
         }
 
-        employee.getFormations().removeIf(form -> form.getId().equals(formationId));
-        employeeRepository.save(employee);
+        if (employee.getFormations() != null) {
+            employee.getFormations().removeIf(form -> form.getId().equals(formationId));
+            employeeRepository.save(employee);
+        }
+
         formationRepository.deleteById(formationId);
 
         return ResponseEntity.ok("Formation supprimée avec succès");
@@ -593,4 +550,15 @@ public class EmployeeController {
 
         return dto;
     }
+    @GetMapping("/{id}/leave-balance")
+    public ResponseEntity<List<LeaveBalanceDTO>> getLeaveBalance(@PathVariable String id) {
+        try {
+            List<LeaveBalanceDTO> balances = employeeService.getEmployeeLeaveBalances(id);
+            return ResponseEntity.ok(balances);
+        } catch (Exception e) {
+            System.err.println("Erreur récupération congés: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

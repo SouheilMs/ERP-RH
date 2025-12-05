@@ -44,16 +44,16 @@ public interface EmployeeService {
     Payslip savePayslip(Payslip payslip);
     Optional<Payslip> getPayslipById(String payslipId);
 
-    // CORRECTION : Méthode pour vérifier la disponibilité selon l'embauche
+    //  Méthode pour vérifier la disponibilité selon l'embauche
     boolean isMonthAvailableForEmployee(Employee employee, int year, int month);
 
-    // NOUVELLE : Méthode pour vérifier si un mois est dans le futur
+    //  Méthode pour vérifier si un mois est dans le futur
     boolean isMonthInFuture(int year, int month);
 
-    // NOUVELLE : Génération annuelle avec vérification des mois futurs
+    //  Génération annuelle avec vérification des mois futurs
     Map<String, Object> generatePayslipsForYear(String employeeId, int year);
 
-    // NOUVELLE : Génération de fiches de test avec vérification des mois futurs
+    // Génération de fiches de test avec vérification des mois futurs
     Map<String, Object> generateTestPayslips(String employeeId);
 
     // Méthode pour récupérer la dernière fiche

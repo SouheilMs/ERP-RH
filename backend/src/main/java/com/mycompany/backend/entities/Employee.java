@@ -1,5 +1,6 @@
 package com.mycompany.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -48,6 +49,7 @@ public class Employee {
     private Integer seniorityBlocks; // Pour compatibilité
 
     @DBRef
+
     private Set<Formation> formations = new HashSet<>();
 
     @DBRef
@@ -152,14 +154,15 @@ public class Employee {
 
     public Integer getSeniorityBlocks() { return seniorityBlocks; }
     public void setSeniorityBlocks(Integer seniorityBlocks) { this.seniorityBlocks = seniorityBlocks; }
-
+    @JsonIgnoreProperties({"employees", "hibernateLazyInitializer", "handler"})
     public Set<Formation> getFormations() { return formations; }
     public void setFormations(Set<Formation> formations) { this.formations = formations; }
-
+    @JsonIgnoreProperties({"employees", "hibernateLazyInitializer", "handler"})
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
     public String getGender() { return gender; }
-    public void setGender(String upperCase) {
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
 }

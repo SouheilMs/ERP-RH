@@ -6,23 +6,12 @@ import java.util.Map;
 
 public interface SalaryCalculationService {
 
-    /**
-     * Calcule l'ancienneté avec prime de 9 dinars
-     */
+   // Calcule la prime d'ancienneté
     Map<String, Object> calculateSeniorityBonus(Employee employee);
-
-    /**
-     * Calcule l'IRPP selon l'échelle tunisienne
-     */
+    // Calcule l'IRPP
     Double calculateIRPP(Double taxableIncome);
-
-    /**
-     * Calcule le salaire net complet
-     */
+   // Calcule le salaire complet
     Map<String, Object> calculateCompleteSalary(Employee employee, Map<String, Object> seniorityInfo);
-
-    /**
-     * Génère les années disponibles depuis l'embauche
-     */
+   // Génère une liste d'années depuis la date d'embauche
     List<Integer> generateYearsFromHireDate(Employee employee);
 }

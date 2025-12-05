@@ -14,31 +14,31 @@ export class RoleListComponent implements OnInit {
   // Data
   allRoles: Role[] = [];
   filteredRoles: Role[] = [];
-  
+
   // States
   loading = false;
   errorMessage = '';
   searchTerm = '';
-  
+
   // Modals
   showAddModal = false;
   showEditModal = false;
   showDeleteConfirmation = false;
   showBulkDeleteConfirmation = false;
-  
+
   // Form data
   newRoleName = '';
   editRoleData: Role = { id: '', roleName: '' };
-  
+
   // Loading states
   modalLoading = false;
   deleteLoading = false;
   bulkDeleteLoading = false;
-  
+
   // Error messages
   modalErrorMessage = '';
   deleteError = '';
-  
+
   // Selection
   selectedRoles: Set<string> = new Set();
 
@@ -51,7 +51,7 @@ export class RoleListComponent implements OnInit {
   loadRoles(): void {
     this.loading = true;
     this.errorMessage = '';
-    
+
     this.roleService.getAllRoles().subscribe({
       next: (roles) => {
         this.allRoles = roles;
@@ -105,20 +105,20 @@ export class RoleListComponent implements OnInit {
 
     this.modalLoading = true;
     this.modalErrorMessage = '';
-    
+
     const tempRole: Role = {
       id: 'temp-' + Date.now(),
       roleName: this.newRoleName
     };
-    
+
     this.allRoles.unshift(tempRole);
     this.applySearchFilter();
-    
+
     this.roleService.createRole(this.newRoleName).subscribe({
       next: (response) => {
         this.modalLoading = false;
         this.closeAddModal();
-        
+
         // Replace temporary role with actual response
         const index = this.allRoles.findIndex(r => r.id === tempRole.id);
         if (index !== -1) {
@@ -129,7 +129,7 @@ export class RoleListComponent implements OnInit {
       error: (error) => {
         this.modalLoading = false;
         this.modalErrorMessage = error.message;
-        
+
         // Remove temporary role on error
         this.allRoles = this.allRoles.filter(r => r.id !== tempRole.id);
         this.applySearchFilter();
@@ -159,7 +159,7 @@ export class RoleListComponent implements OnInit {
       next: (response) => {
         this.modalLoading = false;
         this.closeEditModal();
-        
+
         // Update role in the list
         const index = this.allRoles.findIndex(r => r.id === this.editRoleData.id);
         if (index !== -1) {
@@ -199,7 +199,7 @@ export class RoleListComponent implements OnInit {
       next: () => {
         this.deleteLoading = false;
         this.showDeleteConfirmation = false;
-        
+
         // Remove from lists
         this.allRoles = this.allRoles.filter(r => r.id !== this.editRoleData.id);
         this.applySearchFilter();
@@ -247,7 +247,7 @@ export class RoleListComponent implements OnInit {
     this.bulkDeleteLoading = true;
     this.deleteError = '';
 
-    const deletePromises = Array.from(this.selectedRoles).map(roleId => 
+    const deletePromises = Array.from(this.selectedRoles).map(roleId =>
       this.roleService.deleteRole(roleId).toPromise()
     );
 

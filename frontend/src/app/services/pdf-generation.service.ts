@@ -14,9 +14,7 @@ export class PdfGenerationService {
     private translationService: TranslationService
   ) {}
 
-  /**
-   * Génère le PDF de la fiche de paie avec calculs actualisés
-   */
+// Génère la fiche de paie PDF pour un employé donné et une période spécifique
   generatePayslipPDF(employee: Employee, periodText: string, language: 'fr' | 'en' = 'fr'): jsPDF {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -58,9 +56,7 @@ export class PdfGenerationService {
     return doc;
   }
 
-  /**
-   *  Extrait la date à partir du texte de période
-   */
+ // EXTRACTION : Extrait une date à partir du texte de la période
   private extractDateFromPeriod(periodText: string): Date {
     try {
       const [monthName, yearStr] = periodText.split(' ');
@@ -81,9 +77,7 @@ export class PdfGenerationService {
     return new Date();
   }
 
-  /**
-   *  CORRECTION : Crée un employé "propre" sans données d'ancienneté pré-calculées
-   */
+ // EXTRACTION : Crée un employé "propre" sans données d'ancienneté pré-calculées
   private createCleanEmployeeForCalculation(employee: Employee): Employee {
     // Créer un nouvel objet avec seulement les propriétés nécessaires au calcul
     const cleanEmployee: Employee = {
