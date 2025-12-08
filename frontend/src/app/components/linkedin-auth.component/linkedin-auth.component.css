@@ -1,0 +1,260 @@
+/* LinkedIn Auth Component CSS */
+.linkedin-auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 20px;
+}
+
+.linkedin-auth-container .auth-card {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.linkedin-auth-container .auth-card .auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.linkedin-auth-container .auth-card .auth-header i {
+  font-size: 3rem;
+  color: #0077B5;
+  margin-bottom: 15px;
+}
+
+.linkedin-auth-container .auth-card .auth-header h2 {
+  color: #0077B5;
+  margin: 0 0 10px 0;
+}
+
+.linkedin-auth-container .auth-card .auth-header .text-muted {
+  color: #6c757d;
+  margin: 0;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group {
+  margin-bottom: 20px;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group label .required {
+  color: #dc3545;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group input.p-inputtext {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group input.p-inputtext:disabled {
+  background-color: #e9ecef;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group small {
+  display: block;
+  margin-top: 5px;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-group .error-message {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.linkedin-auth-container .auth-card .auth-form .security-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.linkedin-auth-container .auth-card .auth-form .security-info .security-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+.linkedin-auth-container .auth-card .auth-form .security-info .security-item:last-child {
+  margin-bottom: 0;
+}
+
+.linkedin-auth-container .auth-card .auth-form .security-info .security-item i {
+  font-size: 1.2rem;
+}
+
+.linkedin-auth-container .auth-card .auth-form .security-info .security-item span {
+  font-size: 0.9rem;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button {
+  flex: 1;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button.p-button-outlined {
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button.p-button-outlined:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button.p-button {
+  background: #0077B5;
+  border-color: #0077B5;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button.p-button:hover {
+  background: #005582;
+  border-color: #005582;
+}
+
+.linkedin-auth-container .auth-card .auth-form .form-actions ::ng-deep button.p-button:disabled {
+  background: #6c757d;
+  border-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.linkedin-auth-container .auth-card .loading-state {
+  text-align: center;
+  padding: 40px;
+}
+
+.linkedin-auth-container .auth-card .loading-state ::ng-deep .p-progress-spinner {
+  margin: 0 auto 15px;
+}
+
+.linkedin-auth-container .auth-card .loading-state p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.linkedin-auth-container .auth-card .auth-result {
+  text-align: center;
+  padding: 30px;
+}
+
+.linkedin-auth-container .auth-card .auth-result .success-message i {
+  color: #28a745;
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.linkedin-auth-container .auth-card .auth-result .success-message h3 {
+  color: #28a745;
+  margin: 15px 0 10px 0;
+}
+
+.linkedin-auth-container .auth-card .auth-result .success-message p {
+  color: #6c757d;
+}
+
+.linkedin-auth-container .auth-card .auth-result .error-message i {
+  color: #dc3545;
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.linkedin-auth-container .auth-card .auth-result .error-message h3 {
+  color: #dc3545;
+  margin: 15px 0 10px 0;
+}
+
+.linkedin-auth-container .auth-card .auth-result .error-message p {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.linkedin-auth-container .auth-card .auth-result .error-message ::ng-deep .p-button-outlined {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.linkedin-auth-container .auth-card .auth-result .error-message ::ng-deep .p-button-outlined:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.linkedin-auth-container .permissions-info {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.linkedin-auth-container .permissions-info h4 {
+  color: #0077B5;
+  margin-bottom: 15px;
+}
+
+.linkedin-auth-container .permissions-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.linkedin-auth-container .permissions-info ul li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+.linkedin-auth-container .permissions-info ul li:last-child {
+  margin-bottom: 0;
+}
+
+.linkedin-auth-container .permissions-info ul li i.pi-check {
+  color: #28a745;
+}
+
+.linkedin-auth-container .permissions-info .text-muted.small {
+  color: #6c757d;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .linkedin-auth-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .linkedin-auth-container .auth-card {
+    padding: 20px;
+  }
+  
+  .linkedin-auth-container .auth-card .auth-form .form-actions {
+    flex-direction: column;
+  }
+  
+  .linkedin-auth-container .permissions-info {
+    margin-top: 20px;
+  }
+}

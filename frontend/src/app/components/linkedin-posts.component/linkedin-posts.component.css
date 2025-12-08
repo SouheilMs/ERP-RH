@@ -1,0 +1,522 @@
+/* LinkedIn Posts Component CSS */
+.linkedin-posts-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.linkedin-posts-container .posts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.linkedin-posts-container .posts-header .header-left h2 {
+  margin: 0;
+  color: #0077B5;
+  font-size: 1.8rem;
+}
+
+.linkedin-posts-container .posts-header .header-left .text-muted {
+  color: #6c757d;
+  margin: 5px 0 0 0;
+}
+
+.linkedin-posts-container .posts-header .header-right ::ng-deep .p-button-success {
+  background: #28a745;
+  border-color: #28a745;
+}
+
+.linkedin-posts-container .posts-header .header-right ::ng-deep .p-button-success:hover {
+  background: #218838;
+  border-color: #1e7e34;
+}
+
+.linkedin-posts-container .posts-header .header-right ::ng-deep .p-button-success:disabled {
+  background: #6c757d;
+  border-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.linkedin-posts-container .filters-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.linkedin-posts-container .filters-section .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.linkedin-posts-container .filters-section .filter-group .p-float-label {
+  position: relative;
+}
+
+.linkedin-posts-container .filters-section .filter-group .p-float-label label {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: white;
+  padding: 0 5px;
+  font-size: 12px;
+  color: #495057;
+}
+
+.linkedin-posts-container .filters-section .filter-group .p-float-label ::ng-deep .p-dropdown {
+  width: 200px;
+  min-width: 200px;
+}
+
+.linkedin-posts-container .filters-section .filter-group .p-float-label ::ng-deep .p-dropdown .p-dropdown-label {
+  padding: 0.5rem;
+}
+
+.linkedin-posts-container .filters-section .filter-group .p-float-label input.p-inputtext {
+  width: 200px;
+  padding: 0.5rem;
+}
+
+.linkedin-posts-container .filters-section ::ng-deep .p-button-outlined {
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+.linkedin-posts-container .filters-section ::ng-deep .p-button-outlined:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.linkedin-posts-container .job-offers-list {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .p-datatable-tbody > tr {
+  transition: background-color 0.2s;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background: #f8f9fa;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .status-badge.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .status-badge.secondary {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .status-badge.danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .status-badge.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .published-status {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .published-status i {
+  font-size: 1.5rem;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .published-status span {
+  font-weight: 500;
+  color: #28a745;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .published-status small {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .not-published-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .not-published-status i {
+  font-size: 1.5rem;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .action-buttons ::ng-deep button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .action-buttons ::ng-deep button .p-button-icon {
+  font-size: 1rem;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .text-muted.small {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .empty-state {
+  text-align: center;
+  padding: 40px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .empty-state i {
+  color: #dee2e6;
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .empty-state h3 {
+  color: #6c757d;
+  margin: 15px 0 10px 0;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .empty-state p {
+  color: #adb5bd;
+  margin-bottom: 20px;
+}
+
+.linkedin-posts-container .job-offers-list ::ng-deep .p-datatable .empty-state ::ng-deep .p-button {
+  padding: 0.5rem 1.5rem;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  background: #f8f9fa;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview h4 {
+  margin: 0 0 5px 0;
+  color: #0077B5;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview .text-muted {
+  color: #6c757d;
+  margin: 0 0 15px 0;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview .preview-content p {
+  margin: 0 0 10px 0;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview .preview-content p strong {
+  color: #343a40;
+}
+
+.linkedin-posts-container .publish-dialog-content .job-offer-preview .preview-content p:last-child {
+  margin-bottom: 0;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview {
+  margin-bottom: 20px;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview h5 {
+  color: #0077B5;
+  margin-bottom: 10px;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-header {
+  background: #0077B5;
+  color: white;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-header i {
+  font-size: 1.2rem;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content {
+  padding: 15px;
+  background: white;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content p {
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content p:last-child {
+  margin-bottom: 0;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content p strong {
+  color: #495057;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content .hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.linkedin-posts-container .publish-dialog-content .linkedin-preview .linkedin-card .linkedin-content .hashtags .hashtag {
+  background: #e9ecef;
+  color: #0077B5;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item:last-child {
+  margin-bottom: 0;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item ::ng-deep .p-checkbox {
+  margin-top: 2px;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item label {
+  flex: 1;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item label strong {
+  display: block;
+  color: #495057;
+  margin-bottom: 3px;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item label .text-muted.d-block {
+  display: block;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item.calendar-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item.calendar-item label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.linkedin-posts-container .publish-dialog-content .publication-options .option-item.calendar-item ::ng-deep .p-calendar {
+  width: 100%;
+}
+
+.linkedin-posts-container .published-posts-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #dee2e6;
+}
+
+.linkedin-posts-container .published-posts-section h3 {
+  color: #495057;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-header i {
+  color: #0077B5;
+  font-size: 1.5rem;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-header .post-info {
+  flex: 1;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-header .post-info strong {
+  display: block;
+  color: #495057;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-header .post-info small {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-content {
+  color: #495057;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-stats .stat-item i {
+  color: #6c757d;
+  font-size: 1.2rem;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-stats .stat-item span {
+  font-weight: 600;
+  color: #495057;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-actions ::ng-deep button {
+  width: 32px;
+  height: 32px;
+}
+
+.linkedin-posts-container .published-posts-section .posts-grid .post-card .post-actions ::ng-deep button .p-button-icon {
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .linkedin-posts-container {
+    padding: 10px;
+  }
+  
+  .linkedin-posts-container .posts-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .linkedin-posts-container .posts-header .header-right {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .linkedin-posts-container .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .linkedin-posts-container .filters-section .filter-group {
+    width: 100%;
+  }
+  
+  .linkedin-posts-container .filters-section .filter-group .p-float-label ::ng-deep .p-dropdown,
+  .linkedin-posts-container .filters-section .filter-group .p-float-label input.p-inputtext {
+    width: 100%;
+  }
+  
+  .linkedin-posts-container .published-posts-section .posts-grid {
+    grid-template-columns: 1fr;
+  }
+}

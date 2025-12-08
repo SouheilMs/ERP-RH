@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { JobOfferService, JobOfferRequest } from '../../services/job-offer.service';
 import { AuthService } from '../../services/auth.service'; 
 
 @Component({
   selector: 'app-job-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, FormsModule],
   templateUrl: './job-form.component.html',
   styleUrl: './job-form.component.css',
 })
@@ -18,6 +18,7 @@ export class JobFormComponent implements OnInit {
   loading = false;
   submitting = false;
   errorMessage: string = '';
+  publishToLinkedIn: boolean = false;
 
   contractTypes = ['CDI', 'CDD', 'FREELANCE', 'INTERNSHIP', 'PART_TIME'];
   experienceLevels = ['JUNIOR', 'MID', 'SENIOR'];
@@ -37,16 +38,10 @@ export class JobFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('🔐 JobFormComponent - Initialisation');
-    
-    // ✅ Détection du mode (création ou édition)
     this.detectFormMode();
-    
-    // Debug
-    this.debugFormMode();
   }
 
-  // ✅ NOUVELLE MÉTHODE : Détection correcte du mode
+  //  Détection correcte du mode
   private detectFormMode(): void {
     // Récupérer l'ID depuis les paramètres de route
     this.jobId = this.route.snapshot.paramMap.get('id');
@@ -58,23 +53,11 @@ export class JobFormComponent implements OnInit {
     this.isEdit = currentUrl.includes('/edit') && !!this.jobId;
 
     if (this.isEdit && this.jobId) {
-      console.log('🔄 Mode ÉDITION détecté - Chargement de l\'offre:', this.jobId);
       this.loadJobOffer();
     } else {
-      console.log('🆕 Mode CRÉATION détecté');
       this.isEdit = false;
       this.jobId = null;
     }
-  }
-
-  // ✅ MÉTHODE DE DEBUG
-  private debugFormMode(): void {
-    console.log('🔍 Debug Form Mode:');
-    console.log('  - URL complète:', this.router.url);
-    console.log('  - ID depuis route:', this.jobId);
-    console.log('  - Mode Édition:', this.isEdit);
-    console.log('  - User connecté:', this.authService.isLoggedIn());
-    console.log('  - Rôles user:', this.authService.getUserRoles());
   }
 
   createForm(): FormGroup {
@@ -90,7 +73,8 @@ export class JobFormComponent implements OnInit {
       closingDate: ['', [Validators.required, this.futureDateValidator]],
       experienceLevel: ['', Validators.required],
       educationRequired: ['', Validators.required],
-      tags: ['']
+      tags: [''],
+      publishToLinkedIn: [false]
     });
   }
 
@@ -107,7 +91,6 @@ export class JobFormComponent implements OnInit {
 
   loadJobOffer(): void {
     if (!this.jobId) {
-      console.error('❌ Impossible de charger l\'offre: jobId est null');
       this.errorMessage = 'ID d\'offre non valide';
       return;
     }
@@ -115,12 +98,9 @@ export class JobFormComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     
-    console.log('🔄 Chargement de l\'offre avec ID:', this.jobId);
     
     this.jobService.getJobOfferById(this.jobId).subscribe({
       next: (job) => {
-        console.log('✅ Offre chargée avec succès:', job.title);
-        
         // Formater la date de clôture
         const closingDate = job.closingDate ? job.closingDate.split('T')[0] : '';
         this.currentTags = job.tags || []; 
@@ -138,14 +118,12 @@ export class JobFormComponent implements OnInit {
           closingDate: closingDate,
           experienceLevel: job.experienceLevel || '',
           educationRequired: job.educationRequired || '',
-          tags: this.currentTags.join(', ') || ''
+          tags: this.currentTags.join(', ') || '',
         });
-        
+         this.publishToLinkedIn = job.externalPlatforms?.includes('LINKEDIN') || false;
         this.loading = false;
-        console.log('✅ Formulaire rempli avec les données de l\'offre');
       },
       error: (error) => {
-        console.error('❌ Erreur lors du chargement de l\'offre:', error);
         this.errorMessage = `Erreur lors du chargement: ${error.message}`;
         this.loading = false;
       }
@@ -153,10 +131,6 @@ export class JobFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    console.log('📤 Soumission du formulaire:');
-    console.log('  - Mode:', this.isEdit ? 'ÉDITION' : 'CRÉATION');
-    console.log('  - ID:', this.jobId);
-    console.log('  - Formulaire valide:', this.jobForm.valid);
     
     if (this.jobForm.valid) {
       this.submitting = true;
@@ -181,30 +155,25 @@ export class JobFormComponent implements OnInit {
         experienceLevel: formValue.experienceLevel,
         educationRequired: formValue.educationRequired,
         tags: tags,
-        isActive: true
+        isActive: true,
+        publishToLinkedIn: this.publishToLinkedIn
       };
 
-      console.log('📦 Données à envoyer:', request);
-
       if (this.isEdit && this.jobId) {
-        // ✅ MODE ÉDITION
-        console.log('🔄 Mise à jour de l\'offre:', this.jobId);
+        //  MODE ÉDITION
+
         this.jobService.updateJobOffer(this.jobId, request).subscribe({
           next: (response) => {
-            console.log('✅ Offre mise à jour avec succès:', response.title);
             this.submitting = false;
             alert('Offre mise à jour avec succès!');
             this.router.navigate(['/jobs']);
           },
           error: (error) => {
-            console.error('❌ Erreur lors de la mise à jour:', error);
             this.errorMessage = `Erreur lors de la mise à jour: ${error.message}`;
             this.submitting = false;
           }
         });
       } else {
-        // ✅ MODE CRÉATION
-        console.log('🆕 Création d\'une nouvelle offre');
         const publisherId = this.getCurrentUserId();
         if (!publisherId) {
           this.errorMessage = 'Utilisateur non connecté';
@@ -214,20 +183,17 @@ export class JobFormComponent implements OnInit {
         
         this.jobService.createJobOffer(request, publisherId).subscribe({
           next: (response) => {
-            console.log('✅ Offre créée avec succès:', response.title);
             this.submitting = false;
             alert('Offre créée avec succès!');
             this.router.navigate(['/jobs']);
           },
           error: (error) => {
-            console.error('❌ Erreur lors de la création:', error);
             this.errorMessage = `Erreur lors de la création: ${error.message}`;
             this.submitting = false;
           }
         });
       }
     } else {
-      console.log('❌ Formulaire invalide');
       this.markFormGroupTouched();
       this.errorMessage = 'Veuillez corriger les erreurs dans le formulaire';
       this.checkFormValidity();
@@ -250,7 +216,6 @@ export class JobFormComponent implements OnInit {
     const currentUser = this.authService.getUser();
   
     if (currentUser && currentUser.id) {
-      console.log('🔑 ID utilisateur trouvé:', currentUser.id);
       return currentUser.id;
     }
     
@@ -259,10 +224,9 @@ export class JobFormComponent implements OnInit {
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        console.log('🔑 ID utilisateur depuis localStorage:', user.id);
         return user.id;
       } catch (error) {
-        console.error('❌ Erreur parsing user data:', error);
+        console.error('Erreur lors de l\'analyse des données utilisateur :', error);
       }
     }
     
@@ -285,21 +249,6 @@ export class JobFormComponent implements OnInit {
       if (field.errors['pastDate']) return 'La date doit être dans le futur';
     }
     return '';
-  }
-
-  // ✅ MÉTHODE DE DEBUG
-  checkFormStatus(): void {
-    console.log('🔍 État du formulaire:');
-    console.log('  - Mode:', this.isEdit ? 'ÉDITION' : 'CRÉATION');
-    console.log('  - ID:', this.jobId);
-    console.log('  - Formulaire valide:', this.jobForm.valid);
-    console.log('  - Formulaire touché:', this.jobForm.touched);
-    console.log('  - Formulaire modifié:', this.jobForm.dirty);
-    
-    Object.keys(this.jobForm.controls).forEach(key => {
-      const control = this.jobForm.get(key);
-      console.log(`  - ${key}: valide=${control?.valid}, touché=${control?.touched}, valeur=`, control?.value);
-    });
   }
 
   goBack(): void {

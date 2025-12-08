@@ -98,8 +98,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log(' === INIT PAYSLIP HISTORY COMPONENT ===');
-
     // Initialiser les permissions utilisateur
     this.initializeUserPermissions();
 
@@ -133,16 +131,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
         this.userRole = 'ROLE_EMPLOYEE';
       }
 
-      console.log('Permissions utilisateur:', {
-        userId: this.currentUserId,
-        role: this.userRole,
-        isHR: this.authService.isHR(),
-        isHRManager: this.authService.isHRManager(),
-        isEmployee: this.authService.isEmployee(),
-        canViewAllEmployees: this.canViewAllEmployees,
-        canGeneratePayslips: this.canGeneratePayslips,
-        canPerformAllActions: this.canPerformAllActions
-      });
     } else {
       console.warn('Aucun utilisateur connecté trouvé');
       this.setDefaultPermissions();
@@ -159,13 +147,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Permissions d\'accès:', {
-      isViewingOwnProfile: this.isViewingOwnProfile,
-      canViewAllEmployees: this.canViewAllEmployees,
-      employeeId: this.employeeId,
-      currentUserId: this.currentUserId,
-      userRole: this.userRole
-    });
   }
   private setDefaultPermissions() {
     this.currentUserId = '';
@@ -220,7 +201,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   private resetComponent() {
-    console.log('🔄 Réinitialisation du composant pour le nouvel employé');
 
     this.payslipHistory = [];
     this.availableYears = [];
@@ -284,7 +264,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadEmployeeInfo() {
-    console.log(' Chargement des informations pour l\'employé ID:', this.employeeId);
 
     this.loading = true;
     this.employeeService.getEmployeeById(this.employeeId).subscribe({
@@ -302,30 +281,21 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
         this.employeeName = employee.username || 'Nom inconnu';
         this.employeeMatricule = employee.matricule || employee.id || 'N/A';
 
-        console.log(' Informations employé:');
-        console.log('   - Nom:', this.employeeName);
-        console.log('   - Matricule:', this.employeeMatricule);
-        console.log('   - Email:', employee.email);
-        console.log('   - Salaire:', employee.salary);
-
         if (employee.hireDate) {
           const hireDate = new Date(employee.hireDate);
           this.employeeHireYear = hireDate.getFullYear();
           this.employeeHireMonth = hireDate.getMonth() + 1;
           this.employeeHireDay = hireDate.getDate();
-          console.log('   - Date d\'embauche:', `${this.employeeHireDay}/${this.employeeHireMonth}/${this.employeeHireYear}`);
         } else {
           this.employeeHireYear = new Date().getFullYear();
           this.employeeHireMonth = 1;
           this.employeeHireDay = 1;
-          console.log('   - Date d\'embauche: Non définie');
         }
 
         this.cdr.detectChanges();
         this.loadAvailableYears();
       },
       error: (error: any) => {
-        console.error(' Erreur chargement employé:', error);
         this.errorMessage = ` Erreur lors du chargement des informations employé: ${error.message}`;
         this.loading = false;
         this.cdr.detectChanges();
@@ -334,11 +304,9 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadAvailableYears() {
-    console.log(' Chargement des années disponibles pour:', this.employeeId);
 
     this.employeeService.getAvailableYears(this.employeeId).subscribe({
       next: (years: number[]) => {
-        console.log(' Années disponibles du backend:', years);
 
         if (years && years.length > 0) {
           this.availableYears = years.sort((a, b) => b - a);
@@ -346,16 +314,11 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
           this.availableYears = this.generateYearsFromHireDate();
         }
 
-        console.log(' Années disponibles finales:', this.availableYears);
-
         this.selectedYear = this.availableYears[0] || this.currentYear;
         this.selectedYearForGeneration = this.selectedYear;
-        console.log(' Année sélectionnée:', this.selectedYear);
-
         this.loadPayslipsForYear(this.selectedYear);
       },
       error: (error: any) => {
-        console.error(' Erreur chargement années:', error);
         this.availableYears = this.generateYearsFromHireDate();
         this.selectedYear = this.availableYears[0] || this.currentYear;
         this.selectedYearForGeneration = this.selectedYear;
@@ -370,7 +333,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       for (let year = this.currentYear; year >= this.currentYear - 5; year--) {
         years.push(year);
       }
-      console.log(' Années par défaut (pas de date d\'embauche):', years);
+
       return years;
     }
 
@@ -382,20 +345,16 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       years.push(year);
     }
 
-    console.log(' Années générées depuis embauche:', years);
     return years.sort((a, b) => b - a);
   }
 
   loadPayslipsForYear(year: number) {
-    console.log(` Chargement des fiches pour: ${this.employeeName} (${this.employeeId}), année: ${year}`);
 
     this.loading = true;
     this.errorMessage = '';
 
     this.employeeService.getEmployeePayslipsByYear(this.employeeId, year).subscribe({
       next: (payslips: Payslip[]) => {
-        console.log(` Fiches reçues pour ${year}:`, payslips);
-
         if (!payslips) {
           console.log('️ Aucune fiche reçue (null)');
           this.payslipHistory = [];
@@ -406,7 +365,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
         this.hasData = this.payslipHistory.length > 0;
         this.loading = false;
 
-        console.log(` ${this.payslipHistory.length} fiche(s) chargée(s) pour ${year}`);
         this.performDataDiagnosis();
         this.cdr.detectChanges();
       },
@@ -418,11 +376,9 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   private fallbackLoadPayslips(year: number) {
-    console.log(' Tentative de chargement de fallback...');
 
     this.employeeService.getEmployeePayslips(this.employeeId).subscribe({
       next: (allPayslips: Payslip[]) => {
-        console.log(' Toutes les fiches (fallback):', allPayslips);
 
         if (!allPayslips) {
           this.payslipHistory = [];
@@ -433,7 +389,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
             return payslipYear === searchYear;
           });
 
-          console.log(` Fiches filtrées pour ${year}:`, filteredPayslips.length);
           this.payslipHistory = filteredPayslips;
         }
 
@@ -458,22 +413,16 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   private performDataDiagnosis() {
-    console.log(' === DIAGNOSTIC DES DONNÉES ===');
-    console.log(' Employé:', this.employeeName);
-    console.log(' Année sélectionnée:', this.selectedYear);
-    console.log(' Fiches chargées:', this.payslipHistory.length);
 
     this.payslipHistory.forEach((payslip, index) => {
       console.log(`   ${index + 1}. ${payslip.period} - Mois: ${payslip.month} - Année: ${payslip.year}`);
     });
 
-    console.log(' État des mois:');
     for (let month = 1; month <= 12; month++) {
       const hasPayslip = this.hasPayslipForMonth(month);
       console.log(`   ${month}/${this.selectedYear}: ${hasPayslip ? ' Fiche' : ' Sans fiche'}`);
     }
 
-    console.log('=== FIN DIAGNOSTIC ===');
   }
 
 
@@ -871,7 +820,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 🔥 MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
+  //  MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
   getTargetMonth(): number {
     if (this.selectedYear < this.currentYear) {
       return 12;
@@ -966,12 +915,6 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     const currentDate = new Date();
 
     const totalMonths = this.calculateExactMonthsOfService(hireDate, currentDate);
-
-    console.log(` Vérification éligibilité prime 9 dinars:`);
-    console.log(`   - Date embauche: ${hireDate.toLocaleDateString()}`);
-    console.log(`   - Date actuelle: ${currentDate.toLocaleDateString()}`);
-    console.log(`   - Mois de service: ${totalMonths}`);
-    console.log(`   - Éligible: ${totalMonths >= 18 ? 'OUI' : 'NON'}`);
 
     if (totalMonths >= 18) {
       const bonusPeriods = Math.floor(totalMonths / 18);

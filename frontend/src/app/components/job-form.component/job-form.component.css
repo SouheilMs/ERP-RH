@@ -417,7 +417,44 @@
 .tag-suggestion:last-child {
   border-bottom: none;
 }
+/* Styles pour le checkbox LinkedIn */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
 
+.checkbox-group:hover {
+  border-color: #0077b5;
+  background: #f0f7ff;
+}
+
+.checkbox-input {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #2d3748;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.checkbox-group small {
+  display: block;
+  color: #718096;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-left: 28px;
+}
 /* Message d'erreur */
 .error-banner {
   background: #fed7d7;

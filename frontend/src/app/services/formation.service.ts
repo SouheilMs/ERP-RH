@@ -48,10 +48,9 @@ export class FormationService {
 
   constructor(private http: HttpClient) { }
 
-  // ✅ MODIFIÉ : Ajouter des headers manuels pour tester
+  //  Ajouter des headers manuels pour tester
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('authToken');
-    console.log('🔐 FormationService - Token from localStorage:', token ? `PRESENT (${token.length} chars)` : 'NULL');
     
     if (token) {
       return new HttpHeaders({
@@ -69,17 +68,12 @@ export class FormationService {
     const params = new HttpParams().set('createdById', createdById);
     const headers = this.getAuthHeaders();
     
-    console.log('📨 FormationService - Headers for create:', headers.keys());
-    
     return this.http.post<Formation>(this.apiUrl, request, { params, headers });
   }
 
   getAllFormations(): Observable<Formation[]> {
     const headers = this.getAuthHeaders();
-    
-    console.log('📨 FormationService - Headers for getAll:', headers.keys());
-    console.log('🔑 Authorization Header:', headers.get('Authorization')?.substring(0, 30) + '...');
-    
+     
     return this.http.get<Formation[]>(this.apiUrl, { headers });
   }
 

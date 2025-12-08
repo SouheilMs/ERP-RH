@@ -255,31 +255,45 @@
             </div>
           }
         </div>
-
+<div class="form-group full-width">
+  <div class="checkbox-group">
+    <input 
+      type="checkbox" 
+      id="publishToLinkedIn" 
+      name="publishToLinkedIn"
+      [(ngModel)]="publishToLinkedIn"
+      [ngModelOptions]="{standalone: true}"
+      class="checkbox-input"
+    >
+    <label for="publishToLinkedIn" class="checkbox-label">
+      <i class="fas fa-linkedin me-2" style="color: #0077b5;"></i>
+      Publier automatiquement sur LinkedIn
+    </label>
+    <small class="text-muted">
+      L'offre sera publiée sur votre page LinkedIn immédiatement après création
+    </small>
+  </div>
+</div>
         <!-- Tags -->
-        <div class="form-group full-width">
-          <label class="form-label" for="tags">Tags</label>
-          <div class="tags-container">
-            @for (tag of currentTags; track tag) {
-              <div class="tag-item">
-                <span>{{ tag }}</span>
-                <button type="button" class="tag-remove" (click)="removeTag(tag)">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-            }
-            <input
-              type="text"
-              id="tags"
-              class="tag-input"
-              placeholder="Add a tag..."
-              [value]="tagInput"
-              (input)="onTagInput($event)"
-              (keydown)="onTagKeydown($event)"
-              (blur)="addCurrentTag()"
-            >
-          </div>
-        </div>
+       <div class="form-group full-width">
+  <div class="checkbox-group">
+    <input 
+      type="checkbox" 
+      id="publishToLinkedIn" 
+      name="publishToLinkedIn"
+      [(ngModel)]="publishToLinkedIn"
+      [ngModelOptions]="{standalone: true}"
+      class="checkbox-input"
+    >
+    <label for="publishToLinkedIn" class="checkbox-label">
+      <i class="fas fa-linkedin me-2" style="color: #0077b5;"></i>
+      Publier automatiquement sur LinkedIn
+    </label>
+    <small class="text-muted">
+      L'offre sera publiée sur votre page LinkedIn immédiatement après création
+    </small>
+  </div>
+</div>
 
         <!-- Actions -->
         <div class="form-actions">

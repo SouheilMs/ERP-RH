@@ -1,6 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 // Interfaces exportées
@@ -43,49 +43,26 @@ export class AuthService {
   private userRolesSubject = new BehaviorSubject<string[]>(this.getStoredUserRoles());
 
   constructor() {
-    console.log('🔄 AuthService initialisé');
-    console.log('🔐 Token initial:', this.getToken() ? 'PRÉSENT' : 'NULL');
+    // Initial debug log
   }
 
   // Méthodes d'authentification
   signup(signupRequest: SignupRequest): Observable<SignupResponse> {
     return this.http.post<SignupResponse>(`${this.apiUrl}/signup`, signupRequest)
-      .pipe(
-        catchError(this.handleError)
-      );
+     .pipe(catchError(error => throwError(() => error)));
   }
 
 canViewFormations(): boolean {
   return this.isHR() || this.isHRManager();
 }
-  // login(loginRequest: LoginRequest): Observable<JwtResponse> {
-  //   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
-  //     .pipe(
-  //       tap((response: JwtResponse) => {
-  //         // Store token and user info
-  //         localStorage.setItem('authToken', response.token);
-  //         localStorage.setItem('user', JSON.stringify({
-  //           id: response.id,
-  //           username: response.username,
-  //           email: response.email,
-  //           roles: response.roles
-  //         }));
-  //         this.isLoggedInSubject.next(true);
-  //       }),
-  //       catchError(this.handleError)
-  //     );
-  // }
 
 login(loginRequest: LoginRequest): Observable<JwtResponse> {
-  console.log('🔄 Tentative de login vers:', `${this.apiUrl}/signin`);
 
   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
     .pipe(
       tap((response: JwtResponse) => {
-        console.log('✅ Réponse login reçue:', response);
 
-        if (response.token) {  // ✅ CORRECTION : Utiliser "token" au lieu de "accessToken"
-          // Stocker le token correctement
+        if (response.token) {  
           localStorage.setItem('authToken', response.token);
 
           const userData = {
@@ -99,38 +76,25 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
           this.isLoggedInSubject.next(true);
           this.userRolesSubject.next(response.roles);
 
-          console.log('🔐 Token stocké avec succès');
-          console.log('👤 User ID:', response.id);
-          console.log('🎯 Roles:', response.roles);
-
-          // ✅ Débogage du token
           this.decodeToken();
         } else {
-          console.error('❌ Pas de token dans la réponse');
           throw new Error('No token received');
         }
       }),
-      catchError(this.handleError)
+      catchError(error => throwError(() => error))
     );
 }
   resetPassword(resetRequest: LoginRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)
-      .pipe(
-        catchError(this.handleError)
-      );
+     .pipe(catchError(error => throwError(() => error)));
   }
 
   logout(): void {
-    console.log('🚪 Déconnexion en cours...');
 
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     this.isLoggedInSubject.next(false);
     this.userRolesSubject.next([]);
-
-    console.log('🧹 Données localStorage nettoyées');
-    console.log('🔓 Nouvel état isLoggedIn:', false);
-
     this.router.navigate(['/login']);
   }
 
@@ -150,43 +114,34 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
 // Dans AuthService, modifiez getCurrentUserId()
 getCurrentUserId(): string | null {
   const user = this.getUser();
-  console.log('🔍 getCurrentUserId - user data:', user);
 
   if (user && user.id) {
-    console.log('✅ User ID found:', user.id);
     return user.id;
   }
-
-  console.log('❌ User ID not found - user object:', user);
   return null;
 }
 
 // Et dans getUser()
 getUser(): any {
   const userJson = localStorage.getItem('user');
-  console.log('🔍 getUser - raw JSON from localStorage:', userJson);
-
   try {
     const user = userJson ? JSON.parse(userJson) : null;
-    console.log('🔍 getUser - parsed user:', user);
     return user;
+
   } catch (error) {
-    console.error('❌ Erreur parsing user data:', error);
     return null;
   }
 }
-  // ✅ CORRECTION : Méthodes de vérification de rôle plus précises
+  //  Méthodes de vérification de rôle plus précises
  isHR(): boolean {
   const roles = this.getUserRoles();
   const isHR = roles.includes('ROLE_HR');
-  console.log('🔍 isHR() check:', { roles, isHR });
   return isHR;
 }
 
   isHRManager(): boolean {
   const roles = this.getUserRoles();
   const isHRManager = roles.includes('ROLE_HRMANAGER');
-  console.log('🔍 isHRManager() check:', { roles, isHRManager });
   return isHRManager;
 }
 
@@ -194,7 +149,7 @@ getUser(): any {
     return this.getUserRoles().includes('ROLE_EMPLOYEE');
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier si c'est RH ou Manager
+  //Vérifier si c'est RH ou Manager
   isHRorManager(): boolean {
     return this.isHR() || this.isHRManager();
   }
@@ -209,7 +164,7 @@ getUser(): any {
     return this.isHRorManager();
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut voir les offres d'emploi
+  //  Vérifier si l'utilisateur peut voir les offres d'emploi
   canViewJobs(): boolean {
     return this.isHRorManager();
   }
@@ -231,13 +186,6 @@ getUser(): any {
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
-    console.log('🔐 canAccessEmployeeProfile check:');
-    console.log('   - Employee ID:', employeeId);
-    console.log('   - Current User ID:', currentUserId);
-    console.log('   - Is HR/Manager:', isHRorManager);
-    console.log('   - Is Own Profile:', isOwnProfile);
-    console.log('   - Result:', isHRorManager || isOwnProfile);
-
     return isHRorManager || isOwnProfile;
   }
 
@@ -246,13 +194,6 @@ getUser(): any {
     const currentUserId = this.getCurrentUserId();
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
-
-    console.log('🔐 canViewPayslipHistory Check:');
-    console.log('   - Employee ID:', employeeId);
-    console.log('   - Current User ID:', currentUserId);
-    console.log('   - isHR/Manager:', isHRorManager);
-    console.log('   - isOwnProfile:', isOwnProfile);
-    console.log('   - Result:', isHRorManager || isOwnProfile);
 
     return isHRorManager || isOwnProfile;
   }
@@ -276,14 +217,6 @@ getUser(): any {
     // Les RH peuvent éditer tous les profils sauf le leur via l'interface admin
     // Les employés ne peuvent éditer que leur propre profil via "Mon Profil"
     const canEdit = isHRorManager && !isOwnProfile;
-
-    console.log('🔐 canEditEmployeeProfile:');
-    console.log('   - Employee ID:', employeeId);
-    console.log('   - Current User ID:', currentUserId);
-    console.log('   - Is HR/Manager:', isHRorManager);
-    console.log('   - Is Own Profile:', isOwnProfile);
-    console.log('   - Result:', canEdit);
-
     return canEdit;
   }
 
@@ -294,12 +227,10 @@ getUser(): any {
     const isOwnProfile = currentUserId === employeeId;
 
     const canUpload = isHRorManager && !isOwnProfile;
-
-    console.log('🔐 canUploadEmployeePhoto:', canUpload);
     return canUpload;
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier si l'utilisateur peut créer/modifier des offres d'emploi
+  //  Vérifier si l'utilisateur peut créer/modifier des offres d'emploi
   canManageJobs(): boolean {
     return this.isHRorManager();
   }
@@ -322,43 +253,17 @@ getUser(): any {
   getUserRolesObservable(): Observable<string[]> {
     return this.userRolesSubject.asObservable();
   }
-debugCurrentUser(): void {
-  console.log('🐛 DEBUG CURRENT USER:');
-  console.log('  - Token:', this.getToken() ? 'PRESENT' : 'NULL');
-  console.log('  - User:', this.getUser());
-  console.log('  - Roles:', this.getUserRoles());
-  console.log('  - isHR():', this.isHR());
-  console.log('  - isHRManager():', this.isHRManager());
-  console.log('  - isEmployee():', this.isEmployee());
-}
+
   // ================= MÉTHODES DE DEBUG =================
 
-  debugAuth(): void {
-    console.log('🐛 DEBUG AUTH SERVICE:');
-    console.log('🔐 Token:', this.getToken());
-    console.log('👤 User:', this.getUser());
-    console.log('🔓 isLoggedIn:', this.isLoggedIn());
-    console.log('🎯 Roles:', this.getUserRoles());
-    console.log('💾 localStorage authToken:', localStorage.getItem('authToken'));
-    console.log('💾 localStorage user:', localStorage.getItem('user'));
-    console.log('👑 isHR:', this.isHR());
-    console.log('👨‍💼 isHRManager:', this.isHRManager());
-    console.log('👤 isEmployee:', this.isEmployee());
-    console.log('👥 isHRorManager:', this.isHRorManager());
-    console.log('📋 canViewEmployeeList:', this.canViewEmployeeList());
-    console.log('💼 canViewJobs:', this.canViewJobs());
-    console.log('🛠️ canManageJobs:', this.canManageJobs());
-  }
 
   decodeToken(): void {
     const token = this.getToken();
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('🔓 Token payload:', payload);
-        console.log('⏰ Token expiration:', new Date(payload.exp * 1000));
       } catch (error) {
-        console.error('❌ Error decoding token:', error);
+        console.error(' Error decoding token:', error);
       }
     }
   }
@@ -374,37 +279,4 @@ debugCurrentUser(): void {
     return user?.roles || [];
   }
 
-  private handleError(error: any) {
-    console.error('❌ Erreur AuthService:', error);
-    let errorMessage = 'Une erreur est survenue!';
-
-    if (error.status === 401) {
-      errorMessage = 'Email ou mot de passe incorrect.';
-    } else if (error.status === 403) {
-      errorMessage = 'Accès refusé. Permissions insuffisantes.';
-    } else if (error.status === 0) {
-      errorMessage = 'Impossible de se connecter au serveur.';
-    } else if (error.error?.message) {
-      errorMessage = error.error.message;
-    }
-
-    return throwError(() => errorMessage);
-  }
-  debugLoginResponse(loginRequest: LoginRequest): void {
-  console.log('🧪 DEBUG: Testing login response format');
-
-  this.http.post<any>(`${this.apiUrl}/signin`, loginRequest).subscribe({
-    next: (rawResponse) => {
-      console.log('🔍 RAW LOGIN RESPONSE:', rawResponse);
-      console.log('📋 Response keys:', Object.keys(rawResponse));
-      console.log('🔐 Token field name:',
-        rawResponse.accessToken ? 'accessToken' :
-        rawResponse.token ? 'token' :
-        'UNKNOWN');
-    },
-    error: (error) => {
-      console.error('❌ Debug login failed:', error);
-    }
-  });
-}
 }

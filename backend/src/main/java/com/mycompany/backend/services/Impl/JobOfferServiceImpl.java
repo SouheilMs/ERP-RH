@@ -8,7 +8,7 @@ import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.repositories.JobOfferRepository;
 import com.mycompany.backend.services.JobOfferService;
 import com.mycompany.backend.services.EmployeeService;
-import com.mycompany.backend.services.LinkedInService;
+import com.mycompany.backend.services.LinkedInIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class JobOfferServiceImpl implements JobOfferService {
     private EmployeeService employeeService;
 
     @Autowired
-    private LinkedInService linkedInService;
+    private LinkedInIntegrationService linkedInService;
 
     @Override
     public JobOfferDTO create(JobOfferRequest request, String publisherId) {
@@ -232,18 +232,18 @@ public class JobOfferServiceImpl implements JobOfferService {
 
     // Méthodes LinkedIn
     @Override
-    public JobOfferDTO publishToLinkedIn(String jobOfferId) {
+    public LinkedInPostResponse publishToLinkedIn(String jobOfferId) {
         JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
                 .orElseThrow(() -> new RuntimeException("Job offer not found"));
 
-        LinkedInPostResponse response = linkedInService.publishJobOffer(jobOffer);
+        LinkedInPostResponse response = linkedInService.publishJobOffer(jobOfferId);
 
         if (response.isSuccess()) {
             // Mettre à jour l'offre avec l'ID du post LinkedIn
             jobOffer.setLinkedInPostId(response.getId());
             jobOffer.addExternalPlatform("LINKEDIN");
             jobOffer.setUpdatedAt(LocalDateTime.now());
-            jobOffer = jobOfferRepository.save(jobOffer);
+            jobOfferRepository.save(jobOffer);
 
             log.info("Job offer {} published to LinkedIn with post ID: {}",
                     jobOfferId, response.getId());
@@ -251,7 +251,7 @@ public class JobOfferServiceImpl implements JobOfferService {
             throw new RuntimeException("Failed to publish to LinkedIn: " + response.getErrorMessage());
         }
 
-        return convertToDTO(jobOffer);
+        return response;
     }
 
     @Override
@@ -259,7 +259,6 @@ public class JobOfferServiceImpl implements JobOfferService {
         JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
                 .orElseThrow(() -> new RuntimeException("Job offer not found"));
 
-        // Pour Indeed, similaire à LinkedIn mais avec une logique spécifique
         String indeedJobKey = "indeed_" + System.currentTimeMillis();
         jobOffer.addExternalPlatform("INDEED");
         jobOffer.setUpdatedAt(LocalDateTime.now());
@@ -276,7 +275,7 @@ public class JobOfferServiceImpl implements JobOfferService {
 
         if (jobOffer.getLinkedInPostId() != null) {
             try {
-                linkedInService.deleteJobOfferPost(jobOffer.getLinkedInPostId());
+                linkedInService.deleteJobPost(jobOffer.getLinkedInPostId());
                 log.info("Successfully unpublished job offer {} from LinkedIn", jobOfferId);
             } catch (Exception e) {
                 log.warn("Failed to delete LinkedIn post, but removing local reference: {}", e.getMessage());
@@ -294,7 +293,7 @@ public class JobOfferServiceImpl implements JobOfferService {
     }
 
     @Override
-    public JobOfferDTO updateLinkedInPost(String jobOfferId) {
+    public LinkedInPostResponse updateLinkedInPost(String jobOfferId) {
         JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
                 .orElseThrow(() -> new RuntimeException("Job offer not found"));
 
@@ -302,20 +301,19 @@ public class JobOfferServiceImpl implements JobOfferService {
             throw new RuntimeException("Job offer is not published on LinkedIn");
         }
 
-        LinkedInPostResponse response = linkedInService.updateJobOfferPost(
-                jobOffer.getLinkedInPostId(), jobOffer
-        );
+        LinkedInPostResponse response = linkedInService.updateJobPost(jobOfferId);
 
         if (response.isSuccess()) {
             jobOffer.setUpdatedAt(LocalDateTime.now());
-            jobOffer = jobOfferRepository.save(jobOffer);
+            jobOfferRepository.save(jobOffer);
             log.info("LinkedIn post updated for job offer {}", jobOfferId);
         } else {
             throw new RuntimeException("Failed to update LinkedIn post: " + response.getErrorMessage());
         }
 
-        return convertToDTO(jobOffer);
+        return response;
     }
+
 
     // Private helper methods
     private JobOfferDTO convertToDTO(JobOffer jobOffer) {

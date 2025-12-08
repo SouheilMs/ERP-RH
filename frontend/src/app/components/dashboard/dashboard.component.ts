@@ -37,44 +37,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.rolesSubscription = this.authService.getUserRolesObservable().subscribe(roles => {
       this.updatePermissions();
     });
-
-    console.log('👤 User connected with role:', this.userRole);
-
-    // ✅ Redirection automatique
     this.redirectIfNeeded();
   }
 
   private updatePermissions() {
     this.canViewEmployees = this.authService.canViewEmployeeList();
-    this.canViewJobs = this.authService.isHR() || this.authService.isHRManager(); // ✅ OFFRES POUR RH SEULEMENT
-    this.canViewFormations = this.authService.isHR() || this.authService.isHRManager(); // ✅ FORMATIONS POUR RH SEULEMENT
+    this.canViewJobs = this.authService.isHR() || this.authService.isHRManager(); //  OFFRES POUR RH SEULEMENT
+    this.canViewFormations = this.authService.isHR() || this.authService.isHRManager(); //  FORMATIONS POUR RH SEULEMENT
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
-
-    console.log('🔐 Permissions updated:');
-    console.log('   - canViewEmployees:', this.canViewEmployees);
-    console.log('   - canViewJobs:', this.canViewJobs);
-    console.log('   - canViewFormations:', this.canViewFormations);
-    console.log('   - userRole:', this.userRole);
-    console.log('   - currentUserId:', this.currentUserId);
   }
 
   private redirectIfNeeded() {
     // Si l'employé est sur la liste des employés, le rediriger vers son profil
     if (this.router.url === '/employees' && !this.canViewEmployees && this.currentUserId) {
-      console.log('🔄 Redirecting employee to their profile');
       this.router.navigate(['/employees', this.currentUserId]);
     }
 
-    // ✅ Redirection si employé essaie d'accéder aux offres d'emploi
+    //  Redirection si employé essaie d'accéder aux offres d'emploi
     if (this.router.url === '/jobs' && !this.canViewJobs && this.currentUserId) {
-      console.log('🔄 Redirecting employee from jobs to their profile');
       this.router.navigate(['/employees', this.currentUserId]);
     }
 
-    // ✅ Redirection si employé essaie d'accéder aux formations
+    // Redirection si employé essaie d'accéder aux formations
     if (this.router.url === '/formations' && !this.canViewFormations && this.currentUserId) {
-      console.log('🔄 Redirecting employee from formations to their profile');
       this.router.navigate(['/employees', this.currentUserId]);
     }
   }

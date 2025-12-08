@@ -131,23 +131,17 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getUser();
     this.isViewingOwnProfile = currentUser?.id === employeeId;
 
-    // ✅ CORRECTION : HR et HR Manager peuvent voir TOUS les profils + leur propre profil
+    //  HR Manager peuvent voir TOUS les profils + leur propre profil
     this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
 
-    // ✅ CORRECTION : Les RH peuvent éditer tous les profils SAUF leur propre profil via cette interface
+    //  Les RH peuvent éditer tous les profils SAUF leur propre profil via cette interface
     this.canEdit = this.canViewAllInfo && !this.isViewingOwnProfile;
 
-    console.log('🔐 Permissions Check:');
-    console.log('   - Employee ID:', employeeId);
-    console.log('   - Current User ID:', currentUser?.id);
-    console.log('   - isViewingOwnProfile:', this.isViewingOwnProfile);
-    console.log('   - canViewAllInfo (HR/Manager):', this.canViewAllInfo);
-    console.log('   - canEdit:', this.canEdit);
-    console.log('   - isMyProfilePage:', this.isMyProfilePage);
 
-    // ✅ CORRECTION : Si un employé essaie d'accéder à un profil qui n'est pas le sien
+
+    //  Si un employé essaie d'accéder à un profil qui n'est pas le sien
     if (this.authService.isEmployee() && !this.isViewingOwnProfile && !this.isMyProfilePage) {
-      console.log('🚫 Employee trying to access another profile - Redirecting to own profile');
+      console.log(' Employee trying to access another profile - Redirecting to own profile');
       this.showUnauthorizedMessage = true;
       this.loading = false;
       setTimeout(() => {
@@ -163,17 +157,17 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   canSeeUpdateForm(): boolean {
-    // ✅ CORRECTION : Les RH voient le formulaire pour les autres employés
+    //  Les RH voient le formulaire pour les autres employés
     return this.canViewAllInfo && !this.isViewingOwnProfile;
   }
 
   canUploadPhoto(): boolean {
-    // ✅ CORRECTION : Seuls les RH peuvent uploader des photos pour les autres employés
+    //Seuls les RH peuvent uploader des photos pour les autres employés
     return this.canViewAllInfo && !this.isViewingOwnProfile;
   }
 
   canSeeReadonlyInfo(): boolean {
-    // ✅ CORRECTION : Lecture seule pour son propre profil ou si pas RH
+    // Lecture seule pour son propre profil ou si pas RH
     return this.isViewingOwnProfile || !this.canViewAllInfo;
   }
 
@@ -181,10 +175,10 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     return this.canViewAllInfo || this.isViewingOwnProfile || this.isMyProfilePage;
   }
 
-  // ✅ NOUVELLE MÉTHODE : Permissions pour les fiches de paie
+  //  Permissions pour les fiches de paie
   canViewPayslipHistory(): boolean {
-    // ✅ Employé : peut voir SON historique de fiches de paie
-    // ✅ RH/Manager : peut voir TOUS les historiques de fiches de paie + le sien
+    //   peut voir SON historique de fiches de paie
+    //   peut voir TOUS les historiques de fiches de paie + le sien
     return this.canViewAllInfo || this.isViewingOwnProfile;
   }
 
@@ -322,7 +316,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.loadEmployeePhoto();
       },
       error: (error) => {
-        console.error('❌ Error loading employee:', error);
+        console.error(' Error loading employee:', error);
         this.errorMessage = "Impossible de récupérer les données de l'employé";
         this.loading = false;
         this.showErrorModal = true;
@@ -366,7 +360,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('❌ Error loading employee photo from blob:', error);
+        console.error(' Error loading employee photo from blob:', error);
         this.previewUrl = '/assets/default-profile.png';
         this.photoLoading = false;
       }
@@ -406,11 +400,11 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   uploadPhoto() {
     if (!this.employee?.id || !this.selectedPhoto || !this.canUploadPhoto()) {
-      console.error('❌ Cannot upload photo: Missing employee ID, photo, or permissions');
+      console.error(' Cannot upload photo: Missing employee ID, photo, or permissions');
       return;
     }
 
-    console.log('🔄 Starting photo upload for employee:', this.employee.id);
+    console.log(' Starting photo upload for employee:', this.employee.id);
 
     this.isUploadingPhoto = true;
     const formData = new FormData();
@@ -423,12 +417,11 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = "Photo mise à jour avec succès !";
         this.showUploadSuccess = true;
         this.isUploadingPhoto = false;
-        console.log('✅ Photo uploaded successfully');
 
         this.reloadEmployeePhoto();
       },
       error: (error) => {
-        console.error('❌ Error uploading photo:', error);
+        console.error(' Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUploadingPhoto = false;
@@ -437,7 +430,6 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   private reloadEmployeePhoto(): void {
-    console.log('🔄 Reloading employee photo after upload');
 
     if (this.previewUrl && this.previewUrl.toString().startsWith('blob:')) {
       URL.revokeObjectURL(this.previewUrl.toString());
@@ -501,7 +493,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.showUpdateConfirmation = false;
 
     if (!this.employee?.id || !this.canEdit) {
-      console.error('❌ Cannot update: Missing employee ID or permissions');
+      console.error(' Cannot update: Missing employee ID or permissions');
       return;
     }
 
@@ -510,15 +502,15 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔄 Starting employee update for:', this.employee.id);
+    console.log(' Starting employee update for:', this.employee.id);
 
     this.isUpdatingEmployee = true;
 
     if (this.selectedPhoto) {
-      console.log('📸 Photo detected - Uploading photo AND updating info');
+      console.log(' Photo detected - Uploading photo AND updating info');
       this.uploadPhotoAndUpdateInfo();
     } else {
-      console.log('📝 No photo - Updating info only');
+      console.log(' No photo - Updating info only');
       this.updateEmployeeInfoOnly();
     }
   }
@@ -526,14 +518,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private uploadPhotoAndUpdateInfo(): void {
     if (!this.employee?.id || !this.selectedPhoto) return;
 
-    console.log('🔄 Starting combined photo upload and info update');
 
     const formData = new FormData();
     formData.append('file', this.selectedPhoto);
 
     this.employeeService.uploadPhoto(this.employee.id, formData).subscribe({
       next: (photoData: Employee) => {
-        console.log('✅ Photo uploaded successfully, now updating info');
 
         this.updateEmployeeInfo().subscribe({
           next: (infoData: Employee) => {
@@ -542,12 +532,10 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
             this.successMessage = 'Photo et informations mises à jour avec succès ! 🎉';
             this.showUpdateSuccess = true;
             this.isUpdatingEmployee = false;
-            console.log('✅✅ Photo AND info updated successfully');
 
             this.reloadEmployeeDataAndPhoto();
           },
           error: (error) => {
-            console.error('❌ Error updating info after photo upload:', error);
             this.errorMessage = 'Photo uploadée mais erreur lors de la mise à jour des informations.';
             this.showErrorModal = true;
             this.isUpdatingEmployee = false;
@@ -555,7 +543,6 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         });
       },
       error: (error) => {
-        console.error('❌ Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -570,12 +557,11 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = 'Informations mises à jour avec succès !';
         this.showUpdateSuccess = true;
         this.isUpdatingEmployee = false;
-        console.log('✅ Info updated successfully');
 
         this.reloadEmployeeData();
       },
       error: (error) => {
-        console.error('❌ Update error:', error);
+        console.error(' Update error:', error);
         this.errorMessage = 'Erreur lors de la mise à jour.';
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -614,17 +600,15 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private reloadEmployeeDataAndPhoto(): void {
     if (!this.employee?.id) return;
 
-    console.log('🔄 Reloading employee data and photo');
 
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
-        console.log('✅ Employee data reloaded');
 
         this.reloadEmployeePhoto();
       },
       error: (error) => {
-        console.error('❌ Error reloading employee data:', error);
+        console.error(' Error reloading employee data:', error);
       }
     });
   }
@@ -632,15 +616,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private reloadEmployeeData(): void {
     if (!this.employee?.id) return;
 
-    console.log('🔄 Reloading employee data');
-
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
-        console.log('✅ Employee data reloaded after update');
       },
       error: (error) => {
-        console.error('❌ Error reloading employee data:', error);
+        console.error(' Error reloading employee data:', error);
       }
     });
   }
@@ -845,12 +826,10 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   // ================= HISTORIQUE FICHES DE PAIE - CORRIGÉ =================
   viewPayslipHistory() {
     if (this.employee?.id) {
-      // ✅ CORRECTION : Vérifier les permissions avec la nouvelle méthode
+      //Vérifier les permissions avec la nouvelle méthode
       if (this.canViewPayslipHistory()) {
-        console.log('✅ Accès autorisé à l\'historique des fiches de paie');
         this.router.navigate(['/employees', this.employee.id, 'payslips']);
       } else {
-        console.log('❌ Accès refusé à l\'historique des fiches de paie');
         this.errorMessage = "Vous n'avez pas la permission de voir les fiches de paie de cet employé";
         this.showErrorModal = true;
       }

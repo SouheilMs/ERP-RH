@@ -15,7 +15,7 @@ public class TestController {
     @GetMapping("/authenticated")
     public Map<String, Object> authenticatedEndpoint() {
         Map<String, Object> response = new HashMap<>();
-        
+
         // Vérifier l'authentification
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
@@ -29,7 +29,7 @@ public class TestController {
             response.put("message", "Non authentifié");
             response.put("timestamp", java.time.LocalDateTime.now().toString());
         }
-        
+
         return response;
     }
 
@@ -68,9 +68,6 @@ public class TestController {
         response.put("message", "This is a public endpoint - CORS should work");
         response.put("accessible", true);
         response.put("timestamp", java.time.LocalDateTime.now().toString());
-
-        // Log pour débogage
-        System.out.println("✅ Public endpoint accessed successfully");
 
         return ResponseEntity.ok(response);
     }

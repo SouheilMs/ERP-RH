@@ -12,10 +12,10 @@ import { Formation } from '../../services/formation.service';
 })
 export class FormationCardComponent {
   @Input() training!: Formation;
-  @Output() startFormation = new EventEmitter<string>();
-  @Output() completeFormation = new EventEmitter<string>();
-  @Output() cancelFormation = new EventEmitter<string>();
-  @Output() deleteFormation = new EventEmitter<string>();
+  @Output() startFormation = new EventEmitter<Formation>();
+  @Output() completeFormation = new EventEmitter<Formation>();
+  @Output() cancelFormation = new EventEmitter<Formation>();
+  @Output() deleteFormation = new EventEmitter<Formation>();
 
   getStatusBadgeClass(status: string): string {
     switch (status) {
@@ -46,18 +46,18 @@ export class FormationCardComponent {
   }
 
   onStartFormation(): void {
-    this.startFormation.emit(this.training.id);
+    this.startFormation.emit(this.training);
   }
 
   onCompleteFormation(): void {
-    this.completeFormation.emit(this.training.id);
+    this.completeFormation.emit(this.training);
   }
 
   onCancelFormation(): void {
-    this.cancelFormation.emit(this.training.id);
+    this.cancelFormation.emit(this.training);
   }
 
   onDeleteFormation(): void {
-    this.deleteFormation.emit(this.training.id);
+    this.deleteFormation.emit(this.training);
   }
 }

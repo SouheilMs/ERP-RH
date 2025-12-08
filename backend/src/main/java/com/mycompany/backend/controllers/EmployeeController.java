@@ -29,7 +29,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -58,33 +58,33 @@ public class EmployeeController {
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
         System.out.println("=== GET EMPLOYEE BY ID CONTROLLER ===");
-        System.out.println("🔍 Employee ID requested: " + id);
+        System.out.println(" Employee ID requested: " + id);
         
         try {
             // Vérifier l'authentification
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null) {
-                System.out.println("👤 Authenticated user: " + auth.getName());
-                System.out.println("🎯 Authorities: " + auth.getAuthorities());
-                System.out.println("✅ Is authenticated: " + auth.isAuthenticated());
+                System.out.println(" Authenticated user: " + auth.getName());
+                System.out.println(" Authorities: " + auth.getAuthorities());
+                System.out.println(" Is authenticated: " + auth.isAuthenticated());
             } else {
-                System.out.println("❌ No authentication found in controller!");
+                System.out.println(" No authentication found in controller!");
             }
             
             Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
             if (employeeOpt.isPresent()) {
-                System.out.println("✅ Employee found: " + employeeOpt.get().getUsername());
+                System.out.println(" Employee found: " + employeeOpt.get().getUsername());
                 EmployeeDetailDTO response = convertToDetailDTO(employeeOpt.get());
                 return ResponseEntity.ok(response);
             } else {
-                System.out.println("❌ Employee not found with ID: " + id);
+                System.out.println(" Employee not found with ID: " + id);
                 return ResponseEntity.notFound().build();
             }
         } catch (AccessDeniedException e) {
-            System.err.println("❌ ACCESS DENIED in controller: " + e.getMessage());
+            System.err.println(" ACCESS DENIED in controller: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
-            System.err.println("❌ Error getting employee in controller: " + e.getMessage());
+            System.err.println(" Error getting employee in controller: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
