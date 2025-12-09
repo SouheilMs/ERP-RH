@@ -742,8 +742,12 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   getMonthName(month: number): string {
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ]
+    ;
+
     return monthNames[month - 1] || '';
   }
 
@@ -760,10 +764,11 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
 
   getQuarters() {
     return [
-      { name: '1er Trimestre', months: [1, 2, 3] },
-      { name: '2ème Trimestre', months: [4, 5, 6] },
-      { name: '3ème Trimestre', months: [7, 8, 9] },
-      { name: '4ème Trimestre', months: [10, 11, 12] }
+      { name: '1st Quarter', months: [1, 2, 3] },
+      { name: '2nd Quarter', months: [4, 5, 6] },
+      { name: '3rd Quarter', months: [7, 8, 9] },
+      { name: '4th Quarter', months: [10, 11, 12] }
+
     ];
   }
 

@@ -20,10 +20,11 @@ import { Subscription } from 'rxjs';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   canViewEmployees: boolean = false;
-  canCreateEmployees: boolean = false; // <-- AJOUTÉ
+  canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
-  isHRManager: boolean = false; // <-- AJOUTÉ
+  canViewRoles: boolean = false;
+  isHRManager: boolean = false;
   userRole: string = '';
   currentUserId: string | null = null;
   private rolesSubscription?: Subscription;
@@ -54,6 +55,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewFormations = this.authService.isHR() || this.authService.isHRManager();
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
+    this.canViewRoles = this.authService.canViewRoles();
+
 
     console.log(' Permissions updated:');
     console.log('   - isHRManager:', this.isHRManager);
