@@ -23,6 +23,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
+  canViewConges: boolean = false;
   canViewRoles: boolean = false;
   isHRManager: boolean = false;
   userRole: string = '';
