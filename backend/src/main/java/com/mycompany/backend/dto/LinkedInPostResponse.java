@@ -1,5 +1,5 @@
 package com.mycompany.backend.dto;
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -7,29 +7,22 @@ import java.time.LocalDateTime;
 public class LinkedInPostResponse {
     private String id;
     private String activity;
-
-    @JsonProperty("created")
-    private CreatedInfo created;
-
-    @JsonProperty("lifecycleState")
     private String lifecycleState;
-
-    @JsonProperty("visibility")
-    private Visibility visibility;
-
     private String errorMessage;
     private boolean success;
+    private LocalDateTime createdAt;
+    private String message;
 
-    @Data
-    public static class CreatedInfo {
-        private String actor;
-        private Long time;
-        private LocalDateTime createdAt;
+    public LinkedInPostResponse() {
+        this.success = true;
+        this.createdAt = LocalDateTime.now();
+    }
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    @Data
-    public static class Visibility {
-        @JsonProperty("com.linkedin.ugc.MemberNetworkVisibility")
-        private String memberNetworkVisibility;
+    public String getMessage() {
+        return message;
     }
+
 }
