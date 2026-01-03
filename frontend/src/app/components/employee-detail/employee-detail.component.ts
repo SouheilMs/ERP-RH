@@ -322,8 +322,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.previewUrl = null;
 
-        // ✅ DEBUG: Vérifier si hireDate est présent
-        console.log('📅 Employee data received:', {
+        console.log(' Employee data received:', {
           hireDate: this.employee.hireDate,
           fullData: this.employee
         });
@@ -331,7 +330,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.loadEmployeePhoto();
       },
       error: (error: any) => {
-        console.error('❌ Error loading employee:', error);
+        console.error(' Error loading employee:', error);
         this.errorMessage = "Impossible de récupérer les données de l'employé";
         this.loading = false;
         this.showErrorModal = true;
@@ -374,7 +373,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         }
       },
       error: (error: any) => {
-        console.error('❌ Error loading employee photo from blob:', error);
+        console.error(' Error loading employee photo from blob:', error);
         this.previewUrl = '/assets/default-profile.png';
         this.photoLoading = false;
       }
@@ -414,11 +413,11 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   uploadPhoto() {
     if (!this.employee?.id || !this.selectedPhoto || !this.canUploadPhoto()) {
-      console.error('❌ Cannot upload photo: Missing employee ID, photo, or permissions');
+      console.error(' Cannot upload photo: Missing employee ID, photo, or permissions');
       return;
     }
 
-    console.log('🔄 Starting photo upload for employee:', this.employee.id);
+    console.log(' Starting photo upload for employee:', this.employee.id);
 
     this.isUploadingPhoto = true;
     const formData = new FormData();
@@ -431,12 +430,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = "Photo mise à jour avec succès !";
         this.showUploadSuccess = true;
         this.isUploadingPhoto = false;
-        console.log('✅ Photo uploaded successfully');
+        console.log(' Photo uploaded successfully');
 
         this.reloadEmployeePhoto();
       },
       error: (error: any) => {
-        console.error('❌ Error uploading photo:', error);
+        console.error(' Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUploadingPhoto = false;
@@ -445,7 +444,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   private reloadEmployeePhoto(): void {
-    console.log('🔄 Reloading employee photo after upload');
+    console.log(' Reloading employee photo after upload');
 
     if (this.previewUrl && this.previewUrl.toString().startsWith('blob:')) {
       URL.revokeObjectURL(this.previewUrl.toString());
@@ -499,7 +498,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       }
     }
 
-    // ✅ AJOUT: Validation de la section mot de passe
+    //  Validation de la section mot de passe
     if (!this.validatePasswordSection()) {
       this.errorMessage = "Veuillez corriger les erreurs dans la section mot de passe";
       return false;
@@ -511,7 +510,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   onUpdateSubmit(event: Event) {
     event.preventDefault();
 
-    // ✅ CORRECTION : Utiliser canSeeUpdateForm() au lieu de canEdit
+    //  Utiliser canSeeUpdateForm() au lieu de canEdit
     if (!this.canSeeUpdateForm()) {
       this.errorMessage = "Vous n'avez pas la permission de modifier ce profil";
       this.showErrorModal = true;
@@ -529,9 +528,8 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   confirmUpdate() {
     this.showUpdateConfirmation = false;
 
-    // ✅ CORRECTION : Utiliser canSeeUpdateForm() au lieu de canEdit
     if (!this.employee?.id || !this.canSeeUpdateForm()) {
-      console.error('❌ Cannot update: Missing employee ID or permissions');
+      console.error(' Cannot update: Missing employee ID or permissions');
       return;
     }
 
@@ -540,33 +538,32 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔄 Starting employee update for:', this.employee.id);
+    console.log(' Starting employee update for:', this.employee.id);
 
     this.isUpdatingEmployee = true;
 
     if (this.selectedPhoto) {
-      console.log('📸 Photo detected - Uploading photo AND updating info');
+      console.log(' Photo detected - Uploading photo AND updating info');
       this.uploadPhotoAndUpdateInfo();
     } else {
-      console.log('📝 No photo - Updating info only');
+      console.log(' No photo - Updating info only');
       this.updateEmployeeInfoOnly();
     }
 
-    // ✅ AJOUT: Réinitialiser les champs mot de passe après mise à jour
     this.resetPasswordForm();
   }
 
   private uploadPhotoAndUpdateInfo(): void {
     if (!this.employee?.id || !this.selectedPhoto) return;
 
-    console.log('🔄 Starting combined photo upload and info update');
+    console.log(' Starting combined photo upload and info update');
 
     const formData = new FormData();
     formData.append('file', this.selectedPhoto);
 
     this.employeeService.uploadPhoto(this.employee.id, formData).subscribe({
       next: (photoData: Employee) => {
-        console.log('✅ Photo uploaded successfully, now updating info');
+        console.log(' Photo uploaded successfully, now updating info');
 
         this.updateEmployeeInfo().subscribe({
           next: (infoData: Employee) => {
@@ -575,12 +572,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
             this.successMessage = 'Photo et informations mises à jour avec succès ! 🎉';
             this.showUpdateSuccess = true;
             this.isUpdatingEmployee = false;
-            console.log('✅✅ Photo AND info updated successfully');
+            console.log(' Photo AND info updated successfully');
 
             this.reloadEmployeeDataAndPhoto();
           },
           error: (error: any) => {
-            console.error('❌ Error updating info after photo upload:', error);
+            console.error(' Error updating info after photo upload:', error);
             this.errorMessage = 'Photo uploadée mais erreur lors de la mise à jour des informations.';
             this.showErrorModal = true;
             this.isUpdatingEmployee = false;
@@ -588,7 +585,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         });
       },
       error: (error: any) => {
-        console.error('❌ Error uploading photo:', error);
+        console.error(' Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -603,12 +600,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = 'Informations mises à jour avec succès !';
         this.showUpdateSuccess = true;
         this.isUpdatingEmployee = false;
-        console.log('✅ Info updated successfully');
+        console.log(' Info updated successfully');
 
         this.reloadEmployeeData();
       },
       error: (error: any) => {
-        console.error('❌ Update error:', error);
+        console.error(' Update error:', error);
         this.errorMessage = 'Erreur lors de la mise à jour.';
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -625,7 +622,6 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       city: this.employee!.city,
     };
 
-    // ✅ CORRECTION : Séparer le changement de mot de passe de la mise à jour des informations
     if (this.passwordForm.currentPassword && this.passwordForm.newPassword) {
       // Utiliser l'endpoint dédié pour le changement de mot de passe
       this.changePasswordSeparately();
@@ -642,7 +638,6 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       updatedData.rib = this.employee!.rib;
       updatedData.bankName = this.employee!.bankName;
 
-      // ✅ AJOUT: Inclure hireDate dans les données RH
       updatedData.hireDate = this.employee!.hireDate;
 
       // Autres champs si nécessaire
@@ -666,12 +661,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
     this.employeeService.changePassword(this.employee.id, passwordData).subscribe({
       next: () => {
-        console.log('✅ Password changed successfully');
+        console.log(' Password changed successfully');
         this.showPasswordSuccess = true;
         this.resetPasswordForm();
       },
       error: (error: any) => {
-        console.error('❌ Error changing password:', error);
+        console.error(' Error changing password:', error);
         this.errorMessage = 'Erreur lors du changement de mot de passe: ' + (error.error || error.message);
         this.showErrorModal = true;
       }
@@ -681,17 +676,17 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private reloadEmployeeDataAndPhoto(): void {
     if (!this.employee?.id) return;
 
-    console.log('🔄 Reloading employee data and photo');
+    console.log(' Reloading employee data and photo');
 
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
-        console.log('✅ Employee data reloaded');
+        console.log(' Employee data reloaded');
 
         this.reloadEmployeePhoto();
       },
       error: (error: any) => {
-        console.error('❌ Error reloading employee data:', error);
+        console.error(' Error reloading employee data:', error);
       }
     });
   }
@@ -699,15 +694,15 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private reloadEmployeeData(): void {
     if (!this.employee?.id) return;
 
-    console.log('🔄 Reloading employee data');
+    console.log(' Reloading employee data');
 
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
-        console.log('✅ Employee data reloaded after update');
+        console.log(' Employee data reloaded after update');
       },
       error: (error: any) => {
-        console.error('❌ Error reloading employee data:', error);
+        console.error(' Error reloading employee data:', error);
       }
     });
   }
@@ -1027,15 +1022,14 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     link.click();
   }
 
-  // ================= HISTORIQUE FICHES DE PAIE - CORRIGÉ =================
+  // ================= HISTORIQUE FICHES DE PAIE =================
   viewPayslipHistory() {
     if (this.employee?.id) {
-      // ✅ CORRECTION : Vérifier les permissions avec la nouvelle méthode
       if (this.canViewPayslipHistory()) {
-        console.log('✅ Accès autorisé à l\'historique des fiches de paie');
+        console.log(' Accès autorisé à l\'historique des fiches de paie');
         this.router.navigate(['/employees', this.employee.id, 'payslips']);
       } else {
-        console.log('❌ Accès refusé à l\'historique des fiches de paie');
+        console.log(' Accès refusé à l\'historique des fiches de paie');
         this.errorMessage = "Vous n'avez pas la permission de voir les fiches de paie de cet employé";
         this.showErrorModal = true;
       }

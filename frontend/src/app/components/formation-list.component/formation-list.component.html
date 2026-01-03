@@ -47,6 +47,10 @@
                 (input)="searchFormations()"
               >
             </div>
+            <!-- <div class="search-hint">
+              <i class="fas fa-info-circle"></i>
+              <span>Press Enter to search</span>
+            </div> -->
           </div>
 
           <!-- Filters and Export -->
@@ -84,24 +88,25 @@
     </section>
 
     <!-- Results Summary -->
-    <section class="results-summary" *ngIf="!loading && filteredFormations.length > 0">
-      <div class="summary-content">
-        <div class="summary-text">
-          <h3>Training Programs</h3>
-          <p>Showing {{ filteredFormations.length }} of {{ totalCount }} training{{ totalCount !== 1 ? 's' : '' }}</p>
-        </div>
-        <div class="summary-actions">
-          <div class="sort-control">
-            <label>Sort by:</label>
-            <select class="sort-select" [(ngModel)]="selectedSort" (change)="onSortChange()">
-              <option *ngFor="let option of sortOptions" [value]="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-        </div>
+    <!-- Results Summary -->
+<section class="results-summary" *ngIf="!loading && filteredFormations.length > 0">
+  <div class="summary-content">
+    <div class="summary-text">
+      <h3>Training Programs</h3>
+      <p>Showing {{ filteredFormations.length }} of {{ totalCount }} training{{ totalCount !== 1 ? 's' : '' }}</p>
+    </div>
+    <div class="summary-actions">
+      <div class="sort-control">
+        <label>Sort by:</label>
+        <select class="sort-select" [(ngModel)]="selectedSort" (change)="onSortChange()">
+          <option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
     <!-- Loading State -->
     <section *ngIf="loading" class="loading-section">
@@ -129,10 +134,10 @@
         <app-formation-card 
           *ngFor="let training of filteredFormations"
           [training]="training"
-          (startFormation)="openStartConfirmation($event)"
-          (completeFormation)="openCompleteConfirmation($event)"
-          (cancelFormation)="openCancelConfirmation($event)"
-          (deleteFormation)="openDeleteConfirmation($event)">
+          (startFormation)="handleStartFormation($event)"
+          (completeFormation)="handleCompleteFormation($event)"
+          (cancelFormation)="handleCancelFormation($event)"
+          (deleteFormation)="handleDeleteFormation($event)">
         </app-formation-card>
       </div>
     </section>
@@ -157,207 +162,3 @@
 
   </div>
 </div>
-
-<!-- Start Training Confirmation Modal -->
-@if (showStartConfirmation && selectedFormation) {
-  <div class="modal-overlay" (click)="closeAllModals()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2 class="modal-title">Start Training</h2>
-          <p class="modal-subtitle">Confirm training start</p>
-        </div>
-        <button class="close-btn" (click)="closeAllModals()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="action-content">
-          <div class="action-warning">
-            <i class="fas fa-play-circle warning-icon"></i>
-            <p>Are you sure you want to start this training?</p>
-          </div>
-          
-          <div class="formation-info">
-            <span class="formation-title">{{ selectedFormation.title }}</span>
-            <div class="formation-details">
-              <span class="formation-detail">Trainer: {{ selectedFormation.formateur }}</span>
-              <span class="formation-detail">Location: {{ selectedFormation.location }}</span>
-            </div>
-          </div>
-
-          <p class="action-caution">This will change the training status to "In Progress".</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeAllModals()" [disabled]="actionLoading">
-            Cancel
-          </button>
-          <button type="button" class="submit-btn start-btn" (click)="confirmStartFormation()" [disabled]="actionLoading">
-            @if (actionLoading) {
-              <span class="loading-spinner-btn"></span>
-              Starting...
-            } @else {
-              <i class="fas fa-play"></i>
-              Start Training
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Complete Training Confirmation Modal -->
-@if (showCompleteConfirmation && selectedFormation) {
-  <div class="modal-overlay" (click)="closeAllModals()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2 class="modal-title">Complete Training</h2>
-          <p class="modal-subtitle">Confirm training completion</p>
-        </div>
-        <button class="close-btn" (click)="closeAllModals()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="action-content">
-          <div class="action-warning">
-            <i class="fas fa-check-circle warning-icon"></i>
-            <p>Are you sure you want to complete this training?</p>
-          </div>
-          
-          <div class="formation-info">
-            <span class="formation-title">{{ selectedFormation.title }}</span>
-            <div class="formation-details">
-              <span class="formation-detail">Participants: {{ selectedFormation.currentParticipants }}/{{ selectedFormation.maxParticipants }}</span>
-              <span class="formation-detail">Status: {{ selectedFormation.status }}</span>
-            </div>
-          </div>
-
-          <p class="action-caution">This will mark the training as completed and close it for new participants.</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeAllModals()" [disabled]="actionLoading">
-            Cancel
-          </button>
-          <button type="button" class="submit-btn complete-btn" (click)="confirmCompleteFormation()" [disabled]="actionLoading">
-            @if (actionLoading) {
-              <span class="loading-spinner-btn"></span>
-              Completing...
-            } @else {
-              <i class="fas fa-check"></i>
-              Complete Training
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Cancel Training Confirmation Modal -->
-@if (showCancelConfirmation && selectedFormation) {
-  <div class="modal-overlay" (click)="closeAllModals()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2 class="modal-title">Cancel Training</h2>
-          <p class="modal-subtitle">This action cannot be undone</p>
-        </div>
-        <button class="close-btn" (click)="closeAllModals()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="action-content">
-          <div class="action-warning">
-            <i class="fas fa-times-circle warning-icon"></i>
-            <p>Are you sure you want to cancel this training?</p>
-          </div>
-          
-          <div class="formation-info">
-            <span class="formation-title">{{ selectedFormation.title }}</span>
-            <div class="formation-details">
-              <span class="formation-detail">Current Status: {{ selectedFormation.status }}</span>
-              <span class="formation-detail">Participants: {{ selectedFormation.currentParticipants }}</span>
-            </div>
-          </div>
-
-          <p class="action-caution">This action cannot be undone and will notify all registered participants.</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeAllModals()" [disabled]="actionLoading">
-            Cancel
-          </button>
-          <button type="button" class="submit-btn cancel-action-btn" (click)="confirmCancelFormation()" [disabled]="actionLoading">
-            @if (actionLoading) {
-              <span class="loading-spinner-btn"></span>
-              Cancelling...
-            } @else {
-              <i class="fas fa-times"></i>
-              Cancel Training
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Delete Training Confirmation Modal -->
-@if (showDeleteConfirmation && selectedFormation) {
-  <div class="modal-overlay" (click)="closeAllModals()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2 class="modal-title">Delete Training</h2>
-          <p class="modal-subtitle">This action cannot be undone</p>
-        </div>
-        <button class="close-btn" (click)="closeAllModals()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="action-content">
-          <div class="action-warning">
-            <i class="fas fa-exclamation-triangle warning-icon"></i>
-            <p>Are you sure you want to delete this training?</p>
-          </div>
-          
-          <div class="formation-info">
-            <span class="formation-title">{{ selectedFormation.title }}</span>
-            <div class="formation-details">
-              <span class="formation-detail">Category: {{ selectedFormation.category }}</span>
-              <span class="formation-detail">Status: {{ selectedFormation.status }}</span>
-            </div>
-          </div>
-
-          <p class="action-caution">This action cannot be undone and will permanently delete the training from the system.</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeAllModals()" [disabled]="actionLoading">
-            Cancel
-          </button>
-          <button type="button" class="submit-btn delete-action-btn" (click)="confirmDeleteFormation()" [disabled]="actionLoading">
-            @if (actionLoading) {
-              <span class="loading-spinner-btn"></span>
-              Deleting...
-            } @else {
-              <i class="fas fa-trash"></i>
-              Delete Training
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}

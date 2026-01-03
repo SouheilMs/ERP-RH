@@ -213,7 +213,7 @@ export class FormationFormComponent implements OnInit {
             this.errorMessage = errorMessage;
             this.submitting = false;
           }
-        }); //  AJOUT DE LA PARENTHÈSE FERMANTE MANQUANTE
+        });
       } catch (error) {
         this.errorMessage = 'Error: User not logged in. Please log in again.';
         this.submitting = false;
@@ -222,7 +222,7 @@ export class FormationFormComponent implements OnInit {
       this.markFormGroupTouched();
       this.errorMessage = 'Please correct errors in the form';
     }
-  } //  AJOUT DU CROCHET FERMANT MANQUANT
+  }
 
   private getCurrentUserId(): string {
     const currentUser = this.authService.getUser();

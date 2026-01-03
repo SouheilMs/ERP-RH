@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
-import { ChatbotComponent } from '../chatbot/chatbot';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 
@@ -14,23 +13,20 @@ import { Subscription } from 'rxjs';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    Navbar,
-    ChatbotComponent
+    Navbar
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  showChatbot = false;
   canViewEmployees: boolean = false;
-  canCreateEmployees: boolean = false; // <-- AJOUTÉ
+  canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
-  isHRManager: boolean = false; // <-- AJOUTÉ
+  canViewRoles: boolean = false;
+  isHRManager: boolean = false;
   userRole: string = '';
   currentUserId: string | null = null;
-  // Chatbot state
-  isChatbotOpen: boolean = false;
   private rolesSubscription?: Subscription;
 
   constructor(
@@ -59,6 +55,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewFormations = this.authService.isHR() || this.authService.isHRManager();
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
+    this.canViewRoles = this.authService.canViewRoles();
+
 
     console.log(' Permissions updated:');
     console.log('   - isHRManager:', this.isHRManager);
@@ -90,39 +88,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Chatbot Methods
-  openChatbot(): void {
-    this.isChatbotOpen = true;
-    console.log('🤖 Chatbot ouvert');
-
-    // Ajouter un effet visuel dans la sidebar
-    const chatbotLink = document.querySelector('.chatbot-link');
-    if (chatbotLink) {
-      chatbotLink.classList.add('active');
-      setTimeout(() => chatbotLink.classList.remove('active'), 500);
-    }
-  }
-
-  closeChatbot(): void {
-    this.isChatbotOpen = false;
-    console.log('🤖 Chatbot fermé');
-  }
-
-  private setupKeyboardShortcut(): void {
-    document.addEventListener('keydown', (event) => {
-      // Ctrl+K ou Cmd+K pour ouvrir/fermer le chatbot
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        this.toggleChatbot();
-      }
-
-      // Échap pour fermer le chatbot
-      if (event.key === 'Escape' && this.isChatbotOpen) {
-        this.closeChatbot();
-      }
-    });
-  }
-
   getMyProfileLink(): string {
     return this.currentUserId ? `/employees/${this.currentUserId}` : '/login';
   }
@@ -135,8 +100,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.rolesSubscription) {
       this.rolesSubscription.unsubscribe();
     }
-  }
-  toggleChatbot() {
-    this.showChatbot = !this.showChatbot;
   }
 }

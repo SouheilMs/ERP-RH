@@ -12,14 +12,14 @@
         </a>
       </li>
 
-      <li *ngIf="canViewEmployees">
+      <li *ngIf="canViewRoles">
         <a routerLink="/roles" routerLinkActive="active">
           <i class="fas fa-bullseye me-2"></i>
           Roles List
         </a>
       </li>
 
-      <!--  Add Job Offers to sidebar (RH seulement) -->
+      <!-- Add Job Offers to sidebar (RH seulement) -->
       <li *ngIf="canViewJobs">
         <a routerLink="/jobs" routerLinkActive="active">
           <i class="fas fa-briefcase me-2"></i>
@@ -54,18 +54,7 @@
   </aside>
 
   <!-- Main content -->
-  <!-- Main content -->
   <main class="main-content">
-    <!-- Intégrer le chatbot comme une bulle -->
-    <div class="chatbot-floating" *ngIf="showChatbot">
-      <app-chatbot></app-chatbot>
-    </div>
-
-    <!-- Bouton pour ouvrir/fermer le chatbot -->
-    <button class="chatbot-toggle-btn" (click)="toggleChatbot()">
-      <i class="fas fa-robot"></i>
-    </button>
-
     <router-outlet></router-outlet>
   </main>
 </div>

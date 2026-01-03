@@ -106,7 +106,7 @@ export class PdfGenerationService {
       bonusPeriods: undefined,
       traditionalSeniorityBonus: undefined,
       nineDinarsBonus: undefined,
-      // Propriétés optionnellesa
+      // Propriétés optionnelles
       employee: employee.employee,
       formations: employee.formations
     };

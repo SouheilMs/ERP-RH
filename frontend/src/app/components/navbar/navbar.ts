@@ -15,8 +15,8 @@ export class Navbar {
   isUserMenuOpen = false;
   isMobileMenuOpen = false;
   isMobileToggleActive = false;
-  userName = 'John Doe';
-  
+  userName = '';
+
   // Propriétés pour la recherche globale
   searchTerm = '';
   @Output() searchChange = new EventEmitter<string>();
@@ -67,11 +67,11 @@ export class Navbar {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
     const target = event.target as HTMLElement;
-    
+
     if (!target.closest('.user-menu')) {
       this.isUserMenuOpen = false;
     }
-    
+
     if (!target.closest('.mobile-toggle') && !target.closest('.mobile-menu')) {
       this.closeAllMenus();
     }

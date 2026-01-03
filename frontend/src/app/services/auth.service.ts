@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+;import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 // Interfaces exportées
@@ -43,13 +43,16 @@ export class AuthService {
   private userRolesSubject = new BehaviorSubject<string[]>(this.getStoredUserRoles());
 
   constructor() {
-    // Initial debug log
+    console.log(' AuthService initialisé');
+    console.log('Token initial:', this.getToken() ? 'PRÉSENT' : 'NULL');
   }
 
   // Méthodes d'authentification
   signup(signupRequest: SignupRequest): Observable<SignupResponse> {
     return this.http.post<SignupResponse>(`${this.apiUrl}/signup`, signupRequest)
-     .pipe(catchError(error => throwError(() => error)));
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
 
@@ -94,25 +97,37 @@ export class AuthService {
             this.isLoggedInSubject.next(true);
             this.userRolesSubject.next(response.roles);
 
-          this.decodeToken();
-        } else {
-          throw new Error('No token received');
-        }
-      }),
-      catchError(error => throwError(() => error))
-    );
-}
+            console.log(' Token stocké avec succès');
+            console.log(' User ID:', response.id);
+            console.log('Roles:', response.roles);
+
+            this.decodeToken();
+          } else {
+            console.error(' Pas de token dans la réponse');
+            throw new Error('No token received');
+          }
+        }),
+        catchError(this.handleError)
+      );
+  }
   resetPassword(resetRequest: LoginRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, resetRequest)
-     .pipe(catchError(error => throwError(() => error)));
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   logout(): void {
+    console.log(' Déconnexion en cours...');
 
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     this.isLoggedInSubject.next(false);
     this.userRolesSubject.next([]);
+
+    console.log(' Données localStorage nettoyées');
+    console.log(' Nouvel état isLoggedIn:', false);
+
     this.router.navigate(['/login']);
   }
 
@@ -200,45 +215,65 @@ export class AuthService {
   }
 
 
-// Dans AuthService, modifiez getCurrentUserId()
-getCurrentUserId(): string | null {
-  const user = this.getUser();
+  getCurrentUserId(): string | null {
+    const user = this.getUser();
+    console.log(' getCurrentUserId - user data:', user);
 
-  if (user && user.id) {
-    return user.id;
-  }
-  return null;
-}
+    if (user && user.id) {
+      console.log('User ID found:', user.id);
+      return user.id;
+    }
 
-// Et dans getUser()
-getUser(): any {
-  const userJson = localStorage.getItem('user');
-  try {
-    const user = userJson ? JSON.parse(userJson) : null;
-    return user;
-
-  } catch (error) {
+    console.log(' User ID not found - user object:', user);
     return null;
   }
-}
-  //  Méthodes de vérification de rôle plus précises
- isHR(): boolean {
-  const roles = this.getUserRoles();
-  const isHR = roles.includes('ROLE_HR');
-  return isHR;
-}
 
-  isHRManager(): boolean {
-  const roles = this.getUserRoles();
-  const isHRManager = roles.includes('ROLE_HRMANAGER');
-  return isHRManager;
-}
+  getUser(): any {
+    const userJson = localStorage.getItem('user');
+    console.log(' getUser - raw JSON from localStorage:', userJson);
+
+    try {
+      const user = userJson ? JSON.parse(userJson) : null;
+      console.log(' getUser - parsed user:', user);
+      return user;
+    } catch (error) {
+      console.error(' Erreur parsing user data:', error);
+      return null;
+    }
+  }
+
 
   isEmployee(): boolean {
     return this.getUserRoles().includes('ROLE_EMPLOYEE');
   }
 
-  //Vérifier si c'est RH ou Manager
+
+  isHR(): boolean {
+    const roles = this.getUserRoles();
+
+
+    if (!roles || !Array.isArray(roles)) {
+      return false;
+    }
+
+    // Vérifier tous les formats possibles
+    const isHR = roles.some(role => {
+      const normalizedRole = role.toUpperCase().trim();
+      return normalizedRole === 'ROLE_RH' ||
+        normalizedRole === 'RH' ||
+        normalizedRole === 'ROLE_HR' ||
+        normalizedRole === 'HR';
+    });
+
+    return isHR;
+  }
+
+  isHRManager(): boolean {
+    const roles = this.getUserRoles();
+    const isHRManager = roles.includes('ROLE_HRMANAGER') || roles.includes('ROLE_HR_MANAGER');
+    return isHRManager;
+  }
+
   isHRorManager(): boolean {
     return this.isHR() || this.isHRManager();
   }
@@ -254,7 +289,6 @@ getUser(): any {
 
   canAccessFormations(): boolean {
     const roles = this.getUserRoles();
-    console.log('🔐 canAccessFormations - User roles:', roles);
 
     // Liste de tous les rôles qui peuvent accéder aux formations
     const allowedRoles = [
@@ -265,8 +299,12 @@ getUser(): any {
 
     return allowedRoles.some(role => roles.includes(role));
   }
-
-  //  Vérifier si l'utilisateur peut voir les offres d'emploi
+  canViewRoles(): boolean {
+    // SEUL LE RH MANAGER PEUT VOIR LA LISTE DES RÔLES
+    const canView = this.isHRManager();
+    console.log('canViewRoles:', canView);
+    return canView;
+  }
   canViewJobs(): boolean {
     return this.isHRorManager();
   }
@@ -288,6 +326,13 @@ getUser(): any {
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
+    console.log(' canAccessEmployeeProfile check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is HR/Manager:', isHRorManager);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', isHRorManager || isOwnProfile);
+
     return isHRorManager || isOwnProfile;
   }
 
@@ -296,6 +341,13 @@ getUser(): any {
     const currentUserId = this.getCurrentUserId();
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
+
+    console.log(' canViewPayslipHistory Check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - isHR/Manager:', isHRorManager);
+    console.log('   - isOwnProfile:', isOwnProfile);
+    console.log('   - Result:', isHRorManager || isOwnProfile);
 
     return isHRorManager || isOwnProfile;
   }
@@ -319,6 +371,14 @@ getUser(): any {
     // Les RH peuvent éditer tous les profils
     // Les employés ne peuvent éditer que leur propre profil via "Mon Profil"
     const canEdit = isHRorManager && !isOwnProfile;
+
+    console.log(' canEditEmployeeProfile:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is HR/Manager:', isHRorManager);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', canEdit);
+
     return canEdit;
   }
 
@@ -329,10 +389,11 @@ getUser(): any {
     const isOwnProfile = currentUserId === employeeId;
 
     const canUpload = isHRorManager && !isOwnProfile;
+
+    console.log(' canUploadEmployeePhoto:', canUpload);
     return canUpload;
   }
 
-  //  Vérifier si l'utilisateur peut créer/modifier des offres d'emploi
   canManageJobs(): boolean {
     return this.isHRorManager();
   }
@@ -355,15 +416,41 @@ getUser(): any {
   getUserRolesObservable(): Observable<string[]> {
     return this.userRolesSubject.asObservable();
   }
-
+  debugCurrentUser(): void {
+    console.log(' DEBUG CURRENT USER:');
+    console.log('  - Token:', this.getToken() ? 'PRESENT' : 'NULL');
+    console.log('  - User:', this.getUser());
+    console.log('  - Roles:', this.getUserRoles());
+    console.log('  - isHR():', this.isHR());
+    console.log('  - isHRManager():', this.isHRManager());
+    console.log('  - isEmployee():', this.isEmployee());
+  }
   // ================= MÉTHODES DE DEBUG =================
 
+  debugAuth(): void {
+    console.log(' DEBUG AUTH SERVICE:');
+    console.log(' Token:', this.getToken());
+    console.log(' User:', this.getUser());
+    console.log(' isLoggedIn:', this.isLoggedIn());
+    console.log(' Roles:', this.getUserRoles());
+    console.log(' localStorage authToken:', localStorage.getItem('authToken'));
+    console.log(' localStorage user:', localStorage.getItem('user'));
+    console.log('isHR:', this.isHR());
+    console.log(' isHRManager:', this.isHRManager());
+    console.log(' isEmployee:', this.isEmployee());
+    console.log('isHRorManager:', this.isHRorManager());
+    console.log('canViewEmployeeList:', this.canViewEmployeeList());
+    console.log(' canViewJobs:', this.canViewJobs());
+    console.log(' canManageJobs:', this.canManageJobs());
+  }
 
   decodeToken(): void {
     const token = this.getToken();
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log(' Token payload:', payload);
+        console.log(' Token expiration:', new Date(payload.exp * 1000));
       } catch (error) {
         console.error(' Error decoding token:', error);
       }
@@ -381,4 +468,70 @@ getUser(): any {
     return user?.roles || [];
   }
 
+  private handleError(error: any) {
+    console.error(' Erreur AuthService:', error);
+    let errorMessage = 'Une erreur est survenue!';
+
+    if (error.status === 401) {
+      errorMessage = 'Email ou mot de passe incorrect.';
+    } else if (error.status === 403) {
+      errorMessage = 'Accès refusé. Permissions insuffisantes.';
+    } else if (error.status === 0) {
+      errorMessage = 'Impossible de se connecter au serveur.';
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    }
+
+    return throwError(() => errorMessage);
+  }
+  canChangePassword(employeeId: string): boolean {
+    const currentUserId = this.getCurrentUserId();
+    const isOwnProfile = currentUserId === employeeId;
+
+    console.log('canChangePassword Check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUserId);
+    console.log('   - Is Own Profile:', isOwnProfile);
+    console.log('   - Result:', isOwnProfile);
+
+    return isOwnProfile;
+  }
+  debugToken(): void {
+    const token = this.getToken();
+    if (token) {
+      console.log(' Token Debug:');
+      console.log('   - Présent:', !!token);
+      console.log('   - Longueur:', token.length);
+
+      try {
+        // Décoder le payload JWT (partie entre les deux points)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('   - Payload:', payload);
+        console.log('   - Expiration:', new Date(payload.exp * 1000));
+        console.log('   - Email:', payload.email);
+        console.log('   - Roles:', payload.roles);
+      } catch (error) {
+        console.error(' Erreur décodage token:', error);
+      }
+    } else {
+      console.warn(' Aucun token trouvé');
+    }
+  }
+  debugLoginResponse(loginRequest: LoginRequest): void {
+    console.log(' DEBUG: Testing login response format');
+
+    this.http.post<any>(`${this.apiUrl}/signin`, loginRequest).subscribe({
+      next: (rawResponse) => {
+        console.log('RAW LOGIN RESPONSE:', rawResponse);
+        console.log(' Response keys:', Object.keys(rawResponse));
+        console.log(' Token field name:',
+          rawResponse.accessToken ? 'accessToken' :
+            rawResponse.token ? 'token' :
+              'UNKNOWN');
+      },
+      error: (error) => {
+        console.error(' Debug login failed:', error);
+      }
+    });
+  }
 }

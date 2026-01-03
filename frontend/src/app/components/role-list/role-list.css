@@ -1123,141 +1123,35 @@
     font-size: 14px;
   }
 }
-/* Delete Modal Styles */
-.delete-content {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.delete-warning {
+/* Simple Confirmation Popup Styles */
+.simple-confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.warning-icon {
-  font-size: 48px;
-  color: #e53e3e;
-}
-
-.role-to-delete-info {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-}
-
-.role-name-display {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.selected-roles-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   justify-content: center;
-  margin: 16px 0;
-  max-height: 120px;
-  overflow-y: auto;
-  padding: 12px;
-  background: #f7fafc;
-  border-radius: 8px;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.selected-role-badge {
-  background: #edf2f7;
-  color: #4a5568;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.delete-caution {
-  color: #718096;
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 16px 0 0 0;
-}
-
-.delete-submit-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: #e53e3e;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.delete-submit-btn:hover:not(:disabled) {
-  background: #c53030;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
-}
-
-.delete-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Edit Modal Styles */
-.current-role-display {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 8px;
-}
-
-.current-role-badge {
-  background: #667eea;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.form-select {
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 15px;
-  transition: all 0.3s ease;
-  background: #f7fafc;
-  color: #2d3748;
+.simple-confirmation-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   width: 100%;
-  cursor: pointer;
+  max-width: 400px;
+  animation: slideUp 0.2s ease-out;
 }
 
-.form-select:focus {
-  outline: none;
-  border-color: #667eea;
-  background-color: white;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
-
-.custom-role-input {
-  margin-top: 12px;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -1265,19 +1159,144 @@
   }
 }
 
-/* Remove old confirmation styles */
-.simple-confirmation-overlay,
-.simple-confirmation-modal,
-.simple-confirmation-content,
-.simple-confirmation-title,
-.simple-confirmation-message,
-.simple-confirmation-warning,
-.simple-selected-roles,
-.simple-role-badge,
-.simple-error-message,
-.simple-confirmation-actions,
-.simple-cancel-btn,
-.simple-confirm-btn,
+.simple-confirmation-content {
+  padding: 24px;
+}
+
+.simple-confirmation-title {
+  color: #2d3748;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.simple-confirmation-message {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.simple-confirmation-warning {
+  color: #e53e3e;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 16px 0;
+}
+
+.simple-selected-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+  max-height: 80px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f7fafc;
+  border-radius: 6px;
+}
+
+.simple-role-badge {
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.simple-error-message {
+  background: #fed7d7;
+  color: #c53030;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simple-confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.simple-cancel-btn {
+  padding: 8px 16px;
+  background: white;
+  color: #4a5568;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.simple-cancel-btn:hover:not(:disabled) {
+  background: #f7fafc;
+  border-color: #a0aec0;
+}
+
+.simple-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.simple-confirm-btn {
+  padding: 8px 16px;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simple-confirm-btn:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.simple-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .simple-loading {
-  display: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .simple-confirmation-modal {
+    margin: 20px;
+    max-width: none;
+  }
+  
+  .simple-confirmation-content {
+    padding: 20px;
+  }
+  
+  .simple-confirmation-actions {
+    flex-direction: column;
+  }
+  
+  .simple-cancel-btn,
+  .simple-confirm-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

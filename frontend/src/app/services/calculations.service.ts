@@ -56,9 +56,9 @@ export class CalculationsService {
     let bonusPeriods = 0;
     let nineDinarsBonus = 0;
 
-    //  Calcul selon votre tableau
+    //  CORRECTION : Calcul selon votre tableau
     if (totalMonths > 18) {
-      //  On compte à partir du 19ème mois, pas par tranches de 18
+      // CORRECTION : On compte à partir du 19ème mois, pas par tranches de 18
       bonusPeriods = Math.floor((totalMonths - 1) / 18);  // -1 pour inclure le 19ème mois
       nineDinarsBonus = bonusPeriods * 9;
 
@@ -145,6 +145,9 @@ export class CalculationsService {
       bonusPeriods = 5;
       nineDinarsBonus = 45;
     }
+
+
+    console.log(` PRIME CALCULÉE: ${nineDinarsBonus} TND pour ${totalMonths} mois`);
 
     return {
       monthsOfService: totalMonths,

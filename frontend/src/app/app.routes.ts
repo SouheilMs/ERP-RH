@@ -16,8 +16,6 @@ import { FormationFormComponent } from './components/formation-form.component/fo
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
-import { LinkedInGuard } from '../app/guards/linkedin.guard';
-import {ChatbotComponent} from './components/chatbot/chatbot';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -38,8 +36,6 @@ export const routes: Routes = [
       { path: 'employees/:id', component: EmployeeDetailComponent },
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
-      { path: 'chatbot', component: ChatbotComponent },
-
 
       {
         path: 'jobs/new',
@@ -58,6 +54,7 @@ export const routes: Routes = [
       },
 
       { path: 'my-profile', component: EmployeeDetailComponent, data: { isMyProfile: true } },
+
       // Routes Formations
       {
         path: 'formations',
@@ -74,11 +71,7 @@ export const routes: Routes = [
         component: FormationFormComponent,
         canActivate: [formationGuard]
       },
-       {
-  path: 'linkedin',
-  loadChildren: () => import('./linkedin-integration.module')
-    .then(m => m.LinkedinIntegrationModule)
-},
+
       { path: '', redirectTo: 'employees', pathMatch: 'full' }
     ]
   },

@@ -1,5 +1,3 @@
-
-
 package com.mycompany.backend.security;
 
 import com.mycompany.backend.security.jwt.AuthEntryPointJwt;
@@ -62,9 +60,7 @@ public class WebSecurityConfig {
 
         // ORIGINES AUTORISÉES
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:4200", 
-            "http://localhost:5173", 
-            "http://localhost:5174"
+            "http://localhost:4200"
         ));
 
         // MÉTHODES AUTORISÉES
@@ -105,17 +101,17 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(authz -> authz
-            // ✅ D'ABORD toutes les URLs publiques
+            //  D'ABORD toutes les URLs publiques
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/test/**").permitAll()
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
             
-            // ✅ ENSUITE les URLs qui nécessitent une authentification
+            //  ENSUITE les URLs qui nécessitent une authentification
             .requestMatchers("/api/job-offers/**").authenticated()
             .requestMatchers("/api/formations/**").authenticated()
             
-            // ✅ ENFIN toutes les autres URLs
+            //  ENFIN toutes les autres URLs
             .anyRequest().authenticated()
         )
         .exceptionHandling(exception -> exception

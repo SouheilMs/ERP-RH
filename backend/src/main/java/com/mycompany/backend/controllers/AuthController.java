@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -51,6 +53,7 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
@@ -61,6 +64,7 @@ public class AuthController {
             List<String> roles = employeeDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
+
 
             return ResponseEntity.ok(new JwtResponse(jwt,
                     employeeDetails.getId().toString(),
@@ -80,6 +84,7 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         try {
+
             if (employeeRepository.existsByUsername(signUpRequest.getUsername())) {
                 return ResponseEntity
                         .badRequest()
@@ -139,6 +144,7 @@ public class AuthController {
                     })
                     .collect(Collectors.toSet());
 
+
             return ResponseEntity.ok(new SignupResponse(employee.getUsername(), employee.getEmail(), roleNames));
 
         } catch (Exception e) {
@@ -150,11 +156,13 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody LoginRequest resetRequest) {
         try {
+
             Employee employee = employeeRepository.findByEmail(resetRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Error: User not found."));
 
             employee.setPassword(encoder.encode(resetRequest.getPassword()));
             employeeRepository.save(employee);
+
 
             return ResponseEntity.ok(new MessageResponse("Password reset successfully!"));
 
@@ -169,4 +177,5 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new MessageResponse("Error: Internal server error - " + e.getMessage()));
     }
+
 }

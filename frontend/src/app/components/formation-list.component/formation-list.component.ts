@@ -39,18 +39,6 @@ export class FormationListComponent implements OnInit {
   selectedCategory = 'ALL';
   selectedSort = 'RECENT';
 
-  // Confirmation modals
-  showStartConfirmation = false;
-  showCompleteConfirmation = false;
-  showCancelConfirmation = false;
-  showDeleteConfirmation = false;
-
-  // Selected formation for actions
-  selectedFormation: Formation | null = null;
-
-  // Loading states for actions
-  actionLoading = false;
-
   statuses = ['ALL', 'PLANIFIED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
   categories = ['ALL', 'TECHNICAL', 'SOFT_SKILLS', 'MANAGEMENT', 'COMPLIANCE', 'LANGUAGE'];
   sortOptions = [
@@ -253,107 +241,65 @@ export class FormationListComponent implements OnInit {
     this.applySorting();
   }
 
-  // Confirmation Modal Methods
-  openStartConfirmation(formation: Formation): void {
-    this.selectedFormation = formation;
-    this.showStartConfirmation = true;
+  // Méthodes pour les actions des cartes
+  handleStartFormation(id: string): void {
+    if (confirm('Are you sure you want to start this training?')) {
+      this.formationService.startFormation(id).subscribe({
+        next: () => {
+          this.loadFormations();
+          alert('Training started successfully!');
+        },
+        error: (error) => {
+          console.error('Error starting training:', error);
+          alert('Error starting training: ' + error.message);
+        }
+      });
+    }
   }
 
-  openCompleteConfirmation(formation: Formation): void {
-    this.selectedFormation = formation;
-    this.showCompleteConfirmation = true;
+  handleCompleteFormation(id: string): void {
+    if (confirm('Are you sure you want to complete this training?')) {
+      this.formationService.completeFormation(id).subscribe({
+        next: () => {
+          this.loadFormations();
+          alert('Training completed successfully!');
+        },
+        error: (error) => {
+          console.error('Error completing training:', error);
+          alert('Error completing training: ' + error.message);
+        }
+      });
+    }
   }
 
-  openCancelConfirmation(formation: Formation): void {
-    this.selectedFormation = formation;
-    this.showCancelConfirmation = true;
+  handleCancelFormation(id: string): void {
+    if (confirm('Are you sure you want to cancel this training?')) {
+      this.formationService.cancelFormation(id).subscribe({
+        next: () => {
+          this.loadFormations();
+          alert('Training cancelled successfully!');
+        },
+        error: (error) => {
+          console.error('Error cancelling training:', error);
+          alert('Error cancelling training: ' + error.message);
+        }
+      });
+    }
   }
 
-  openDeleteConfirmation(formation: Formation): void {
-    this.selectedFormation = formation;
-    this.showDeleteConfirmation = true;
-  }
-
-  closeAllModals(): void {
-    this.showStartConfirmation = false;
-    this.showCompleteConfirmation = false;
-    this.showCancelConfirmation = false;
-    this.showDeleteConfirmation = false;
-    this.selectedFormation = null;
-    this.actionLoading = false;
-  }
-
-  // Action Methods
-  confirmStartFormation(): void {
-    if (!this.selectedFormation) return;
-
-    this.actionLoading = true;
-    this.formationService.startFormation(this.selectedFormation.id).subscribe({
-      next: () => {
-        this.actionLoading = false;
-        this.closeAllModals();
-        this.loadFormations();
-      },
-      error: (error) => {
-        this.actionLoading = false;
-        console.error('Error starting training:', error);
-        alert('Error starting training: ' + error.message);
-      }
-    });
-  }
-
-  confirmCompleteFormation(): void {
-    if (!this.selectedFormation) return;
-
-    this.actionLoading = true;
-    this.formationService.completeFormation(this.selectedFormation.id).subscribe({
-      next: () => {
-        this.actionLoading = false;
-        this.closeAllModals();
-        this.loadFormations();
-      },
-      error: (error) => {
-        this.actionLoading = false;
-        console.error('Error completing training:', error);
-        alert('Error completing training: ' + error.message);
-      }
-    });
-  }
-
-  confirmCancelFormation(): void {
-    if (!this.selectedFormation) return;
-
-    this.actionLoading = true;
-    this.formationService.cancelFormation(this.selectedFormation.id).subscribe({
-      next: () => {
-        this.actionLoading = false;
-        this.closeAllModals();
-        this.loadFormations();
-      },
-      error: (error) => {
-        this.actionLoading = false;
-        console.error('Error cancelling training:', error);
-        alert('Error cancelling training: ' + error.message);
-      }
-    });
-  }
-
-  confirmDeleteFormation(): void {
-    if (!this.selectedFormation) return;
-
-    this.actionLoading = true;
-    this.formationService.deleteFormation(this.selectedFormation.id).subscribe({
-      next: () => {
-        this.actionLoading = false;
-        this.closeAllModals();
-        this.loadFormations();
-      },
-      error: (error) => {
-        this.actionLoading = false;
-        console.error('Error deleting training:', error);
-        alert('Error deleting training: ' + error.message);
-      }
-    });
+  handleDeleteFormation(id: string): void {
+    if (confirm('Are you sure you want to delete this training? This action cannot be undone.')) {
+      this.formationService.deleteFormation(id).subscribe({
+        next: () => {
+          this.loadFormations();
+          alert('Training deleted successfully!');
+        },
+        error: (error) => {
+          console.error('Error deleting training:', error);
+          alert('Error deleting training: ' + error.message);
+        }
+      });
+    }
   }
 
   // Méthodes utilitaires

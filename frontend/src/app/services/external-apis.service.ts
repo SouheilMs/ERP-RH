@@ -109,7 +109,7 @@ export class ExternalApisService {
   }
 
   private formatLinkedInPost(jobOffer: any): string {
-    return ` Nous recrutons ! ${jobOffer.title}
+    return `🎯 Nous recrutons ! ${jobOffer.title}
 
 📍 ${jobOffer.location}
 📝 ${jobOffer.contractType}

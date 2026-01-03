@@ -69,13 +69,19 @@ export class AddEmployeeComponent implements OnInit {
   private checkPermissions(): void {
     this.canAddEmployee = this.authService.isHRorManager();
 
+    console.log(' AddEmployeeComponent - Permissions vérifiées:');
+    console.log('   - canAddEmployee:', this.canAddEmployee);
+    console.log('   - isHR:', this.authService.isHR());
+    console.log('   - isHRManager:', this.authService.isHRManager());
+    console.log('   - Rôles utilisateur:', this.authService.getUserRoles());
+
     if (!this.canAddEmployee) {
       this.errorMessage = ' Vous n\'avez pas les permissions pour ajouter un employé.';
       console.warn(' Accès refusé - L\'utilisateur n\'est pas RH ou Manager RH');
     }
   }
 
-  //  MÉTHODE : Obtenir les headers d'authentification
+  // MÉTHODE : Obtenir les headers d'authentification
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
     console.log(' Obtention des headers auth - Token:', token ? 'PRÉSENT' : 'NULL');
@@ -145,7 +151,7 @@ export class AddEmployeeComponent implements OnInit {
 
   // Validation du formulaire
   validateForm(): boolean {
-    //  VÉRIFIER D'ABORD LES PERMISSIONS
+    // VÉRIFIER D'ABORD LES PERMISSIONS
     if (!this.canAddEmployee) {
       this.errorMessage = ' Vous n\'avez pas les permissions pour ajouter un employé.';
       return false;
@@ -153,7 +159,7 @@ export class AddEmployeeComponent implements OnInit {
 
     //  VÉRIFIER SI L'UTILISATEUR EST AUTHENTIFIÉ
     if (!this.authService.isLoggedIn()) {
-      this.errorMessage = ' Vous n\'êtes pas connecté. Veuillez vous connecter d\'abord.';
+      this.errorMessage = 'Vous n\'êtes pas connecté. Veuillez vous connecter d\'abord.';
       return false;
     }
 
@@ -212,13 +218,15 @@ export class AddEmployeeComponent implements OnInit {
       email: this.employee.email.trim().toLowerCase(),
       password: this.employee.password,
       phone: this.employee.phone || '',
-      status: 'Active', //   Le backend attend 'Active' avec A majuscule
+      status: 'Active',
       roleNames: [this.employee.role]
     };
 
+    console.log('📤 Données envoyées:', employeeData);
 
-    //  OBTENIR LES HEADERS D'AUTH AVEC LE TOKEN
+
     const headers = this.getAuthHeaders();
+    console.log('🔐 Headers envoyés:', headers.keys());
 
     // Appel API avec headers d'authentification
     this.http.post('http://localhost:8081/api/employees/Add-employee', employeeData, {
@@ -229,6 +237,7 @@ export class AddEmployeeComponent implements OnInit {
       .subscribe({
         next: (response: any) => {
           this.isLoading = false;
+          console.log(' Réponse serveur:', response);
 
           if (response.status >= 200 && response.status < 300) {
             this.showSuccessMessage();
@@ -241,7 +250,25 @@ export class AddEmployeeComponent implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
+          console.error(' Erreur détaillée:', error);
+          console.error(' Statut erreur:', error.status);
+          console.error(' Message erreur:', error.message);
 
+          // Gestion d'erreur améliorée
+          if (error.status === 401) {
+            this.errorMessage = 'Authentification échouée. Veuillez vous reconnecter.';
+            console.error(' Le token est peut-être expiré ou invalide');
+          } else if (error.status === 400) {
+            this.errorMessage = 'Données invalides. Vérifiez les informations.';
+          } else if (error.status === 403) {
+            this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
+          } else if (error.status === 409) {
+            this.errorMessage = 'Un employé avec cet email existe déjà.';
+          } else if (error.status === 500) {
+            this.errorMessage = 'Erreur interne du serveur. Veuillez réessayer.';
+          } else {
+            this.errorMessage = `Erreur: ${error.message}`;
+          }
         }
       });
   }
@@ -266,5 +293,14 @@ export class AddEmployeeComponent implements OnInit {
       role: 'ROLE_EMPLOYEE'
     };
     this.passwordStrength = '';
+  }
+
+  //  MÉTHODE DE TEST TEMPORAIRE
+  testAuth(): void {
+    console.log(' TEST AUTHENTIFICATION:');
+    console.log('  - Connecté:', this.authService.isLoggedIn());
+    console.log('  - Token:', this.authService.getToken());
+    console.log('  - Rôles:', this.authService.getUserRoles());
+    console.log('  - Peut ajouter employés:', this.authService.isHRorManager());
   }
 }
