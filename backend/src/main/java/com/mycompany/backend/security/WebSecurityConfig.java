@@ -36,6 +36,13 @@ public class WebSecurityConfig {
     @Autowired
     private AuthTokenFilter authTokenFilter;
 
+    // -------------------- Password Encoder --------------------
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // -------------------- Authentication Provider --------------------
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -44,50 +51,27 @@ public class WebSecurityConfig {
         return authProvider;
     }
 
+    // -------------------- Authentication Manager --------------------
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
+    // -------------------- CORS Configuration --------------------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ORIGINES AUTORISÉES
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:4200"
-        ));
-
-        // MÉTHODES AUTORISÉES
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
-
-        // HEADERS AUTORISÉS
         configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers",
-                "Cache-Control"
+                "Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With",
+                "Access-Control-Request-Method", "Access-Control-Request-Headers", "Cache-Control"
         ));
-
-        // HEADERS EXPOSÉS
         configuration.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Disposition",
-                "Content-Type",
-                "Content-Length",
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Credentials"
+                "Authorization", "Content-Disposition", "Content-Type", "Content-Length",
+                "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"
         ));
-
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -95,33 +79,45 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(authz -> authz
-            //  D'ABORD toutes les URLs publiques
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/api/test/**").permitAll()
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-            
-            //  ENSUITE les URLs qui nécessitent une authentification
-            .requestMatchers("/api/job-offers/**").authenticated()
-            .requestMatchers("/api/formations/**").authenticated()
-            
-            //  ENFIN toutes les autres URLs
-            .anyRequest().authenticated()
-        )
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint(unauthorizedHandler)
-        )
-        .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        )
-        .authenticationProvider(authenticationProvider())
-        .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+    // -------------------- Security Filter Chain --------------------
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authz -> authz
+                        // Routes publiques
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/signup", "/auth/forgot-password").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Routes sécurisées
+                        .requestMatchers("/api/job-offers/**").authenticated()
+                        .requestMatchers("/api/formations/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(unauthorizedHandler)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.formLogin(form -> form
+                .loginPage("/auth/login")
+                .usernameParameter("email")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/auth/login?error=true")
+                .permitAll()
+        ).logout(logout -> logout
+                .logoutUrl("/auth/logout")
+                .logoutSuccessUrl("/auth/login?logout=true")
+                .permitAll()
+        );
 
         return http.build();
     }

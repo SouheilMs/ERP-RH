@@ -20,7 +20,7 @@ public class FormationController {
     private final FormationService formationService;
 
     @PostMapping
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> createFormation(
             @RequestBody FormationRequestDTO request,
             @RequestParam String createdById) {
@@ -29,21 +29,21 @@ public class FormationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> getFormationById(@PathVariable String id) {
         FormationResponseDTO formation = formationService.getFormationById(id);
         return ResponseEntity.ok(formation);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<List<FormationResponseDTO>> getAllFormations() {
         List<FormationResponseDTO> formations = formationService.getAllFormations();
         return ResponseEntity.ok(formations);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> updateFormation(
             @PathVariable String id,
             @RequestBody FormationRequestDTO request) {
@@ -59,28 +59,28 @@ public class FormationController {
     }
 
     @PostMapping("/{id}/start")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> startFormation(@PathVariable String id) {
         FormationResponseDTO updated = formationService.startFormation(id);
         return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/{id}/complete")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> completeFormation(@PathVariable String id) {
         FormationResponseDTO updated = formationService.completeFormation(id);
         return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> cancelFormation(@PathVariable String id) {
         FormationResponseDTO updated = formationService.cancelFormation(id);
         return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/{id}/participants/{employeeId}")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> addParticipant(
             @PathVariable String id,
             @PathVariable String employeeId) {
@@ -89,7 +89,7 @@ public class FormationController {
     }
 
     @DeleteMapping("/{id}/participants/{employeeId}")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<FormationResponseDTO> removeParticipant(
             @PathVariable String id,
             @PathVariable String employeeId) {
@@ -98,7 +98,7 @@ public class FormationController {
     }
 
     @GetMapping("/participant/{employeeId}")
-    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<List<FormationResponseDTO>> getFormationsByParticipant(
             @PathVariable String employeeId) {
         List<FormationResponseDTO> formations = formationService.getFormationsByParticipant(employeeId);
@@ -106,7 +106,7 @@ public class FormationController {
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('RH') or hasRole('HRMANAGER')")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
     public ResponseEntity<List<FormationResponseDTO>> getFormationsByStatus(
             @PathVariable Formation.FormationStatus status) {
         List<FormationResponseDTO> formations = formationService.getFormationsByStatus(status);
