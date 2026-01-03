@@ -23,7 +23,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
-  canViewConges: boolean = false
+  canViewRoles: boolean = false;
   isHRManager: boolean = false;
   userRole: string = '';
   currentUserId: string | null = null;
@@ -56,6 +56,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewConges = this.canViewCongesPermission(); // <-- AJOUTÉ
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
+    this.canViewRoles = this.authService.canViewRoles();
+
 
     console.log(' Permissions updated:');
     console.log('   - isHRManager:', this.isHRManager);

@@ -594,7 +594,6 @@ getEmployeePhotoBlob(id: string): Observable<Blob> {
     });
   }
 // ================= CHANGEMENT MOT DE PASSE =================
-// ================= CHANGEMENT MOT DE PASSE =================
   changePassword(employeeId: string, passwordData: PasswordChangeData): Observable<any> {
     console.log(' changePassword - Adding auth headers');
     const headers = this.getAuthHeaders();

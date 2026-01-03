@@ -28,11 +28,17 @@ export class EmployeeListComponent implements OnInit {
   filteredEmployees: Employee[] = [];
   showAddModal = false;
 
-  //  Permission checking variables
+  // Permission checking variables
   canAddEmployees = false;
   canViewEmployees = false;
 
-  //  Pagination properties
+  // Propriété pour l'ID de l'utilisateur connecté
+  currentUserId: string | null = null;
+
+  // Cache pour vérifier les rôles des employés
+  private employeeRoleCache = new Map<string, boolean>();
+
+  // Pagination properties
   currentPage: number = 1;
   pageSize: number = 10;
   totalPages: number = 1;
@@ -47,12 +53,15 @@ export class EmployeeListComponent implements OnInit {
     this.loadEmployees();
   }
 
-  //  Check user permissions
+  // Check user permissions
   private checkPermissions(): void {
-    this.canAddEmployees = this.authService.isHRorManager();
+    this.canAddEmployees = this.authService.isHRManager(); // Seuls les managers peuvent ajouter
     this.canViewEmployees = this.authService.canViewEmployeeList();
+    // Récupérer l'ID de l'utilisateur connecté
+    this.currentUserId = this.authService.getCurrentUserId();
 
     console.log(' EmployeeListComponent - Permissions checked:');
+    console.log('   - currentUserId:', this.currentUserId);
     console.log('   - canAddEmployees:', this.canAddEmployees);
     console.log('   - canViewEmployees:', this.canViewEmployees);
     console.log('   - User roles:', this.authService.getUserRoles());
@@ -69,9 +78,53 @@ export class EmployeeListComponent implements OnInit {
     }
   }
 
+  canModifyEmployees(): boolean {
+    // Seuls les HR Managers et Managers peuvent modifier
+    return this.authService.isHRManager();
+  }
+
+  // Méthode simplifiée pour vérifier si un employé est un HR Manager
+  private isHRManagerEmployee(employee: Employee): boolean {
+    // Vérifier dans le cache d'abord
+    if (employee.id && this.employeeRoleCache.has(employee.id)) {
+      return this.employeeRoleCache.get(employee.id)!;
+    }
+
+    // Logique basée sur les données disponibles
+    // 1. Vérifier le username (selon vos logs)
+    if (employee.username && employee.username.toLowerCase().includes('hr manager')) {
+      if (employee.id) this.employeeRoleCache.set(employee.id, true);
+      return true;
+    }
+
+    // 2. Vérifier la position
+    if (employee.position) {
+      const position = employee.position.toLowerCase();
+      const isManager = position.includes('manager') || position.includes('hr manager');
+      if (isManager && employee.id) {
+        this.employeeRoleCache.set(employee.id, true);
+      }
+      return isManager;
+    }
+
+    // 3. Vérifier les roleNames si disponibles
+    if (employee.roleNames && employee.roleNames.length > 0) {
+      const isManager = employee.roleNames.some(role =>
+        role.toUpperCase().includes('HRMANAGER') ||
+        role.toUpperCase().includes('MANAGER')
+      );
+      if (employee.id) this.employeeRoleCache.set(employee.id, isManager);
+      return isManager;
+    }
+
+    // Par défaut, ce n'est pas un manager
+    if (employee.id) this.employeeRoleCache.set(employee.id, false);
+    return false;
+  }
+
   // Load employees
   loadEmployees(): void {
-    //  CHECK PERMISSIONS BEFORE LOADING
+    // CHECK PERMISSIONS BEFORE LOADING
     if (!this.canViewEmployees) {
       this.errorMessage = ' You do not have permissions to view the employee list.';
       return;
@@ -82,17 +135,36 @@ export class EmployeeListComponent implements OnInit {
 
     this.employeeService.getAllEmployees().subscribe({
       next: (data: Employee[]) => {
-        this.employees = data;
+        console.log('DEBUG: Employees data received - First employee:', data[0]);
+        console.log('DEBUG: Total employees:', data.length);
+
+        // Réinitialiser le cache
+        this.employeeRoleCache.clear();
+
+        // Filtrer les employés
+        this.employees = this.filterEmployeesBasedOnRole(data);
+
         this.filteredEmployees = [...this.employees];
         this.updatePagination();
         this.loading = false;
         this.cdr.detectChanges();
-        console.log(' Employees loaded:', this.employees.length);
+
+        console.log(' Employees after filtering:', this.employees.length);
+        console.log(' Current user is HR (not manager):', this.authService.isHR() && !this.authService.isHRManager());
+
+        // Afficher les employés filtrés pour débogage
+        if (this.authService.isHR() && !this.authService.isHRManager()) {
+          console.log('HR user can see these employees:', this.employees.map(e => ({
+            name: e.username,
+            position: e.position,
+            id: e.id
+          })));
+        }
       },
       error: (err) => {
         console.error(" Retrieval error details:", err);
 
-        //  GESTION D'ERREUR AMÉLIORÉE
+        // GESTION D'ERREUR AMÉLIORÉE
         if (err.status === 200 && err.error && typeof err.error === 'string') {
           // Le serveur retourne du texte au lieu du JSON
           console.error(' Server returned text instead of JSON');
@@ -114,7 +186,34 @@ export class EmployeeListComponent implements OnInit {
     });
   }
 
-  // Filter employees
+  // Méthode pour filtrer les employés selon le rôle de l'utilisateur
+  private filterEmployeesBasedOnRole(allEmployees: Employee[]): Employee[] {
+    let filteredEmployees = [...allEmployees];
+
+    // 1. Exclure l'utilisateur connecté
+    if (this.currentUserId) {
+      const beforeCount = filteredEmployees.length;
+      filteredEmployees = filteredEmployees.filter(emp => emp.id !== this.currentUserId);
+      console.log(`Excluded current user. Before: ${beforeCount}, After: ${filteredEmployees.length}`);
+    }
+
+    // 2. Si l'utilisateur est RH (pas Manager), exclure les RH Managers
+    if (this.authService.isHR() && !this.authService.isHRManager()) {
+      const beforeCount = filteredEmployees.length;
+      filteredEmployees = filteredEmployees.filter(emp => {
+        const isHRManager = this.isHRManagerEmployee(emp);
+        if (isHRManager) {
+          console.log(`Excluding HR Manager: ${emp.username} (Position: ${emp.position})`);
+        }
+        return !isHRManager;
+      });
+      console.log(`Excluded HR Managers. Before: ${beforeCount}, After: ${filteredEmployees.length}`);
+    }
+
+    return filteredEmployees;
+  }
+
+  // Filter employees (recherche)
   filterEmployees(): void {
     if (!this.searchTerm) {
       this.filteredEmployees = [...this.employees];
@@ -133,9 +232,15 @@ export class EmployeeListComponent implements OnInit {
     this.updatePagination();
   }
 
+  // Ajouter une méthode pour vérifier si c'est l'utilisateur courant
+  isCurrentUser(employeeId: string | undefined): boolean {
+    if (!employeeId || !this.currentUserId) return false;
+    return employeeId === this.currentUserId;
+  }
+
   // Open add modal
   openAddModal(): void {
-    //  CHECK PERMISSIONS BEFORE OPENING
+    // CHECK PERMISSIONS BEFORE OPENING
     if (!this.canAddEmployees) {
       this.errorMessage = ' You do not have permissions to add employees.';
       console.warn(' Attempt to add employee without permissions');
@@ -252,7 +357,7 @@ export class EmployeeListComponent implements OnInit {
     return emp.id!;
   }
 
-  //  New method to get status text
+  // New method to get status text
   getStatusText(status: string | undefined): string {
     if (!status) return 'Inactive';
 
@@ -266,7 +371,7 @@ export class EmployeeListComponent implements OnInit {
     return statusMap[status] || status;
   }
 
-  //  PAGINATION METHODS
+  // PAGINATION METHODS
   updatePagination(): void {
     this.totalPages = Math.ceil(this.filteredEmployees.length / this.pageSize);
 

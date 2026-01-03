@@ -250,15 +250,27 @@ export class AuthService {
 
   isHR(): boolean {
     const roles = this.getUserRoles();
-    const isHR = roles.includes('ROLE_RH') || roles.includes('ROLE_HR');
-    console.log('🔍 isHR() check:', { roles, isHR });
+
+
+    if (!roles || !Array.isArray(roles)) {
+      return false;
+    }
+
+    // Vérifier tous les formats possibles
+    const isHR = roles.some(role => {
+      const normalizedRole = role.toUpperCase().trim();
+      return normalizedRole === 'ROLE_RH' ||
+        normalizedRole === 'RH' ||
+        normalizedRole === 'ROLE_HR' ||
+        normalizedRole === 'HR';
+    });
+
     return isHR;
   }
 
   isHRManager(): boolean {
     const roles = this.getUserRoles();
     const isHRManager = roles.includes('ROLE_HRMANAGER') || roles.includes('ROLE_HR_MANAGER');
-    console.log('🔍 isHRManager() check:', { roles, isHRManager });
     return isHRManager;
   }
 
@@ -277,7 +289,6 @@ export class AuthService {
 
   canAccessFormations(): boolean {
     const roles = this.getUserRoles();
-    console.log('🔐 canAccessFormations - User roles:', roles);
 
     // Liste de tous les rôles qui peuvent accéder aux formations
     const allowedRoles = [
@@ -288,7 +299,12 @@ export class AuthService {
 
     return allowedRoles.some(role => roles.includes(role));
   }
-
+  canViewRoles(): boolean {
+    // SEUL LE RH MANAGER PEUT VOIR LA LISTE DES RÔLES
+    const canView = this.isHRManager();
+    console.log('canViewRoles:', canView);
+    return canView;
+  }
   canViewJobs(): boolean {
     return this.isHRorManager();
   }
