@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/base :: head}">
+    <title th:text="${pageTitle} + ' - Teamlyf Dashboard'">Teamlyf Dashboard</title>
+</head>
+<body>
+<!-- Navbar -->
+<nav th:replace="~{layout/base :: navbar}"></nav>
+
+<!-- Dashboard Layout -->
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header" style="text-align:center; margin-bottom:1.5rem;">
+            <span class="logo-icon" style="font-size:2rem;">👥</span>
+            <span class="logo-text" style="font-size:1.3rem; font-weight:bold; color:#2c3e50; margin-left:0.5rem;">Teamlyf</span>
+        </div>
+        <ul>
+            <!-- Show "Employees List" only for HR and HR Manager -->
+            <li sec:authorize="hasAnyRole('HR','HRMANAGER')">
+                <a th:href="@{/th/employees}" th:classappend="${#httpServletRequest.requestURI.contains('/employees')} ? 'active' : ''">
+                    <i class="fas fa-users me-2"></i>
+                    Employees List
+                </a>
+            </li>
+
+            <!-- "My Profile" link for all users -->
+            <li>
+                <a th:href="@{/th/employees/{id}(id=${userId})}"
+                   th:classappend="${#httpServletRequest.requestURI.contains('/employees/') and not #httpServletRequest.requestURI.contains('/employees?')} ? 'active' : ''">
+                    <i class="fas fa-user me-2"></i>
+                    My Profile
+                </a>
+            </li>
+
+            <!-- Logout Button -->
+            <li>
+                <a th:href="@{/auth/logout}" class="logout-link">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <th:block th:replace="${content}"></th:block>
+    </main>
+</div>
+
+<!-- Scripts -->
+<th:block th:replace="~{layout/base :: scripts}"></th:block>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

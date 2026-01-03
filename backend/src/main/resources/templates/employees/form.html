@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout/dashboard :: layout(~{::title}, ~{::content}, ~{::script})">
+<head>
+    <title th:text="${employee?.id ? 'Edit Employee - Teamlyf' : 'Add Employee - Teamlyf'}">Employee Form - Teamlyf</title>
+</head>
+<body>
+
+<div th:fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    <div class="card-header" style="background: #3498db; color: #fff; border-radius: 12px 12px 0 0;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="logo-icon" style="font-size: 1.5rem;">👥</span>
+                            <span style="font-size: 1.2rem; font-weight: bold;">Teamlyf</span>
+                        </div>
+                        <h4 class="mb-0 mt-2">
+                            <i class="fas fa-user me-2"></i>
+                            <span th:text="${employee?.id ? 'Edit Employee' : 'Add New Employee'}"></span>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Error message -->
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            [[${errorMessage}]]
+                        </div>
+
+                        <!-- Success message -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            [[${successMessage}]]
+                        </div>
+
+                        <form th:action="${employee?.id} ? @{/th/employees/{id}(id=${employee.id})} : @{/th/employees}"
+                              method="post" th:object="${employee}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                            <!-- Basic Information -->
+                            <h5 class="mb-3">Basic Information</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Username *</label>
+                                    <input type="text" th:field="*{username}" class="form-control" required>
+                                    <div th:if="${#fields.hasErrors('username')}" class="text-danger small">
+                                        <span th:errors="*{username}"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" th:field="*{email}" class="form-control" required>
+                                    <div th:if="${#fields.hasErrors('email')}" class="text-danger small">
+                                        <span th:errors="*{email}"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Password <span th:if="${not employee?.id}">*</span></label>
+                                    <input type="password" th:field="*{password}" class="form-control"
+                                           th:required="${not employee?.id}">
+                                    <div th:if="${#fields.hasErrors('password')}" class="text-danger small">
+                                        <span th:errors="*{password}"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone</label>
+                                    <input type="text" th:field="*{phone}" class="form-control">
+                                </div>
+                            </div>
+
+                            <!-- HR Information -->
+                            <h5 class="mb-3 mt-4">HR Information</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Position</label>
+                                    <input type="text" th:field="*{position}" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Salary (TND)</label>
+                                    <input type="number" th:field="*{salary}" class="form-control" step="0.01" min="0">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Hire Date</label>
+                                    <input type="date" th:field="*{hireDate}" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <select th:field="*{status}" class="form-select">
+                                        <option value="ACTIVE">Active</option>
+                                        <option value="INACTIVE">Inactive</option>
+                                        <option value="ON_LEAVE">On Leave</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Roles (only for HR Manager when creating) -->
+                            <div th:if="${hasRole('ROLE_HRMANAGER') and not employee?.id}" class="mb-3">
+                                <label class="form-label">Roles *</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" value="ROLE_EMPLOYEE"
+                                               name="roleNames" id="roleEmployee" checked>
+                                        <label class="form-check-label" for="roleEmployee">Employee</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" value="ROLE_HR"
+                                               name="roleNames" id="roleHR">
+                                        <label class="form-check-label" for="roleHR">HR</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" value="ROLE_HRMANAGER"
+                                               name="roleNames" id="roleHRManager">
+                                        <label class="form-check-label" for="roleHRManager">HR Manager</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <a th:href="@{/th/employees}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${employee?.id ? 'Update Employee' : 'Create Employee'}"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

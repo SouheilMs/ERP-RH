@@ -474,7 +474,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void ImportFromExcel(MultipartFile file) throws IOException {
+    public void importFromExcel(MultipartFile file) throws IOException {
         // SEULS LES RH MANAGERS PEUVENT IMPORTER
         checkCreateEmployeePermission();
 
