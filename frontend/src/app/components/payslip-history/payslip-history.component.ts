@@ -385,7 +385,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     console.log(' Années générées depuis embauche:', years);
     return years.sort((a, b) => b - a);
   }
-
+// Charger les fiches de paie pour une année spécifique
   loadPayslipsForYear(year: number) {
     console.log(` Chargement des fiches pour: ${this.employeeName} (${this.employeeId}), année: ${year}`);
 
