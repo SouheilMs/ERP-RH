@@ -5,10 +5,12 @@ import com.mycompany.backend.dto.*;
 import com.mycompany.backend.entities.*;
 import com.mycompany.backend.repositories.LinkedInIntegrationRepository;
 import com.mycompany.backend.repositories.JobOfferRepository;
+import com.mycompany.backend.repositories.OAuthStateRepository;
 import com.mycompany.backend.services.LinkedInIntegrationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -31,18 +33,24 @@ public class LinkedInIntegrationServiceImpl implements LinkedInIntegrationServic
     @Autowired
     private RestTemplate restTemplate;
 
-    // Stockage temporaire des états OAuth (en production, utiliser Redis)
-    private final Map<String, String> oauthStates = new HashMap<>();
+    @Autowired
+    private OAuthStateRepository oauthStateRepository;
 
     @Override
     public LinkedInAuthResponse initiateAuth(String organizationId) {
         try {
             // Générer un state unique
             String state = UUID.randomUUID().toString();
-            oauthStates.put(state, organizationId);
 
-            // Scopes nécessaires
-            String scopes = "r_liteprofile r_emailaddress w_member_social r_organization_social w_organization_social rw_organization_admin";
+            // Stocker dans MongoDB au lieu de la mémoire
+            OAuthState oauthState = new OAuthState();
+            oauthState.setState(state);
+            oauthState.setOrganizationId(organizationId);
+            oauthState.setRedirectUri(linkedInConfig.getRedirectUri());
+            oauthStateRepository.save(oauthState);
+
+            // ⚡ SCOPES MODERNES (2024) - CORRIGÉ
+            String scopes = "openid profile email w_member_social w_organization_social rw_organization_admin";
 
             // Construire l'URL d'autorisation
             String authUrl = String.format(
@@ -75,12 +83,16 @@ public class LinkedInIntegrationServiceImpl implements LinkedInIntegrationServic
     public LinkedInTokenResponse handleCallback(String code, String state) {
         try {
             // Vérifier le state
-            if (!oauthStates.containsKey(state)) {
-                throw new SecurityException("Invalid state parameter");
+            OAuthState oauthState = oauthStateRepository.findByState(state)
+                    .orElseThrow(() -> new SecurityException("Invalid or expired state parameter"));
+
+            if (!oauthState.isValid()) {
+                oauthStateRepository.delete(oauthState);
+                throw new SecurityException("State has expired");
             }
 
-            String organizationId = oauthStates.get(state);
-            oauthStates.remove(state); // Nettoyer
+            String organizationId = oauthState.getOrganizationId();
+            oauthStateRepository.delete(oauthState);
 
             // Échanger le code contre un token
             String tokenUrl = "https://www.linkedin.com/oauth/v2/accessToken";
@@ -152,6 +164,14 @@ public class LinkedInIntegrationServiceImpl implements LinkedInIntegrationServic
             response.setMessage("Failed to handle callback: " + e.getMessage());
             return response;
         }
+    }
+
+    //  méthode de nettoyage automatique
+    @Scheduled(fixedDelay = 3600000) // Toutes les heures
+    public void cleanupExpiredStates() {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        oauthStateRepository.deleteByExpiresAtBefore(oneHourAgo);
+        log.info("Cleaned up expired OAuth states");
     }
 
     @Override

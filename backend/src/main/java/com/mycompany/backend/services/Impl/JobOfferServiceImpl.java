@@ -1,5 +1,6 @@
 package com.mycompany.backend.services.Impl;
 
+import com.mycompany.backend.config.LinkedInConfig;
 import com.mycompany.backend.dto.JobOfferDTO;
 import com.mycompany.backend.dto.JobOfferRequest;
 import com.mycompany.backend.dto.LinkedInPostResponse;
@@ -31,6 +32,9 @@ public class JobOfferServiceImpl implements JobOfferService {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private LinkedInConfig linkedInConfig;
 
     @Autowired
     private LinkedInIntegrationService linkedInService;
@@ -230,28 +234,58 @@ public class JobOfferServiceImpl implements JobOfferService {
                 .orElse(false);
     }
 
-    // Méthodes LinkedIn
     @Override
     public LinkedInPostResponse publishToLinkedIn(String jobOfferId) {
         JobOffer jobOffer = jobOfferRepository.findById(jobOfferId)
                 .orElseThrow(() -> new RuntimeException("Job offer not found"));
 
-        LinkedInPostResponse response = linkedInService.publishJobOffer(jobOfferId);
+        int retryCount = 0;
+        Exception lastException = null;
 
-        if (response.isSuccess()) {
-            // Mettre à jour l'offre avec l'ID du post LinkedIn
-            jobOffer.setLinkedInPostId(response.getId());
-            jobOffer.addExternalPlatform("LINKEDIN");
-            jobOffer.setUpdatedAt(LocalDateTime.now());
-            jobOfferRepository.save(jobOffer);
+        //  Utilisez linkedInConfig après l'avoir injecté
+        while (retryCount < linkedInConfig.getMaxRetries()) {
+            try {
+                LinkedInPostResponse response = linkedInService.publishJobOffer(jobOfferId);
 
-            log.info("Job offer {} published to LinkedIn with post ID: {}",
-                    jobOfferId, response.getId());
-        } else {
-            throw new RuntimeException("Failed to publish to LinkedIn: " + response.getErrorMessage());
+                if (response.isSuccess()) {
+                    // Mettre à jour l'offre avec l'ID du post LinkedIn
+                    jobOffer.setLinkedInPostId(response.getId());
+                    jobOffer.addExternalPlatform("LINKEDIN");
+                    jobOffer.setUpdatedAt(LocalDateTime.now());
+                    jobOfferRepository.save(jobOffer);
+
+                    log.info("Job offer {} published to LinkedIn with post ID: {}",
+                            jobOfferId, response.getId());
+                    return response;
+                } else {
+                    throw new RuntimeException("LinkedIn API error: " + response.getErrorMessage());
+                }
+            } catch (Exception e) {
+                retryCount++;
+                lastException = e;
+
+                if (retryCount < linkedInConfig.getMaxRetries()) {
+                    log.warn("Attempt {} failed for job offer {}. Retrying in {}ms...",
+                            retryCount, jobOfferId, 1000 * retryCount);
+                    try {
+                        Thread.sleep(1000 * retryCount); // Backoff linéaire
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Publishing interrupted", ie);
+                    }
+                }
+            }
         }
 
-        return response;
+        // Si on arrive ici, toutes les tentatives ont échoué
+        log.error("Failed to publish job offer {} to LinkedIn after {} attempts",
+                jobOfferId, linkedInConfig.getMaxRetries(), lastException);
+
+        LinkedInPostResponse errorResponse = new LinkedInPostResponse();
+        errorResponse.setSuccess(false);
+        errorResponse.setErrorMessage("Failed after " + linkedInConfig.getMaxRetries() +
+                " retries: " + lastException.getMessage());
+        return errorResponse;
     }
 
     @Override

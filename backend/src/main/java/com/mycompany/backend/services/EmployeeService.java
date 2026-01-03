@@ -25,7 +25,7 @@ public interface EmployeeService {
     Optional<Employee> getEmployeeByEmail(String email);
     void deleteEmployee(String id);
     ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
-    void ImportFromExcel(MultipartFile file) throws IOException;
+    void importFromExcel(MultipartFile file) throws IOException;
     ByteArrayOutputStream exportToExcel() throws IOException;
 
     // Gestion des fichiers
@@ -57,4 +57,5 @@ public interface EmployeeService {
 
     // Méthode pour récupérer la dernière fiche
     Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month);
+    ResponseEntity<?> changePassword(String employeeId, String currentPassword, String newPassword);
 }
