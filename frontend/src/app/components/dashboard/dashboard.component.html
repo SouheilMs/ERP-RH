@@ -54,7 +54,18 @@
   </aside>
 
   <!-- Main content -->
+  <!-- Main content -->
   <main class="main-content">
+    <!-- Intégrer le chatbot comme une bulle -->
+    <div class="chatbot-floating" *ngIf="showChatbot">
+      <app-chatbot></app-chatbot>
+    </div>
+
+    <!-- Bouton pour ouvrir/fermer le chatbot -->
+    <button class="chatbot-toggle-btn" (click)="toggleChatbot()">
+      <i class="fas fa-robot"></i>
+    </button>
+
     <router-outlet></router-outlet>
   </main>
 </div>

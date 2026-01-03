@@ -3,6 +3,7 @@ package com.mycompany.backend.controllers;
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.dto.EmployeeDetailDTO;
 import com.mycompany.backend.dto.FormationDTO;
+import com.mycompany.backend.dto.PasswordChangeRequest;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Formation;
@@ -70,7 +71,7 @@ public class EmployeeController {
             } else {
                 System.out.println(" No authentication found in controller!");
             }
-            
+
             Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
             if (employeeOpt.isPresent()) {
                 System.out.println(" Employee found: " + employeeOpt.get().getUsername());
@@ -98,7 +99,7 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
-                                                           @RequestBody Employee employeeDetails) {
+                                                            @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -134,11 +135,24 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employé supprimé avec succès");
     }
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable String id, // CHANGÉ DE Long À String
+            @RequestBody @Valid PasswordChangeRequest request,
+            @RequestHeader("Authorization") String token) {
 
+        System.out.println(" Change password request for employee ID: " + id);
+        System.out.println(" Request details:");
+        System.out.println("   - Current password provided: " + (request.getCurrentPassword() != null ? "YES" : "NO"));
+        System.out.println("   - New password length: " + (request.getNewPassword() != null ? request.getNewPassword().length() : 0));
+        System.out.println("   - Token present: " + (token != null ? "YES" : "NO"));
+
+        return employeeService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
+    }
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
-                                                        @RequestParam("file") MultipartFile file) {
+                                                         @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -226,7 +240,7 @@ public class EmployeeController {
         }
 
         Formation savedFormation = formationRepository.save(f);
-        
+
         // Initialiser la collection si elle est null
         if (emp.getFormations() == null) {
             emp.setFormations(new HashSet<>());

@@ -18,7 +18,6 @@ public class JwtResponse {
 		this.roles = roles;
 	}
 
-	// Corrigez les getters pour qu'ils correspondent aux noms des champs
 	public String getToken() {
 		return token;
 	}

@@ -104,7 +104,7 @@ describe('AddEmployeeComponent', () => {
 
     const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
     req.flush('Erreur', { status: 500, statusText: 'Server Error' });
-    expect(component.errorMessage).toBe('⚠️ Erreur lors de l\'ajout de l\'employé.');
+    expect(component.errorMessage).toBe(' Erreur lors de l\'ajout de l\'employé.');
   });
 
   it('should reset role when opening modal', () => {

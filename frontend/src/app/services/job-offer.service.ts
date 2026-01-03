@@ -16,7 +16,7 @@ export interface JobOffer {
   benefits: string;
   status: string;
   publishedBy: string;
-  publishedDate: string; 
+  publishedDate: string;
   closingDate: string;
   createdAt: string;
   updatedAt: string;

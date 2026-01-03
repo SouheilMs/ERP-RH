@@ -2,14 +2,14 @@
   <!-- Card Header -->
   <div class="card-header">
     <div [class]="getStatusBadgeClass(training.status)">
-      <i class="fas" 
+      <i class="fas"
          [class.fa-clock]="training.status === 'PLANIFIED'"
          [class.fa-play]="training.status === 'IN_PROGRESS'"
          [class.fa-check]="training.status === 'COMPLETED'"
          [class.fa-times]="training.status === 'CANCELLED'"></i>
       {{ training.status }}
     </div>
-    
+
     <div class="card-actions">
       <div class="dropdown">
         <button class="action-btn" type="button">
@@ -25,7 +25,7 @@
           <a *ngIf="training.status === 'IN_PROGRESS'" class="dropdown-item" (click)="onCompleteFormation()">
             <i class="fas fa-check"></i> Complete
           </a>
-          <a *ngIf="training.status !== 'COMPLETED' && training.status !== 'CANCELLED'" 
+          <a *ngIf="training.status !== 'COMPLETED' && training.status !== 'CANCELLED'"
              class="dropdown-item warning" (click)="onCancelFormation()">
             <i class="fas fa-times"></i> Cancel
           </a>
@@ -37,28 +37,27 @@
       </div>
     </div>
   </div>
-
   <!-- Card Body -->
   <div class="card-body">
     <h3 class="training-title">{{ training.title }}</h3>
     <p class="training-description">{{ training.description }}</p>
-    
+
     <div class="training-meta">
       <div class="meta-item">
         <i class="fas fa-map-marker-alt"></i>
         <span>{{ training.location }}</span>
       </div>
-      
+
       <div class="meta-item">
         <i class="fas fa-user-tie"></i>
         <span>{{ training.formateur }}</span>
       </div>
-      
+
       <div class="meta-item">
         <i class="fas fa-calendar"></i>
         <span>{{ formatDate(training.startDate) }} - {{ formatDate(training.endDate) }}</span>
       </div>
-      
+
       <div class="meta-item">
         <i class="fas fa-clock"></i>
         <span>{{ training.startTime }} - {{ training.endTime }}</span>
@@ -77,7 +76,7 @@
         </span>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" 
+        <div class="progress-fill"
              [style.width]="getProgressPercentage() + '%'"
              [class]="getProgressPercentage() > 90 ? 'high' : getProgressPercentage() > 75 ? 'medium' : 'low'">
         </div>

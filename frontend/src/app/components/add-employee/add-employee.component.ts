@@ -241,7 +241,7 @@ export class AddEmployeeComponent implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
-         
+
         }
       });
   }

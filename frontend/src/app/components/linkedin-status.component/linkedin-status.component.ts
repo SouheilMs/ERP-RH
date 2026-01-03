@@ -45,7 +45,7 @@ export class LinkedinStatusComponent implements OnInit, OnDestroy {
   // Méthode getStatusColor corrigée
 getStatusColor(): any {
   if (!this.integrationStatus) return 'secondary';
-  
+
   switch (this.integrationStatus.status) {
     case 'ACTIVE': return 'success';
     case 'EXPIRED': return 'warning';
@@ -260,7 +260,7 @@ getStatusColor(): any {
 
   getStatusIcon(): string {
     if (!this.integrationStatus) return 'pi pi-question-circle';
-    
+
     switch (this.integrationStatus.status) {
       case 'ACTIVE': return 'pi pi-check-circle';
       case 'EXPIRED': return 'pi pi-exclamation-circle';

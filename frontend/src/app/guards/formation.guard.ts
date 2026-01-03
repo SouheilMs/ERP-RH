@@ -6,18 +6,30 @@ export const formationGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  //  SEULEMENT RH ET MANAGERS RH PEUVENT ACCÉDER AUX FORMATIONS
-  if (authService.isHR() || authService.isHRManager()) {
-    return true;
+  // Vérifier d'abord si l'utilisateur est connecté
+  if (!authService.isLoggedIn()) {
+    router.navigate(['/login']);
+    return false;
   }
 
-  // Rediriger les employés vers leur profil
-  const currentUserId = authService.getCurrentUserId();
-  if (currentUserId) {
-    router.navigate(['/employees', currentUserId]);
-  } else {
-    router.navigate(['/login']);
+  //  RH ET RH MANAGER DOIVENT POUVOIR ACCÉDER
+  const canAccess = authService.isHRorManager();
+
+  if (canAccess) {
+    console.log(' Access granted to formations');
+    return true;
   }
-  
+  // Rediriger selon le rôle
+  if (authService.isEmployee()) {
+    const currentUserId = authService.getCurrentUserId();
+    if (currentUserId) {
+      router.navigate(['/employees', currentUserId]);
+    } else {
+      router.navigate(['/profile']);
+    }
+  } else {
+    router.navigate(['/unauthorized']);
+  }
+
   return false;
 };

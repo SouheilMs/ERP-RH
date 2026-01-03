@@ -17,10 +17,11 @@ import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
 import { LinkedInGuard } from '../app/guards/linkedin.guard';
+import {ChatbotComponent} from './components/chatbot/chatbot';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  
+
   // Routes publiques
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
@@ -37,39 +38,39 @@ export const routes: Routes = [
       { path: 'employees/:id', component: EmployeeDetailComponent },
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
+      { path: 'chatbot', component: ChatbotComponent },
 
-      
-      { 
-        path: 'jobs/new', 
+
+      {
+        path: 'jobs/new',
         component: JobFormComponent,
         canActivate: [jobGuard]
       },
-      { 
-        path: 'jobs/:id/edit', 
+      {
+        path: 'jobs/:id/edit',
         component: JobFormComponent,
         canActivate: [jobGuard]
       },
-      { 
-        path: 'jobs', 
+      {
+        path: 'jobs',
         component: JobListComponent,
         canActivate: [jobGuard]
       },
 
       { path: 'my-profile', component: EmployeeDetailComponent, data: { isMyProfile: true } },
-
       // Routes Formations
-      { 
-        path: 'formations', 
+      {
+        path: 'formations',
         component: FormationListComponent,
         canActivate: [formationGuard]
       },
-      { 
-        path: 'formations/new', 
+      {
+        path: 'formations/new',
         component: FormationFormComponent,
         canActivate: [formationGuard]
       },
-      { 
-        path: 'formations/edit/:id', 
+      {
+        path: 'formations/edit/:id',
         component: FormationFormComponent,
         canActivate: [formationGuard]
       },

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 export interface Formation {
   id: string;
@@ -58,7 +59,8 @@ export class FormationService {
         'Content-Type': 'application/json'
       });
     }
-    
+
+    console.warn(' FormationService - No token found');
     return new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -72,6 +74,7 @@ export class FormationService {
   }
 
   getAllFormations(): Observable<Formation[]> {
+    console.log(' FormationService - Getting all formations');
     const headers = this.getAuthHeaders();
      
     return this.http.get<Formation[]>(this.apiUrl, { headers });
@@ -81,6 +84,8 @@ export class FormationService {
     const headers = this.getAuthHeaders();
     return this.http.get<Formation>(`${this.apiUrl}/${id}`, { headers });
   }
+
+  
 
   updateFormation(id: string, request: FormationRequest): Observable<Formation> {
     const headers = this.getAuthHeaders();

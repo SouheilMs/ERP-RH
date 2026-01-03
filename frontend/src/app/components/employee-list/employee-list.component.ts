@@ -32,6 +32,12 @@ export class EmployeeListComponent implements OnInit {
   canAddEmployees = false;
   canViewEmployees = false;
 
+  //  Pagination properties
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 1;
+  paginatedEmployees: Employee[] = [];
+
   private employeeService = inject(EmployeeServices);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
@@ -46,13 +52,19 @@ export class EmployeeListComponent implements OnInit {
     this.canAddEmployees = this.authService.isHRorManager();
     this.canViewEmployees = this.authService.canViewEmployeeList();
 
+    console.log(' EmployeeListComponent - Permissions checked:');
+    console.log('   - canAddEmployees:', this.canAddEmployees);
+    console.log('   - canViewEmployees:', this.canViewEmployees);
+    console.log('   - User roles:', this.authService.getUserRoles());
+    console.log('   - isHR:', this.authService.isHR());
+    console.log('   - isHRManager:', this.authService.isHRManager());
+
     // If user doesn't have permissions, show message
     if (!this.canViewEmployees) {
       this.errorMessage = ' You do not have permissions to view the employee list.';
       const currentUserId = this.authService.getCurrentUserId();
       if (currentUserId) {
         console.log(' Redirecting to personal profile');
-        // this.router.navigate(['/employees', currentUserId]);
       }
     }
   }
@@ -72,6 +84,7 @@ export class EmployeeListComponent implements OnInit {
       next: (data: Employee[]) => {
         this.employees = data;
         this.filteredEmployees = [...this.employees];
+        this.updatePagination();
         this.loading = false;
         this.cdr.detectChanges();
         console.log(' Employees loaded:', this.employees.length);
@@ -105,17 +118,19 @@ export class EmployeeListComponent implements OnInit {
   filterEmployees(): void {
     if (!this.searchTerm) {
       this.filteredEmployees = [...this.employees];
-      return;
+    } else {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredEmployees = this.employees.filter(emp =>
+        emp.username?.toLowerCase().includes(term) ||
+        emp.email?.toLowerCase().includes(term) ||
+        emp.position?.toLowerCase().includes(term) ||
+        emp.phone?.toLowerCase().includes(term) ||
+        emp.status?.toLowerCase().includes(term)
+      );
     }
 
-    const term = this.searchTerm.toLowerCase();
-    this.filteredEmployees = this.employees.filter(emp =>
-      emp.username?.toLowerCase().includes(term) ||
-      emp.email?.toLowerCase().includes(term) ||
-      emp.position?.toLowerCase().includes(term) ||
-      emp.phone?.toLowerCase().includes(term) ||
-      emp.status?.toLowerCase().includes(term)
-    );
+    this.currentPage = 1; // Reset to first page when filtering
+    this.updatePagination();
   }
 
   // Open add modal
@@ -126,6 +141,8 @@ export class EmployeeListComponent implements OnInit {
       console.warn(' Attempt to add employee without permissions');
       return;
     }
+
+    console.log(' Opening add employee modal - Permissions OK');
     this.showAddModal = true;
   }
 
@@ -138,7 +155,7 @@ export class EmployeeListComponent implements OnInit {
   onEmployeeAdded(): void {
     this.closeAddModal();
     this.loadEmployees();
-    this.successMessage = "Employee added successfully!";
+    this.successMessage = " Employee added successfully!";
     setTimeout(() => this.successMessage = '', 4000);
   }
 
@@ -217,6 +234,7 @@ export class EmployeeListComponent implements OnInit {
       next: () => {
         this.employees = this.employees.filter(e => e.id !== id);
         this.filteredEmployees = this.filteredEmployees.filter(e => e.id !== id);
+        this.updatePagination();
         this.loading = false;
         this.successMessage = " Employee deleted successfully!";
         setTimeout(() => this.successMessage = '', 4000);
@@ -246,5 +264,94 @@ export class EmployeeListComponent implements OnInit {
     };
 
     return statusMap[status] || status;
+  }
+
+  //  PAGINATION METHODS
+  updatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredEmployees.length / this.pageSize);
+
+    // Ensure current page is within valid range
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages || 1;
+    }
+
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedEmployees = this.filteredEmployees.slice(startIndex, endIndex);
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+
+  goToPage(page: number | string): void {
+    if (typeof page === 'number' && page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  getStartIndex(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  getEndIndex(): number {
+    const end = this.currentPage * this.pageSize;
+    return end > this.filteredEmployees.length ? this.filteredEmployees.length : end;
+  }
+
+  getPageNumbers(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 5;
+
+    if (this.totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is small
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first page, last page, and pages around current page
+      if (this.currentPage <= 3) {
+        // Near the beginning
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(this.totalPages);
+      } else if (this.currentPage >= this.totalPages - 2) {
+        // Near the end
+        pages.push(1);
+        pages.push('...');
+        for (let i = this.totalPages - 3; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // In the middle
+        pages.push(1);
+        pages.push('...');
+        for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(this.totalPages);
+      }
+    }
+
+    return pages;
   }
 }

@@ -52,29 +52,47 @@ export class AuthService {
      .pipe(catchError(error => throwError(() => error)));
   }
 
-canViewFormations(): boolean {
-  return this.isHR() || this.isHRManager();
-}
 
-login(loginRequest: LoginRequest): Observable<JwtResponse> {
+  // login(loginRequest: LoginRequest): Observable<JwtResponse> {
+  //   return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+  //     .pipe(
+  //       tap((response: JwtResponse) => {
+  //         // Store token and user info
+  //         localStorage.setItem('authToken', response.token);
+  //         localStorage.setItem('user', JSON.stringify({
+  //           id: response.id,
+  //           username: response.username,
+  //           email: response.email,
+  //           roles: response.roles
+  //         }));
+  //         this.isLoggedInSubject.next(true);
+  //       }),
+  //       catchError(this.handleError)
+  //     );
+  // }
 
-  return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
-    .pipe(
-      tap((response: JwtResponse) => {
+  login(loginRequest: LoginRequest): Observable<JwtResponse> {
+    console.log(' Tentative de login vers:', `${this.apiUrl}/signin`);
 
-        if (response.token) {  
-          localStorage.setItem('authToken', response.token);
+    return this.http.post<JwtResponse>(`${this.apiUrl}/signin`, loginRequest)
+      .pipe(
+        tap((response: JwtResponse) => {
+          console.log(' Réponse login reçue:', response);
 
-          const userData = {
-            id: response.id,
-            username: response.username,
-            email: response.email,
-            roles: response.roles
-          };
-          localStorage.setItem('user', JSON.stringify(userData));
+          if (response.token) {
+            // Stocker le token correctement
+            localStorage.setItem('authToken', response.token);
 
-          this.isLoggedInSubject.next(true);
-          this.userRolesSubject.next(response.roles);
+            const userData = {
+              id: response.id,
+              username: response.username,
+              email: response.email,
+              roles: response.roles
+            };
+            localStorage.setItem('user', JSON.stringify(userData));
+
+            this.isLoggedInSubject.next(true);
+            this.userRolesSubject.next(response.roles);
 
           this.decodeToken();
         } else {
@@ -100,6 +118,77 @@ login(loginRequest: LoginRequest): Observable<JwtResponse> {
 
   // ================= MÉTHODES POUR GÉRER LES RÔLES ET PERMISSIONS =================
 
+  canCreateEmployees(): boolean {
+    // SEUL LE RH MANAGER PEUT CRÉER DES EMPLOYÉS
+    const canCreate = this.isHRManager();
+    console.log(' canCreateEmployees:', canCreate);
+    return canCreate;
+  }
+
+  canDeleteEmployees(): boolean {
+    // SEUL LE RH MANAGER PEUT SUPPRIMER DES EMPLOYÉS
+    const canDelete = this.isHRManager();
+    console.log(' canDeleteEmployees:', canDelete);
+    return canDelete;
+  }
+
+  canEditEmployees(): boolean {
+    // RH ET RH MANAGERS PEUVENT ÉDITER LES EMPLOYÉS
+    const canEdit = this.isHR() || this.isHRManager();
+    console.log(' canEditEmployees:', canEdit);
+    return canEdit;
+  }
+
+  canViewEmployeeList(): boolean {
+    // RH ET RH MANAGERS PEUVENT VOIR LA LISTE DES EMPLOYÉS
+    return this.isHR() || this.isHRManager();
+  }
+  canManageJobOffers(): boolean {
+    return this.isHR() || this.isHRManager();
+  }
+
+  canCreateJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canEditJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canDeleteJobOffer(): boolean {
+    return this.canManageJobOffers();
+  }
+
+  canManageFormations(): boolean {
+    return this.isHR() || this.isHRManager();
+  }
+
+  canCreateFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canEditFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canDeleteFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+  canAssignFormation(): boolean {
+    return this.canManageFormations();
+  }
+
+// Vérifie si l'utilisateur peut gérer une formation spécifique
+  canManageFormation(formationId?: string): boolean {
+    // Si c'est un RH ou HR Manager, il peut gérer toutes les formations
+    return this.canManageFormations();
+  }
+
+// Vérifie si l'utilisateur peut gérer une offre d'emploi spécifique
+  canManageJobOffer(jobId?: string): boolean {
+    return this.canManageJobOffers();
+  }
   getUserRole(): string {
     const user = this.getUser();
     return user?.roles?.[0] || '';
@@ -154,14 +243,27 @@ getUser(): any {
     return this.isHR() || this.isHRManager();
   }
 
+// vérifier si l'utilisateur peut voir les formations
+  canViewFormations(): boolean {
+    return this.isHRorManager();
+  }
   // Vérifier si l'utilisateur peut accéder au dashboard
   canAccessDashboard(): boolean {
     return this.isHRorManager();
   }
 
-  // Vérifier si l'utilisateur peut voir la liste des employés
-  canViewEmployeeList(): boolean {
-    return this.isHRorManager();
+  canAccessFormations(): boolean {
+    const roles = this.getUserRoles();
+    console.log('🔐 canAccessFormations - User roles:', roles);
+
+    // Liste de tous les rôles qui peuvent accéder aux formations
+    const allowedRoles = [
+      'ROLE_RH', 'ROLE_HR',
+      'ROLE_HRMANAGER', 'ROLE_HR_MANAGER',
+      'ROLE_ADMIN', 'ROLE_MANAGER'
+    ];
+
+    return allowedRoles.some(role => roles.includes(role));
   }
 
   //  Vérifier si l'utilisateur peut voir les offres d'emploi
@@ -209,12 +311,12 @@ getUser(): any {
   }
 
   canEditEmployeeProfile(employeeId: string): boolean {
-    // SEULS LES RH PEUVENT ÉDITER LES PROFILS (pas leur propre profil via l'interface admin)
+    // SEULS LES RH PEUVENT ÉDITER LES PROFILS
     const currentUserId = this.getCurrentUserId();
     const isHRorManager = this.isHRorManager();
     const isOwnProfile = currentUserId === employeeId;
 
-    // Les RH peuvent éditer tous les profils sauf le leur via l'interface admin
+    // Les RH peuvent éditer tous les profils
     // Les employés ne peuvent éditer que leur propre profil via "Mon Profil"
     const canEdit = isHRorManager && !isOwnProfile;
     return canEdit;

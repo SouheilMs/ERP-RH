@@ -25,7 +25,10 @@ export interface Employee {
   hireDate?: string;
   photoUrl?: string;
   photoId?: string;
-
+  department?: string;
+  age?: number;
+  performance?: string;
+  satisfaction?: number;
   // Informations fiche de paie tunisienne
   cin?: string;
   cnssNumber?: string;
@@ -68,6 +71,10 @@ export interface Payslip {
   yearsOfService?: number;
   monthsOfService?: number;
   bonusPeriods?: number;
+}
+export interface PasswordChangeData {
+  currentPassword: string;
+  newPassword: string;
 }
 
 @Injectable({
@@ -117,7 +124,6 @@ export class EmployeeServices {
     if (token) {
       return new HttpHeaders({
         'Authorization': `Bearer ${token}`
-        // Note: Ne pas mettre 'Content-Type' pour les requêtes blob
       });
     } else {
       return new HttpHeaders();
@@ -125,6 +131,7 @@ export class EmployeeServices {
   }
 
   // ================= EMPLOYEE =================
+// employee.service.ts
   getAllEmployees(): Observable<Employee[]> {
     const headers = this.getAuthHeaders();
 
@@ -168,9 +175,7 @@ getEmployeeById(id: string): Observable<Employee> {
 
 
 
-  /**
-   * Génère les fiches de paie pour toute une année
-   */
+  // ================= GÉNÉRATION FICHES DE PAIE EN MASSE =================
   generatePayslipsForYear(employeeId: string, year: number): Observable<any> {
     const headers = this.getAuthHeaders();
 
@@ -207,7 +212,7 @@ getEmployeeById(id: string): Observable<Employee> {
   }
 
   createEmployee(employee: Employee): Observable<Employee> {
-    console.log('🔄 createEmployee - Adding auth headers');
+    console.log(' createEmployee - Adding auth headers');
     const headers = this.getAuthHeaders();
 
     return this.http.post<Employee>(`${this.apiUrl}/Add-employee`, employee, { headers }).pipe(
@@ -473,7 +478,6 @@ getEmployeePhotoBlob(id: string): Observable<Blob> {
     this.exportEmployees().subscribe({
       next: (res: Blob) => {
         saveAs(res, 'employees.xlsx');
-
       },
       error: (err: any) => {
         console.error(" downloadEmployeesExcel FAILED:", err);
@@ -506,4 +510,51 @@ getEmployeePhotoBlob(id: string): Observable<Blob> {
     );
   }
 
-}
+  checkAuthStatus(): void {
+    const token = this.authService.getToken();
+    const user = this.authService.getUser();
+
+    console.log(' Auth Status Check:');
+    console.log('  - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
+    console.log('  - User:', user ? 'PRESENT' : 'NULL');
+
+    if (user) {
+      console.log('  - User ID:', user.id);
+      console.log('  - Username:', user.username);
+      console.log('  - Roles:', user.roles);
+    }
+  }
+
+  //   MÉTHODE POUR TESTER LES HEADERS
+  testPhotoRequest(id: string): void {
+    const headers = this.getAuthHeadersBlob();
+    console.log(' TEST Headers structure:', headers);
+    console.log(' TEST Headers keys:', headers.keys());
+    console.log('TEST Authorization header:', headers.get('Authorization'));
+
+    this.getEmployeePhotoBlob(id).subscribe({
+      next: (blob) => {
+        console.log('TEST SUCCESS - Blob received:', blob.size);
+      },
+      error: (error) => {
+        console.error(' TEST FAILED:', error);
+      }
+    });
+  }
+// ================= CHANGEMENT MOT DE PASSE =================
+// ================= CHANGEMENT MOT DE PASSE =================
+  changePassword(employeeId: string, passwordData: PasswordChangeData): Observable<any> {
+    console.log(' changePassword - Adding auth headers');
+    const headers = this.getAuthHeaders();
+
+    return this.http.put(`${this.apiUrl}/${employeeId}/change-password`, passwordData, {
+      headers,
+      responseType: 'text'
+    }).pipe(
+      tap(() => console.log(' changePassword SUCCESS')),
+      catchError(error => {
+        console.error(' changePassword FAILED:', error);
+        return throwError(() => error);
+      })
+    );
+  }}

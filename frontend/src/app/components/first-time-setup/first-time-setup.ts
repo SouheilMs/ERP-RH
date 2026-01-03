@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 
+import { Component } from '@angular/core';
 @Component({
   selector: 'app-first-time-setup',
   imports: [],
@@ -7,5 +7,4 @@ import { Component } from '@angular/core';
   styleUrl: './first-time-setup.css'
 })
 export class FirstTimeSetup {
-
 }

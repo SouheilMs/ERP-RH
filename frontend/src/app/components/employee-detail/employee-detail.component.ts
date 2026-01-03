@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { EmployeeServices, Employee, Formation } from '../../services/employee.service';
 import { AuthService } from '../../services/auth.service';
+import { of, Observable } from 'rxjs';
 
 @Pipe({
   name: 'safeUrl',
@@ -73,6 +74,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   showUploadSuccess = false;
   showUpdateSuccess = false;
   showFormationSuccess = false;
+  showPasswordSuccess = false;
 
   // Error modal
   showErrorModal = false;
@@ -87,6 +89,19 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   // Variables pour la validation des dates de formation
   startDateError = '';
   endDateError = '';
+
+  // Variables pour le changement de mot de passe
+  passwordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+  passwordErrors = {
+    current: '',
+    new: '',
+    confirm: ''
+  };
+  isChangingPassword = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -117,6 +132,28 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  private checkPermissions(employeeId: string) {
+    const currentUser = this.authService.getUser();
+
+    //  Vérifier si l'utilisateur voit son propre profil
+    this.isViewingOwnProfile = currentUser?.id === employeeId;
+
+    // Les RH peuvent voir tous les profils
+    this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
+
+    //  TOUS les utilisateurs peuvent modifier leur PROPRE profil
+    // Les RH peuvent aussi modifier les autres profils
+    this.canEdit = this.isViewingOwnProfile || (this.canViewAllInfo && !this.isViewingOwnProfile);
+
+    console.log(' Permissions Check:');
+    console.log('   - Employee ID:', employeeId);
+    console.log('   - Current User ID:', currentUser?.id);
+    console.log('   - isViewingOwnProfile:', this.isViewingOwnProfile);
+    console.log('   - canViewAllInfo (HR/Manager):', this.canViewAllInfo);
+    console.log('   - canEdit:', this.canEdit);
+    console.log('   - isMyProfilePage:', this.isMyProfilePage);
+  }
+
   ngOnDestroy(): void {
     if (this.previewUrl && this.previewUrl.toString().startsWith('blob:')) {
       URL.revokeObjectURL(this.previewUrl.toString());
@@ -127,42 +164,13 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   // ================= LOGIQUE DE PERMISSIONS CORRIGÉE =================
-  private checkPermissions(employeeId: string) {
-    const currentUser = this.authService.getUser();
-    this.isViewingOwnProfile = currentUser?.id === employeeId;
-
-    //  HR Manager peuvent voir TOUS les profils + leur propre profil
-    this.canViewAllInfo = this.authService.isHR() || this.authService.isHRManager();
-
-    //  Les RH peuvent éditer tous les profils SAUF leur propre profil via cette interface
-    this.canEdit = this.canViewAllInfo && !this.isViewingOwnProfile;
-
-
-
-    //  Si un employé essaie d'accéder à un profil qui n'est pas le sien
-    if (this.authService.isEmployee() && !this.isViewingOwnProfile && !this.isMyProfilePage) {
-      console.log(' Employee trying to access another profile - Redirecting to own profile');
-      this.showUnauthorizedMessage = true;
-      this.loading = false;
-      setTimeout(() => {
-        const currentUserId = this.authService.getCurrentUserId();
-        if (currentUserId) {
-          this.router.navigate(['/employees', currentUserId]);
-        } else {
-          this.router.navigate(['/my-profile']);
-        }
-      }, 2000);
-      return;
-    }
-  }
-
+// ================= LOGIQUE DE PERMISSIONS CORRIGÉE =================
   canSeeUpdateForm(): boolean {
-    //  Les RH voient le formulaire pour les autres employés
-    return this.canViewAllInfo && !this.isViewingOwnProfile;
+    return this.isViewingOwnProfile || (this.canViewAllInfo && !this.isViewingOwnProfile);
   }
 
   canUploadPhoto(): boolean {
-    //Seuls les RH peuvent uploader des photos pour les autres employés
+    // Seuls les RH peuvent uploader des photos pour les autres employés
     return this.canViewAllInfo && !this.isViewingOwnProfile;
   }
 
@@ -177,8 +185,8 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   //  Permissions pour les fiches de paie
   canViewPayslipHistory(): boolean {
-    //   peut voir SON historique de fiches de paie
-    //   peut voir TOUS les historiques de fiches de paie + le sien
+    // Employé : peut voir SON historique de fiches de paie
+    // RH/Manager : peut voir TOUS les historiques de fiches de paie + le sien
     return this.canViewAllInfo || this.isViewingOwnProfile;
   }
 
@@ -313,17 +321,24 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.employee = data;
         this.loading = false;
         this.previewUrl = null;
+
+        // ✅ DEBUG: Vérifier si hireDate est présent
+        console.log('📅 Employee data received:', {
+          hireDate: this.employee.hireDate,
+          fullData: this.employee
+        });
+
         this.loadEmployeePhoto();
       },
-      error: (error) => {
-        console.error(' Error loading employee:', error);
+      error: (error: any) => {
+        console.error('❌ Error loading employee:', error);
         this.errorMessage = "Impossible de récupérer les données de l'employé";
         this.loading = false;
         this.showErrorModal = true;
 
-        if (error.position === 401) {
+        if (error.status === 401) {
           this.errorMessage = "Accès non autorisé. Token peut être expiré.";
-        } else if (error.position === 403) {
+        } else if (error.status === 403) {
           this.errorMessage = "Accès refusé. Vous n'avez pas les permissions nécessaires.";
           this.showUnauthorizedMessage = true;
 
@@ -332,13 +347,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
               this.router.navigate(['/my-profile']);
             }, 3000);
           }
-        } else if (error.position === 404) {
+        } else if (error.status === 404) {
           this.errorMessage = "Employé non trouvé.";
         }
       }
     });
   }
-
   // ================= GESTION PHOTO =================
   loadEmployeePhoto(): void {
     if (!this.employee?.id) {
@@ -359,8 +373,8 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
           this.photoLoading = false;
         }
       },
-      error: (error) => {
-        console.error(' Error loading employee photo from blob:', error);
+      error: (error: any) => {
+        console.error('❌ Error loading employee photo from blob:', error);
         this.previewUrl = '/assets/default-profile.png';
         this.photoLoading = false;
       }
@@ -400,11 +414,11 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   uploadPhoto() {
     if (!this.employee?.id || !this.selectedPhoto || !this.canUploadPhoto()) {
-      console.error(' Cannot upload photo: Missing employee ID, photo, or permissions');
+      console.error('❌ Cannot upload photo: Missing employee ID, photo, or permissions');
       return;
     }
 
-    console.log(' Starting photo upload for employee:', this.employee.id);
+    console.log('🔄 Starting photo upload for employee:', this.employee.id);
 
     this.isUploadingPhoto = true;
     const formData = new FormData();
@@ -417,11 +431,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = "Photo mise à jour avec succès !";
         this.showUploadSuccess = true;
         this.isUploadingPhoto = false;
+        console.log('✅ Photo uploaded successfully');
 
         this.reloadEmployeePhoto();
       },
-      error: (error) => {
-        console.error(' Error uploading photo:', error);
+      error: (error: any) => {
+        console.error('❌ Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUploadingPhoto = false;
@@ -430,6 +445,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   }
 
   private reloadEmployeePhoto(): void {
+    console.log('🔄 Reloading employee photo after upload');
 
     if (this.previewUrl && this.previewUrl.toString().startsWith('blob:')) {
       URL.revokeObjectURL(this.previewUrl.toString());
@@ -444,28 +460,48 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   // ================= MISE À JOUR EMPLOYÉ =================
   validateForm(): boolean {
+    // Validations communes
     if (this.employee?.phone && !this.isTunisianPhoneValid(this.employee.phone)) {
       this.errorMessage = "Le numéro de téléphone doit être un numéro tunisien valide (8 chiffres commençant par 2, 5 ou 9)";
       return false;
     }
 
-    if (this.employee?.salary !== undefined && !this.isSalaryValid(this.employee.salary)) {
-      this.errorMessage = "Le salaire ne peut pas être négatif";
-      return false;
+    // Validations pour les RH (quand ils modifient un autre employé)
+    if (!this.isViewingOwnProfile && this.canViewAllInfo) {
+      if (this.employee?.salary !== undefined && !this.isSalaryValid(this.employee.salary)) {
+        this.errorMessage = "Le salaire ne peut pas être négatif";
+        return false;
+      }
+
+      if (this.employee?.position && !this.isPositionLengthValid(this.employee.position)) {
+        this.errorMessage = "Le poste ne peut pas dépasser 15 caractères";
+        return false;
+      }
+
+      if (this.employee?.cin && !this.validateCin()) {
+        return false;
+      }
+
+      if (this.employee?.cnssNumber && !this.validateCnss()) {
+        return false;
+      }
+
+      if (this.employee?.rib && !this.validateRib()) {
+        return false;
+      }
     }
 
-    if (this.employee?.hireDate && !this.isHireDateValid(this.employee.hireDate)) {
-      this.errorMessage = "La date d'embauche ne peut pas être dans le futur";
-      return false;
+    // Validations pour l'employé (son propre profil)
+    if (this.isViewingOwnProfile) {
+      if (this.employee?.address && !this.isAddressLengthValid(this.employee.address)) {
+        this.errorMessage = "L'adresse ne peut pas dépasser 100 caractères";
+        return false;
+      }
     }
 
-    if (this.employee?.position && !this.isPositionLengthValid(this.employee.position)) {
-      this.errorMessage = "Le statut ne peut pas dépasser 20 caractères";
-      return false;
-    }
-
-    if (this.employee?.address && !this.isAddressLengthValid(this.employee.address)) {
-      this.errorMessage = "L'adresse ne peut pas dépasser 20 caractères";
+    // ✅ AJOUT: Validation de la section mot de passe
+    if (!this.validatePasswordSection()) {
+      this.errorMessage = "Veuillez corriger les erreurs dans la section mot de passe";
       return false;
     }
 
@@ -475,7 +511,8 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   onUpdateSubmit(event: Event) {
     event.preventDefault();
 
-    if (!this.canEdit) {
+    // ✅ CORRECTION : Utiliser canSeeUpdateForm() au lieu de canEdit
+    if (!this.canSeeUpdateForm()) {
       this.errorMessage = "Vous n'avez pas la permission de modifier ce profil";
       this.showErrorModal = true;
       return;
@@ -492,8 +529,9 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   confirmUpdate() {
     this.showUpdateConfirmation = false;
 
-    if (!this.employee?.id || !this.canEdit) {
-      console.error(' Cannot update: Missing employee ID or permissions');
+    // ✅ CORRECTION : Utiliser canSeeUpdateForm() au lieu de canEdit
+    if (!this.employee?.id || !this.canSeeUpdateForm()) {
+      console.error('❌ Cannot update: Missing employee ID or permissions');
       return;
     }
 
@@ -502,28 +540,33 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log(' Starting employee update for:', this.employee.id);
+    console.log('🔄 Starting employee update for:', this.employee.id);
 
     this.isUpdatingEmployee = true;
 
     if (this.selectedPhoto) {
-      console.log(' Photo detected - Uploading photo AND updating info');
+      console.log('📸 Photo detected - Uploading photo AND updating info');
       this.uploadPhotoAndUpdateInfo();
     } else {
-      console.log(' No photo - Updating info only');
+      console.log('📝 No photo - Updating info only');
       this.updateEmployeeInfoOnly();
     }
+
+    // ✅ AJOUT: Réinitialiser les champs mot de passe après mise à jour
+    this.resetPasswordForm();
   }
 
   private uploadPhotoAndUpdateInfo(): void {
     if (!this.employee?.id || !this.selectedPhoto) return;
 
+    console.log('🔄 Starting combined photo upload and info update');
 
     const formData = new FormData();
     formData.append('file', this.selectedPhoto);
 
     this.employeeService.uploadPhoto(this.employee.id, formData).subscribe({
       next: (photoData: Employee) => {
+        console.log('✅ Photo uploaded successfully, now updating info');
 
         this.updateEmployeeInfo().subscribe({
           next: (infoData: Employee) => {
@@ -532,17 +575,20 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
             this.successMessage = 'Photo et informations mises à jour avec succès ! 🎉';
             this.showUpdateSuccess = true;
             this.isUpdatingEmployee = false;
+            console.log('✅✅ Photo AND info updated successfully');
 
             this.reloadEmployeeDataAndPhoto();
           },
-          error: (error) => {
+          error: (error: any) => {
+            console.error('❌ Error updating info after photo upload:', error);
             this.errorMessage = 'Photo uploadée mais erreur lors de la mise à jour des informations.';
             this.showErrorModal = true;
             this.isUpdatingEmployee = false;
           }
         });
       },
-      error: (error) => {
+      error: (error: any) => {
+        console.error('❌ Error uploading photo:', error);
         this.errorMessage = "Erreur lors du téléchargement de la photo.";
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -557,11 +603,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.successMessage = 'Informations mises à jour avec succès !';
         this.showUpdateSuccess = true;
         this.isUpdatingEmployee = false;
+        console.log('✅ Info updated successfully');
 
         this.reloadEmployeeData();
       },
-      error: (error) => {
-        console.error(' Update error:', error);
+      error: (error: any) => {
+        console.error('❌ Update error:', error);
         this.errorMessage = 'Erreur lors de la mise à jour.';
         this.showErrorModal = true;
         this.isUpdatingEmployee = false;
@@ -569,46 +616,82 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateEmployeeInfo() {
-    const updatedData: Employee = {
+  private updateEmployeeInfo(): Observable<Employee> {
+    const updatedData: any = {
       username: this.employee!.username,
       email: this.employee!.email,
       phone: this.employee!.phone,
-      salary: this.employee!.salary,
-      position: this.employee!.position,
-      hireDate: this.employee!.hireDate,
-
-      // New fields
-      cin: this.employee!.cin,
-      cnssNumber: this.employee!.cnssNumber,
-
       address: this.employee!.address,
       city: this.employee!.city,
-      matricule: this.employee!.matricule,
-      rib: this.employee!.rib,
-      bankName: this.employee!.bankName,
-      workingDays: this.employee!.workingDays,
-      actualWorkingDays: this.employee!.actualWorkingDays,
-      transportAllowance: this.employee!.transportAllowance,
-      familyAllowance: this.employee!.familyAllowance,
-      otherBonuses: this.employee!.otherBonuses
     };
 
+    // ✅ CORRECTION : Séparer le changement de mot de passe de la mise à jour des informations
+    if (this.passwordForm.currentPassword && this.passwordForm.newPassword) {
+      // Utiliser l'endpoint dédié pour le changement de mot de passe
+      this.changePasswordSeparately();
+      // Retourner un observable immédiat sans attendre le changement de mot de passe
+      return of(this.employee!);
+    }
+
+    // Ajouter les champs RH seulement si l'utilisateur a les permissions
+    if (!this.isViewingOwnProfile && this.canViewAllInfo) {
+      updatedData.salary = this.employee!.salary;
+      updatedData.position = this.employee!.position;
+      updatedData.cin = this.employee!.cin;
+      updatedData.cnssNumber = this.employee!.cnssNumber;
+      updatedData.rib = this.employee!.rib;
+      updatedData.bankName = this.employee!.bankName;
+
+      // ✅ AJOUT: Inclure hireDate dans les données RH
+      updatedData.hireDate = this.employee!.hireDate;
+
+      // Autres champs si nécessaire
+      updatedData.matricule = this.employee!.matricule;
+      updatedData.workingDays = this.employee!.workingDays;
+      updatedData.actualWorkingDays = this.employee!.actualWorkingDays;
+      updatedData.transportAllowance = this.employee!.transportAllowance;
+      updatedData.familyAllowance = this.employee!.familyAllowance;
+      updatedData.otherBonuses = this.employee!.otherBonuses;
+    }
+
     return this.employeeService.updateEmployeeById(this.employee!.id!, updatedData);
+  }
+  private changePasswordSeparately(): void {
+    if (!this.employee?.id) return;
+
+    const passwordData = {
+      currentPassword: this.passwordForm.currentPassword,
+      newPassword: this.passwordForm.newPassword
+    };
+
+    this.employeeService.changePassword(this.employee.id, passwordData).subscribe({
+      next: () => {
+        console.log('✅ Password changed successfully');
+        this.showPasswordSuccess = true;
+        this.resetPasswordForm();
+      },
+      error: (error: any) => {
+        console.error('❌ Error changing password:', error);
+        this.errorMessage = 'Erreur lors du changement de mot de passe: ' + (error.error || error.message);
+        this.showErrorModal = true;
+      }
+    });
   }
 
   private reloadEmployeeDataAndPhoto(): void {
     if (!this.employee?.id) return;
 
+    console.log('🔄 Reloading employee data and photo');
 
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
+        console.log('✅ Employee data reloaded');
 
         this.reloadEmployeePhoto();
       },
-      error: (error) => {
-        console.error(' Error reloading employee data:', error);
+      error: (error: any) => {
+        console.error('❌ Error reloading employee data:', error);
       }
     });
   }
@@ -616,18 +699,98 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   private reloadEmployeeData(): void {
     if (!this.employee?.id) return;
 
+    console.log('🔄 Reloading employee data');
+
     this.employeeService.getEmployeeById(this.employee.id).subscribe({
       next: (data: Employee) => {
         this.employee = data;
+        console.log('✅ Employee data reloaded after update');
       },
-      error: (error) => {
-        console.error(' Error reloading employee data:', error);
+      error: (error: any) => {
+        console.error('❌ Error reloading employee data:', error);
       }
     });
   }
 
   cancelUpdate() {
     this.showUpdateConfirmation = false;
+  }
+
+  // ================= VALIDATION MOT DE PASSE =================
+  validatePassword(password: string): boolean {
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordPattern.test(password);
+  }
+
+  onNewPasswordChange() {
+    this.passwordErrors.new = '';
+
+    if (this.passwordForm.newPassword) {
+      if (!this.validatePassword(this.passwordForm.newPassword)) {
+        this.passwordErrors.new = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)';
+      }
+    }
+  }
+
+  onConfirmPasswordChange() {
+    this.passwordErrors.confirm = '';
+
+    if (this.passwordForm.confirmPassword && this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+      this.passwordErrors.confirm = 'Les mots de passe ne correspondent pas';
+    }
+  }
+
+  validatePasswordSection(): boolean {
+    let isValid = true;
+
+    // Réinitialiser les erreurs
+    this.passwordErrors = { current: '', new: '', confirm: '' };
+
+    // Si au moins un champ est rempli, tous doivent être validés
+    const anyPasswordFieldFilled = this.passwordForm.currentPassword ||
+      this.passwordForm.newPassword ||
+      this.passwordForm.confirmPassword;
+
+    if (anyPasswordFieldFilled) {
+      // Validation mot de passe actuel
+      if (!this.passwordForm.currentPassword) {
+        this.passwordErrors.current = 'Le mot de passe actuel est requis pour changer le mot de passe';
+        isValid = false;
+      }
+
+      // Validation nouveau mot de passe
+      if (!this.passwordForm.newPassword) {
+        this.passwordErrors.new = 'Le nouveau mot de passe est requis';
+        isValid = false;
+      } else if (!this.validatePassword(this.passwordForm.newPassword)) {
+        this.passwordErrors.new = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)';
+        isValid = false;
+      }
+
+      // Validation confirmation
+      if (!this.passwordForm.confirmPassword) {
+        this.passwordErrors.confirm = 'La confirmation du mot de passe est requise';
+        isValid = false;
+      } else if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+        this.passwordErrors.confirm = 'Les mots de passe ne correspondent pas';
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  }
+
+  private resetPasswordForm() {
+    this.passwordForm = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+    this.passwordErrors = {
+      current: '',
+      new: '',
+      confirm: ''
+    };
   }
 
   // ================= GESTION FORMATIONS =================
@@ -689,8 +852,9 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.formationSuccessMessage = 'Formation ajoutée avec succès !';
         this.showFormationSuccess = true;
       },
-      error: () => {
+      error: (error: any) => {
         this.formationErrorMessage = 'Erreur lors de l\'ajout de la formation.';
+        console.error('Error adding formation:', error);
       }
     });
   }
@@ -748,7 +912,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.showDeleteSuccess = true;
         this.closeDeleteConfirmation();
       },
-      error: () => {
+      error: (error: any) => {
         this.errorMessage = 'Erreur lors de la suppression de la formation.';
         this.showErrorModal = true;
         this.closeDeleteConfirmation();
@@ -763,6 +927,46 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   closeDeleteConfirmation() {
     this.showDeleteConfirmation = false;
     this.formationToDelete = undefined;
+  }
+
+  // ================= MÉTHODES DE VALIDATION SUPPLEMENTAIRES =================
+  validateCin(): boolean {
+    if (!this.employee?.cin) {
+      return true;
+    }
+    // Validation CIN tunisien (8 chiffres)
+    const cinRegex = /^\d{8}$/;
+    if (!cinRegex.test(this.employee.cin)) {
+      this.errorMessage = "Le CIN doit contenir 8 chiffres";
+      return false;
+    }
+    return true;
+  }
+
+  validateCnss(): boolean {
+    if (!this.employee?.cnssNumber) {
+      return true;
+    }
+    // Validation numéro CNSS
+    const cnssRegex = /^[A-Za-z0-9]{8,15}$/;
+    if (!cnssRegex.test(this.employee.cnssNumber)) {
+      this.errorMessage = "Le numéro CNSS doit contenir entre 8 et 15 caractères alphanumériques";
+      return false;
+    }
+    return true;
+  }
+
+  validateRib(): boolean {
+    if (!this.employee?.rib) {
+      return true;
+    }
+    // Validation RIB (20 chiffres)
+    const ribRegex = /^\d{20}$/;
+    if (!ribRegex.test(this.employee.rib)) {
+      this.errorMessage = "Le RIB doit contenir exactement 20 chiffres";
+      return false;
+    }
+    return true;
   }
 
   // ================= AFFICHAGE PDF FORMATION =================
@@ -782,7 +986,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.showFormationPdfModal = true;
         this.formationPdfLoading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading formation PDF:', err);
         this.errorMessage = 'Impossible de charger le certificat';
         this.showErrorModal = true;
@@ -826,10 +1030,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   // ================= HISTORIQUE FICHES DE PAIE - CORRIGÉ =================
   viewPayslipHistory() {
     if (this.employee?.id) {
-      //Vérifier les permissions avec la nouvelle méthode
+      // ✅ CORRECTION : Vérifier les permissions avec la nouvelle méthode
       if (this.canViewPayslipHistory()) {
+        console.log('✅ Accès autorisé à l\'historique des fiches de paie');
         this.router.navigate(['/employees', this.employee.id, 'payslips']);
       } else {
+        console.log('❌ Accès refusé à l\'historique des fiches de paie');
         this.errorMessage = "Vous n'avez pas la permission de voir les fiches de paie de cet employé";
         this.showErrorModal = true;
       }
@@ -867,8 +1073,12 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.showFormationSuccess = false;
   }
 
+  closePasswordSuccess() {
+    this.showPasswordSuccess = false;
+  }
+
   closeErrorModal() {
     this.showErrorModal = false;
     this.errorMessage = '';
-  }
-}
+  }}
+
