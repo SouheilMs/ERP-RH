@@ -12,11 +12,11 @@ import { JobListComponent } from './components/job-list.component/job-list.compo
 import { JobFormComponent } from './components/job-form.component/job-form.component';
 import { FormationListComponent } from './components/formation-list.component/formation-list.component';
 import { FormationFormComponent } from './components/formation-form.component/formation-form.component';
-import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
 
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
+import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -26,24 +26,21 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'conges', component: LeaveBalanceComponent },
 
-  // Protected routes (with authentication)
+  // Routes protégées
   {
     path: '',
     component: DashboardComponent,
     canActivate: [authGuard],
     children: [
-      // Dashboard
-      { path: 'dashboard', redirectTo: 'employees', pathMatch: 'full' },
-
-      // Employee management
       { path: 'employees', component: EmployeeListComponent },
       { path: 'employees/:id', component: EmployeeDetailComponent },
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
+      // Vérifiez comment est définie votre route
+      {path: 'my-leave ',
+        component: LeaveBalanceComponent},
 
-      // ✅ CORRECTION : Routes Job avec ordre correct
       {
         path: 'jobs/new',
         component: JobFormComponent,
@@ -83,7 +80,5 @@ export const routes: Routes = [
     ]
   },
 
-  // Default redirects
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

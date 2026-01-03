@@ -10,7 +10,7 @@ describe('FormationListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [FormationListComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(FormationListComponent);
     component = fixture.componentInstance;

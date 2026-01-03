@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormationService, FormationRequest } from '../../services/formation.service';
 import { AuthService } from '../../services/auth.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-formation-form',
@@ -21,10 +22,10 @@ export class FormationFormComponent implements OnInit {
   errorMessage: string = '';
 
   categories = [
-    'TECHNICAL', 
-    'SOFT_SKILLS', 
-    'MANAGEMENT', 
-    'COMPLIANCE', 
+    'TECHNICAL',
+    'SOFT_SKILLS',
+    'MANAGEMENT',
+    'COMPLIANCE',
     'LANGUAGE',
     'LEADERSHIP',
     'DIGITAL_TRANSFORMATION'
@@ -37,18 +38,22 @@ export class FormationFormComponent implements OnInit {
     private formationService: FormationService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {
     this.formationForm = this.createForm();
     this.timeSlots = this.generateTimeSlots();
   }
 
   ngOnInit(): void {
-    // Vérifier si l'utilisateur est connecté
+
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
     }
+
+    this.debugAuth();
+
 
     this.formationId = this.route.snapshot.paramMap.get('id');
     this.isEdit = !!this.formationId;
@@ -56,6 +61,46 @@ export class FormationFormComponent implements OnInit {
     if (this.isEdit && this.formationId) {
       this.loadFormation();
     }
+  }
+
+  debugAuth(): void {
+    const token = localStorage.getItem('authToken');
+    console.log(' FormationForm - Token:', token ? `PRESENT (${token.length} chars)` : 'NULL');
+    console.log(' FormationForm - User:', localStorage.getItem('user'));
+    console.log('FormationForm - isHR:', this.authService.isHR());
+    console.log(' FormationForm - isHRManager:', this.authService.isHRManager());
+
+
+  }
+
+  testFormationRequest(): void {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      console.error(' No token found for manual test');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    console.log(' Testing formation request manually...');
+    console.log(' Headers:', headers.keys());
+
+    this.http.get('http://localhost:8081/api/formations', { headers }).subscribe({
+      next: (response) => {
+        console.log(' Manual test SUCCESS:', response);
+      },
+      error: (error) => {
+        console.error(' Manual test FAILED:', error);
+        console.log(' Error details:', {
+          status: error.status,
+          statusText: error.statusText
+        });
+      }
+    });
   }
 
   createForm(): FormGroup {
@@ -78,7 +123,7 @@ export class FormationFormComponent implements OnInit {
   private dateValidator(group: FormGroup) {
     const startDate = group.get('startDate')?.value;
     const endDate = group.get('endDate')?.value;
-    
+
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
       return { dateRange: true };
     }
@@ -139,7 +184,7 @@ export class FormationFormComponent implements OnInit {
 
         const createdById = this.getCurrentUserId();
 
-        const observable = this.isEdit && this.formationId 
+        const observable = this.isEdit && this.formationId
           ? this.formationService.updateFormation(this.formationId, request)
           : this.formationService.createFormation(request, createdById);
 
@@ -151,23 +196,24 @@ export class FormationFormComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error saving formation:', error);
-            
+
             let errorMessage = `Error during ${this.isEdit ? 'update' : 'creation'}`;
-            
+
             if (error?.error?.message) {
               errorMessage = error.error.message;
             } else if (error?.message) {
               errorMessage = error.message;
             } else if (error?.status === 401) {
               errorMessage = 'Non autorisé - Veuillez vous reconnecter';
+              this.authService.logout();
             } else if (error?.status === 403) {
               errorMessage = 'Accès refusé - Vous n\'avez pas les permissions nécessaires';
             }
-            
+
             this.errorMessage = errorMessage;
             this.submitting = false;
           }
-        }); // ✅ AJOUT DE LA PARENTHÈSE FERMANTE MANQUANTE
+        });
       } catch (error) {
         this.errorMessage = 'Error: User not logged in. Please log in again.';
         this.submitting = false;
@@ -176,24 +222,28 @@ export class FormationFormComponent implements OnInit {
       this.markFormGroupTouched();
       this.errorMessage = 'Please correct errors in the form';
     }
-  } // ✅ AJOUT DU CROCHET FERMANT MANQUANT
+  }
 
   private getCurrentUserId(): string {
     const currentUser = this.authService.getUser();
-  
+
     if (currentUser && currentUser.id) {
       console.log('Using current user ID:', currentUser.id);
       return currentUser.id;
     }
-    
+
     // Fallback: try to get from localStorage directly
     const userData = localStorage.getItem('user');
     if (userData) {
-      const user = JSON.parse(userData);
-      console.log('Using user ID from localStorage:', user.id);
-      return user.id;
+      try {
+        const user = JSON.parse(userData);
+        console.log('Using user ID from localStorage:', user.id);
+        return user.id;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
     }
-    
+
     // If no user is found, redirect to login
     this.router.navigate(['/login']);
     throw new Error('No user logged in');
@@ -246,9 +296,9 @@ export class FormationFormComponent implements OnInit {
 
   // Méthode pour obtenir l'erreur de date range
   getDateRangeError(): string {
-    if (this.formationForm.errors?.['dateRange'] && 
-        this.formationForm.get('startDate')?.touched && 
-        this.formationForm.get('endDate')?.touched) {
+    if (this.formationForm.errors?.['dateRange'] &&
+      this.formationForm.get('startDate')?.touched &&
+      this.formationForm.get('endDate')?.touched) {
       return 'End date must be after start date';
     }
     return '';

@@ -1,6 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AddEmployeeComponent } from './add-employee.component';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { AuthService } from '../../services/auth.service';
+
+// === MOCK AUTH SERVICE ===
+class MockAuthService {
+  isHRorManager() { return true; }
+  isLoggedIn() { return true; }
+  isHR() { return false; }
+  isHRManager() { return true; }
+  getUserRoles() { return ['ROLE_HRMANAGER']; }
+  getToken() { return 'fake-jwt-token'; }
+}
 
 describe('AddEmployeeComponent', () => {
   let component: AddEmployeeComponent;
@@ -9,7 +20,8 @@ describe('AddEmployeeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AddEmployeeComponent, HttpClientTestingModule]
+      imports: [AddEmployeeComponent, HttpClientTestingModule],
+      providers: [{ provide: AuthService, useClass: MockAuthService }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AddEmployeeComponent);
@@ -22,9 +34,6 @@ describe('AddEmployeeComponent', () => {
     httpMock.verify();
   });
 
-  // ------------------------------------------------------
-  // BASIC TESTS
-  // ------------------------------------------------------
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -36,52 +45,92 @@ describe('AddEmployeeComponent', () => {
   it('should have available roles', () => {
     expect(component.availableRoles.length).toBe(3);
     expect(component.availableRoles[0].value).toBe('ROLE_EMPLOYEE');
+    expect(component.availableRoles[1].value).toBe('ROLE_HR');
+    expect(component.availableRoles[2].value).toBe('ROLE_HRMANAGER');
   });
 
-  // ------------------------------------------------------
-  // MODAL
-  // ------------------------------------------------------
   it('should open and close modal', () => {
     component.openModal();
     expect(component.isOpen).toBeTrue();
+    expect(component.employee.role).toBe('ROLE_EMPLOYEE');
 
     component.closeModal();
     expect(component.isOpen).toBeFalse();
   });
 
-  // ------------------------------------------------------
-  // VALIDATION
-  // ------------------------------------------------------
-  it('should show error if required fields missing', () => {
+  it('should show error if username missing', () => {
     component.employee.username = '';
-    component.employee.email = '';
+    component.employee.email = 'test@mail.com';
+    component.employee.password = 'Password@123';
+    component.employee.cin = '1234';
+    component.employee.cnssNumber = '1234';
 
     component.saveEmployee();
 
-    expect(component.errorMessage).toBe('Le nom est obligatoire.');
+    expect(component.errorMessage).toBe('Le nom complet est obligatoire.');
   });
 
-  // ------------------------------------------------------
-  // API SUCCESS
-  // ------------------------------------------------------
-  it('should call API with role data and close modal on success', () => {
+  it('should call API and close modal on success', () => {
+    const closeSpy = spyOn(component, 'closeModal');
+
+    // === Données valide ===
     component.employee = {
       username: 'John Doe',
       email: 'john@example.com',
-      password: 'Password@1',
+      password: 'Password@123',
+      phone: '99887766',
+      gender: 'M',
+      hireDate: '2024-01-01',
+      salary: 1200,
+      position: 'Developer',
+      customPosition: '',
+      status: 'ACTIVE',
+      role: 'ROLE_HR',
+      cin: '1234',
+      cnssNumber: '5678',
+      matricule: 'A001',
+      workingDays: 22,
+      address: 'Tunis',
+      city: 'Tunis',
+      rib: '123456',
+      bankName: 'BIAT',
+      transportAllowance: 50,
+      familyAllowance: 20,
+      otherBonuses: 10,
+      actualWorkingDays: 20
+    };
+
+    component.saveEmployee();
+
+    const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
+    expect(req.request.method).toBe('POST');
+
+    // vérifier structure envoyée
+    expect(req.request.body.username).toBe('John Doe');
+    expect(req.request.body.roleNames).toEqual(['ROLE_HR']);
+
+    req.flush({}, { status: 200, statusText: 'OK' });
+
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('should show server error on API failure', () => {
+    component.employee = {
+      username: 'John Doe',
+      email: 'john@example.com',
+      password: 'Password@123',
       phone: '',
       gender: '',
-      photoUrl: '',
-      photoFile: null,
       hireDate: '',
       salary: null,
-      position: 'SOFTWARE_DEVELOPER',
+      position: '',
       customPosition: '',
-      cin: '12345678',
-      cnssNumber: '123456789',
-      matricule: 'EMP001',
-      workingDays: 22,
-      actualWorkingDays: 22,
+      status: 'ACTIVE',
+      role: 'ROLE_EMPLOYEE',
+      cin: '1234',
+      cnssNumber: '1234',
+      matricule: '',
+      workingDays: null,
       address: '',
       city: '',
       rib: '',
@@ -89,75 +138,22 @@ describe('AddEmployeeComponent', () => {
       transportAllowance: 0,
       familyAllowance: 0,
       otherBonuses: 0,
-      status: 'ACTIVE',
-      role: 'ROLE_HR'
+      actualWorkingDays: null
     };
-
-    const closeSpy = spyOn(component, 'closeModal');
-
-    component.saveEmployee();
-
-    const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
-    expect(req.request.method).toBe('POST');
-
-    expect(req.request.body).toEqual({
-      username: 'John Doe',
-      email: 'john@example.com',
-      password: 'Password@1',
-      phone: '',
-      status: 'Active',
-      roleNames: ['ROLE_HR']
-    });
-
-    req.flush({ success: true });
-
-    expect(closeSpy).toHaveBeenCalled();
-  });
-
-  // ------------------------------------------------------
-  // API FAILURE
-  // ------------------------------------------------------
-  it('should show error on API failure', () => {
-    component.employee.username = 'John';
-    component.employee.email = 'john@example.com';
-    component.employee.password = 'Password@1';
 
     component.saveEmployee();
 
     const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
     req.flush('Erreur', { status: 500, statusText: 'Server Error' });
 
-    expect(component.errorMessage).toBe('Erreur serveur.');
+    expect(component.errorMessage).toBe('Erreur interne du serveur. Veuillez réessayer.');
   });
 
-  // ------------------------------------------------------
-  // FILE HANDLING
-  // ------------------------------------------------------
-  it('should handle file selection', () => {
-    const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
+  it('should reset role when opening modal', () => {
+    component.employee.role = 'ROLE_HR';
 
-    const event = { target: { files: [file] } } as any;
+    component.openModal();
 
-    (component as any).selectedFile = null; // reset
-
-    component['selectedFile'] = file;
-    component.employee.photoFile = file;
-
-    expect(component.employee.photoFile).toBe(file);
-  });
-
-  it('should remove photo', () => {
-    component.selectedFile = new File([''], 'test.jpg');
-    component.employee.photoUrl = 'url-test';
-    component.employee.photoFile = new File([''], 'test.jpg');
-
-    // simulated delete logic
-    component.employee.photoUrl = '';
-    component.employee.photoFile = null;
-    component.selectedFile = null;
-
-    expect(component.employee.photoUrl).toBe('');
-    expect(component.employee.photoFile).toBeNull();
-    expect(component.selectedFile).toBeNull();
+    expect(component.employee.role).toBe('ROLE_EMPLOYEE');
   });
 });

@@ -1,6 +1,6 @@
 package com.mycompany.backend.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -23,7 +23,11 @@ public class Employee {
     private Date hireDate;
     private String photoUrl;
     private String photoId;
-    private String gender;
+
+    private String department;
+    private Integer age;
+    private String performance;
+    private Integer satisfaction;
     // Informations pour la fiche de paie tunisienne
     private String cin;
     private String cnssNumber;
@@ -47,12 +51,14 @@ public class Employee {
     private Double traditionalSeniorityBonus;
     private Double nineDinarsBonus;
     private Integer seniorityBlocks; // Pour compatibilité
+    private String gender;
 
     @DBRef
-
+    @JsonIgnore
     private Set<Formation> formations = new HashSet<>();
 
     @DBRef
+    @JsonIgnore
     private Set<Role> roles = new HashSet<>();
 
     // Constructeurs
@@ -154,15 +160,50 @@ public class Employee {
 
     public Integer getSeniorityBlocks() { return seniorityBlocks; }
     public void setSeniorityBlocks(Integer seniorityBlocks) { this.seniorityBlocks = seniorityBlocks; }
-    @JsonIgnoreProperties({"employees", "hibernateLazyInitializer", "handler"})
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(String performance) {
+        this.performance = performance;
+    }
+
+    public Integer getSatisfaction() {
+        return satisfaction;
+    }
+
+    public void setSatisfaction(Integer satisfaction) {
+        this.satisfaction = satisfaction;
+    }
+
     public Set<Formation> getFormations() { return formations; }
     public void setFormations(Set<Formation> formations) { this.formations = formations; }
-    @JsonIgnoreProperties({"employees", "hibernateLazyInitializer", "handler"})
+
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
-    public String getGender() { return gender; }
+
+    public String getGender() {
+        return gender;
+    }
+
     public void setGender(String gender) {
         this.gender = gender;
     }
-
 }

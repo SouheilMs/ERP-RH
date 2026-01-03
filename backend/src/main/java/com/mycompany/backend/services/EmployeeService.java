@@ -1,7 +1,6 @@
 package com.mycompany.backend.services;
 
 import com.mycompany.backend.dto.EmployeeDTO;
-import com.mycompany.backend.dto.LeaveBalanceDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 
@@ -58,12 +57,5 @@ public interface EmployeeService {
 
     // Méthode pour récupérer la dernière fiche
     Optional<Payslip> getLatestPayslip(String employeeId, Integer year, Integer month);
-
-    List<LeaveBalanceDTO> getEmployeeLeaveBalances(String employeeId);
-
-    LeaveBalanceDTO getEmployeeLeaveBalanceByType(String employeeId, String leaveType);
-
-    double calculateUsedLeaveDays(String employeeId, String leaveType);
-
-    double calculateRemainingLeaveDays(String employeeId, String leaveType);
+    ResponseEntity<?> changePassword(String employeeId, String currentPassword, String newPassword);
 }

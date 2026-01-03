@@ -6,7 +6,6 @@ import java.util.List;
 
 @Data
 public class EmployeeDTO {
-    private String id;
     private String username;
     private String email;
     private String phone;
@@ -14,7 +13,10 @@ public class EmployeeDTO {
     private Date hireDate;
     private Double salary;
     private String status;
-    private String gender;
+    private String department;
+    private Integer age;
+    private String performance;
+    private Integer satisfaction;
     // Champs fiche de paie
     private String cin;
     private String cnssNumber;
@@ -35,10 +37,40 @@ public class EmployeeDTO {
     private Integer yearsOfService = 0;
     private Integer totalMonthsOfService = 0;
     private Integer seniorityBlocks = 0;
-    private String photoUrl;
-    private String photoId;
 
     private List<String> roleNames;
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(String performance) {
+        this.performance = performance;
+    }
+
+    public Integer getSatisfaction() {
+        return satisfaction;
+    }
+
+    public void setSatisfaction(Integer satisfaction) {
+        this.satisfaction = satisfaction;
+    }
 
     public String getUsername() {
         return username;
@@ -239,18 +271,4 @@ public class EmployeeDTO {
     public void setSeniorityBlocks(Integer seniorityBlocks) {
         this.seniorityBlocks = seniorityBlocks;
     }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-    public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
-
-    public String getPhotoId() { return photoId; }
-    public void setPhotoId(String photoId) { this.photoId = photoId; }
-
 }

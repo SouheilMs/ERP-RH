@@ -18,14 +18,11 @@ public interface PayslipRepository extends MongoRepository<Payslip, String> {
 
     Optional<Payslip> findByEmployeeIdAndYearAndMonth(String employeeId, int year, int month);
 
-    // NOUVELLE MÉTHODE : Recherche plus robuste avec query personnalisée
     @Query("{ 'employee.$id': ?0, 'year': ?1 }")
     List<Payslip> findByEmployeeIdAndYearRobust(String employeeId, int year);
 
-    // NOUVELLE MÉTHODE : Récupérer les années distinctes avec les fiches existantes
     @Query(value = "{ 'employee.$id': ?0 }", fields = "{ 'year': 1 }")
     List<Payslip> findDistinctYearsByEmployeeId(String employeeId);
 
-    // Méthode pour compter les fiches par employé
     long countByEmployeeId(String employeeId);
 }

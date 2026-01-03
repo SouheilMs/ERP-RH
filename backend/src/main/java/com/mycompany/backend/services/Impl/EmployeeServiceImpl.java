@@ -1,20 +1,22 @@
 package com.mycompany.backend.services.Impl;
 
 import com.mycompany.backend.dto.EmployeeDTO;
-import com.mycompany.backend.dto.LeaveBalanceDTO;
-import com.mycompany.backend.entities.*;
-import com.mycompany.backend.repositories.*;
-import com.mycompany.backend.services.EmailService;
-import com.mycompany.backend.services.EmployeeService;
-import com.mycompany.backend.services.GridFsService;
-import com.mycompany.backend.services.SalaryCalculationService;
-
+import com.mycompany.backend.entities.Employee;
+import com.mycompany.backend.entities.Payslip;
+import com.mycompany.backend.entities.Role;
+import com.mycompany.backend.entities.ERole;
+import com.mycompany.backend.repositories.EmployeeRepository;
+import com.mycompany.backend.repositories.PayslipRepository;
+import com.mycompany.backend.repositories.FormationRepository;
+import com.mycompany.backend.repositories.RoleRepository;
+import com.mycompany.backend.services.*;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,9 +35,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private CongeRepository congeRepository;
 
     @Autowired
     private PayslipRepository payslipRepository;
@@ -59,67 +57,70 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private SalaryCalculationService salaryCalculationService;
 
-    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS - CORRIGÉES
-    private boolean hasHRRole() {
+    @Autowired
+    private PermissionService permissionService;
+
+    // MÉTHODES DE VÉRIFICATION DES PERMISSIONS
+    private void checkCreateEmployeePermission() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            System.out.println("❌ hasHRRole: No authentication or not authenticated");
-            return false;
+        if (!permissionService.canCreateEmployees(authentication)) {
+            throw new AccessDeniedException("Access denied: Only HR Managers can create employees");
         }
+    }
 
-        boolean isHR = authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority ->
-                        grantedAuthority.getAuthority().equals("ROLE_HR") ||
-                                grantedAuthority.getAuthority().equals("ROLE_HRMANAGER"));
+    private void checkDeleteEmployeePermission() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!permissionService.canDeleteEmployees(authentication)) {
+            throw new AccessDeniedException("Access denied: Only HR Managers can delete employees");
+        }
+    }
 
-        System.out.println("🔍 hasHRRole check: " + isHR);
-        System.out.println("🎯 Authorities: " + authentication.getAuthorities());
-        return isHR;
+    private void checkManageEmployeePermission() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!permissionService.canManageEmployees(authentication)) {
+            throw new AccessDeniedException("Access denied: HR role required");
+        }
     }
 
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            System.out.println("❌ getCurrentUsername: No authentication or not authenticated");
+            System.out.println(" getCurrentUsername: No authentication or not authenticated");
             return null;
         }
         String username = authentication.getName();
-        System.out.println("🔍 getCurrentUsername returning: " + username);
+        System.out.println(" getCurrentUsername returning: " + username);
         return username;
     }
 
-    // CORRECTION : Méthode pour obtenir l'email de l'utilisateur connecté
     private String getCurrentUserEmail() {
         String currentUsername = getCurrentUsername();
         if (currentUsername == null) {
             return null;
         }
 
-        // Rechercher l'employé par username pour obtenir son email
         Optional<Employee> currentEmployee = employeeRepository.findByUsername(currentUsername);
         if (currentEmployee.isPresent()) {
             String email = currentEmployee.get().getEmail();
-            System.out.println("🔍 getCurrentUserEmail: " + email);
+            System.out.println(" getCurrentUserEmail: " + email);
             return email;
         }
 
-        // Fallback: si pas trouvé par username, essayer par email
         Optional<Employee> currentEmployeeByEmail = employeeRepository.findByEmail(currentUsername);
         if (currentEmployeeByEmail.isPresent()) {
             String email = currentEmployeeByEmail.get().getEmail();
-            System.out.println("🔍 getCurrentUserEmail (fallback): " + email);
+            System.out.println(" getCurrentUserEmail (fallback): " + email);
             return email;
         }
 
-        System.out.println("❌ getCurrentUserEmail: Employee not found for username: " + currentUsername);
+        System.out.println(" getCurrentUserEmail: Employee not found for username: " + currentUsername);
         return null;
     }
 
-    // CORRECTION : Méthode améliorée pour vérifier si c'est son propre profil
     private boolean isViewingOwnProfile(String employeeId) {
         String currentUserEmail = getCurrentUserEmail();
         if (currentUserEmail == null) {
-            System.out.println("❌ isViewingOwnProfile: Current user email is null");
+            System.out.println(" isViewingOwnProfile: Current user email is null");
             return false;
         }
 
@@ -128,7 +129,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             Employee employee = employeeOpt.get();
             boolean isOwnProfile = employee.getEmail().equals(currentUserEmail);
 
-            System.out.println("🔍 isViewingOwnProfile DETAILED CHECK:");
+            System.out.println(" isViewingOwnProfile DETAILED CHECK:");
             System.out.println("   - Employee ID: " + employeeId);
             System.out.println("   - Employee email: " + employee.getEmail());
             System.out.println("   - Current user email: " + currentUserEmail);
@@ -137,109 +138,96 @@ public class EmployeeServiceImpl implements EmployeeService {
             return isOwnProfile;
         }
 
-        System.out.println("❌ isViewingOwnProfile: Employee not found with ID: " + employeeId);
+        System.out.println(" isViewingOwnProfile: Employee not found with ID: " + employeeId);
         return false;
-    }
-
-    private void checkHRPermission() {
-        if (!hasHRRole()) {
-            throw new AccessDeniedException("Access denied: HR role required");
-        }
-    }
-
-    // CORRECTION : Méthode améliorée pour vérifier l'accès au profil
-    private void checkEmployeeProfileAccess(String employeeId) {
-        System.out.println("=== VÉRIFICATION PERMISSION ACCÈS PROFIL EMPLOYÉ ===");
-        System.out.println("Employee ID demandé: " + employeeId);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            System.out.println("👤 Utilisateur authentifié: " + authentication.getName());
-            System.out.println("🎯 Authorities: " + authentication.getAuthorities());
-            System.out.println("🔐 Principal: " + authentication.getPrincipal());
-            System.out.println("✅ Is authenticated: " + authentication.isAuthenticated());
-        } else {
-            System.out.println("❌ Aucune authentification trouvée!");
-            throw new AccessDeniedException("Non authentifié");
-        }
-
-        boolean isHR = hasHRRole();
-        boolean isOwnProfile = isViewingOwnProfile(employeeId);
-
-        System.out.println("👑 Est HR ou RH Manager: " + isHR);
-        System.out.println("👤 Est son propre profil: " + isOwnProfile);
-
-        // LOGIQUE : Autoriser si c'est son propre profil OU si c'est un RH
-        if (!isHR && !isOwnProfile) {
-            System.out.println("❌ ACCÈS REFUSÉ: Ni HR ni propre profil");
-            throw new AccessDeniedException("Access denied: You can only access your own profile");
-        }
-
-        System.out.println("✅ ACCÈS AUTORISÉ AU PROFIL");
-        System.out.println("=== FIN VÉRIFICATION ===");
-    }
-
-    private void checkPayslipGenerationPermission(String employeeId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        System.out.println("=== VÉRIFICATION PERMISSION FICHE DE PAIE ===");
-        System.out.println("Employee ID demandé: " + employeeId);
-
-        if (authentication != null) {
-            System.out.println("Utilisateur authentifié: " + authentication.getName());
-            System.out.println("Authorities: " + authentication.getAuthorities());
-        } else {
-            System.out.println("❌ Aucune authentification trouvée!");
-        }
-
-        boolean isHR = hasHRRole();
-        boolean isOwnProfile = isViewingOwnProfile(employeeId);
-
-        System.out.println("Est HR: " + isHR);
-        System.out.println("Est son propre profil: " + isOwnProfile);
-
-        if (!isHR && !isOwnProfile) {
-            System.out.println("❌ ACCÈS REFUSÉ: Ni HR ni propre profil");
-            throw new AccessDeniedException("Access denied: You can only generate your own payslips");
-        }
-
-        System.out.println("✅ ACCÈS AUTORISÉ");
-        System.out.println("=== FIN VÉRIFICATION ===");
-    }
-
-    private void checkFormationPermission(String employeeId) {
-        if (!hasHRRole() && !isViewingOwnProfile(employeeId)) {
-            throw new AccessDeniedException("Access denied: You can only manage your own formations");
-        }
     }
 
     @Override
     public List<Employee> getAllEmployees() {
-        // SEULS LES RH PEUVENT VOIR TOUS LES EMPLOYÉS
-        checkHRPermission();
+        // RH et RH Managers peuvent voir tous les employés
+        checkManageEmployeePermission();
         return employeeRepository.findAll();
     }
 
     @Override
-    public Optional<Employee> getEmployeeById(String id) {
-        System.out.println("🔄 EmployeeServiceImpl.getEmployeeById called for ID: " + id);
+    public ResponseEntity<?> changePassword(String employeeId, String currentPassword, String newPassword) {
+        try {
+            System.out.println(" EmployeeServiceImpl.changePassword called for ID: " + employeeId);
 
-        // NOUVELLE VÉRIFICATION : Autoriser l'accès si c'est son propre profil ou si c'est un RH
-        checkEmployeeProfileAccess(id);
+            // Vérifier que l'utilisateur modifie son propre mot de passe
+            if (!isViewingOwnProfile(employeeId)) {
+                System.out.println("Access denied: Users can only change their own password");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Access denied: You can only change your own password");
+            }
+
+            Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+            if (employeeOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Employee not found");
+            }
+
+            Employee employee = employeeOpt.get();
+
+            // Vérifier l'ancien mot de passe
+            if (!passwordEncoder.matches(currentPassword, employee.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Current password is incorrect");
+            }
+
+            // Valider le nouveau mot de passe
+            if (newPassword == null || newPassword.length() < 6) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("New password must be at least 6 characters long");
+            }
+
+            // Mettre à jour le mot de passe
+            employee.setPassword(passwordEncoder.encode(newPassword));
+            employeeRepository.save(employee);
+
+            System.out.println(" Password changed successfully for employee: " + employeeId);
+            return ResponseEntity.ok("Password changed successfully");
+
+        } catch (Exception e) {
+            System.err.println(" Error changing password: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error changing password");
+        }
+    }
+
+    @Override
+    public Optional<Employee> getEmployeeById(String id) {
+        System.out.println(" EmployeeServiceImpl.getEmployeeById called for ID: " + id);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Vérifier si l'utilisateur peut voir ce profil
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            String currentUserEmail = getCurrentUserEmail();
+            Optional<Employee> employeeOpt = employeeRepository.findById(id);
+
+            if (employeeOpt.isPresent()) {
+                Employee employee = employeeOpt.get();
+                if (!employee.getEmail().equals(currentUserEmail)) {
+                    throw new AccessDeniedException("Access denied: You can only access your own profile");
+                }
+            }
+        }
 
         Optional<Employee> employee = employeeRepository.findById(id);
         if (employee.isPresent()) {
-            System.out.println("✅ Employee found: " + employee.get().getUsername());
+            System.out.println(" Employee found: " + employee.get().getUsername());
         } else {
-            System.out.println("❌ Employee not found with ID: " + id);
+            System.out.println(" Employee not found with ID: " + id);
         }
         return employee;
     }
 
     @Override
     public void deleteEmployee(String id) {
-        // SEULS LES RH PEUVENT SUPPRIMER
-        checkHRPermission();
+        // SEULEMENT LES RH MANAGERS PEUVENT SUPPRIMER
+        checkDeleteEmployeePermission();
         employeeRepository.deleteById(id);
     }
 
@@ -265,79 +253,204 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, HttpServletRequest request) {
-        // SEULS LES RH PEUVENT CRÉER DES EMPLOYÉS
-        checkHRPermission();
+        // SEULEMENT LES RH MANAGERS PEUVENT CRÉER DES EMPLOYÉS
+        checkCreateEmployeePermission();
 
+        System.out.println("=== DÉBUT CRÉATION NOUVEL EMPLOYÉ ===");
+        System.out.println("Créé par HR Manager: " + getCurrentUsername());
+        System.out.println("Permission vérifiée: CREATE EMPLOYEE");
+
+        // Validation des champs requis
+        if (employeeDTO.getEmail() == null || employeeDTO.getEmail().trim().isEmpty()) {
+            System.err.println(" Email requis manquant");
+            return ResponseEntity.badRequest().body("Email is required!");
+        }
+
+        if (employeeDTO.getUsername() == null || employeeDTO.getUsername().trim().isEmpty()) {
+            System.err.println(" Username requis manquant");
+            return ResponseEntity.badRequest().body("Username is required!");
+        }
+
+        if (employeeDTO.getPassword() == null || employeeDTO.getPassword().length() < 6) {
+            System.err.println(" Mot de passe trop court");
+            return ResponseEntity.badRequest().body("Password must be at least 6 characters long!");
+        }
+
+        // Vérification si l'email existe déjà
         if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
+            System.err.println(" Email déjà existant: " + employeeDTO.getEmail());
             return ResponseEntity.badRequest().body("Employee with provided email already exists!");
         }
 
+        // Vérification si le username existe déjà
+        if (employeeRepository.existsByUsername(employeeDTO.getUsername())) {
+            System.err.println(" Username déjà existant: " + employeeDTO.getUsername());
+            return ResponseEntity.badRequest().body("Employee with provided username already exists!");
+        }
+
+        System.out.println(" Données reçues:");
+        System.out.println("  Email: " + employeeDTO.getEmail());
+        System.out.println("  Username: " + employeeDTO.getUsername());
+        System.out.println("  RoleNames: " + (employeeDTO.getRoleNames() != null ? employeeDTO.getRoleNames() : "null"));
+
+        // Création de l'employé
         Employee employee = new Employee();
         employee.setUsername(employeeDTO.getUsername());
         employee.setEmail(employeeDTO.getEmail());
         employee.setPhone(employeeDTO.getPhone());
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         employee.setHireDate(employeeDTO.getHireDate());
-        employee.setSalary(employeeDTO.getSalary());
-        employee.setStatus(employeeDTO.getStatus());
-        if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
-            String gender = employeeDTO.getGender().toUpperCase();
-            if (!isValidGender(gender)) {
-                return ResponseEntity.badRequest().body("Invalid gender value. Use: MALE, FEMALE");
-            }
-        }
-
+        employee.setSalary(employeeDTO.getSalary() != null ? employeeDTO.getSalary() : 0.0);
+        employee.setStatus(employeeDTO.getStatus() != null ? employeeDTO.getStatus() : "ACTIVE");
+        employee.setDepartment(employeeDTO.getDepartment());
+        employee.setAge(employeeDTO.getAge());
+        employee.setPerformance(employeeDTO.getPerformance());
+        employee.setSatisfaction(employeeDTO.getSatisfaction());
         employee.setCin(employeeDTO.getCin());
         employee.setCnssNumber(employeeDTO.getCnssNumber());
-        employee.setPosition(employeeDTO.getPosition());
+        employee.setPosition(employeeDTO.getPosition() != null ? employeeDTO.getPosition() : "Employee");
         employee.setAddress(employeeDTO.getAddress());
         employee.setCity(employeeDTO.getCity());
         employee.setMatricule(employeeDTO.getMatricule());
         employee.setRib(employeeDTO.getRib());
         employee.setBankName(employeeDTO.getBankName());
-        employee.setWorkingDays(employeeDTO.getWorkingDays());
-        employee.setActualWorkingDays(employeeDTO.getActualWorkingDays());
-        employee.setTransportAllowance(employeeDTO.getTransportAllowance());
-        employee.setFamilyAllowance(employeeDTO.getFamilyAllowance());
-        employee.setOtherBonuses(employeeDTO.getOtherBonuses());
+        employee.setWorkingDays(employeeDTO.getWorkingDays() != null ? employeeDTO.getWorkingDays() : 22);
+        employee.setActualWorkingDays(employeeDTO.getActualWorkingDays() != null ? employeeDTO.getActualWorkingDays() : 22);
+        employee.setTransportAllowance(employeeDTO.getTransportAllowance() != null ? employeeDTO.getTransportAllowance() : 0.0);
+        employee.setFamilyAllowance(employeeDTO.getFamilyAllowance() != null ? employeeDTO.getFamilyAllowance() : 0.0);
+        employee.setOtherBonuses(employeeDTO.getOtherBonuses() != null ? employeeDTO.getOtherBonuses() : 0.0);
 
-        if (employeeDTO.getGender() != null && !employeeDTO.getGender().trim().isEmpty()) {
-            employee.setGender(employeeDTO.getGender().toUpperCase());
+        // Calcul de l'ancienneté
+        try {
+            Map<String, Object> seniorityInfo = salaryCalculationService.calculateSeniorityBonus(employee);
+            employee.setYearsOfService((Integer) seniorityInfo.get("yearsOfService"));
+            employee.setMonthsOfService((Integer) seniorityInfo.get("monthsOfService"));
+            employee.setBonusPeriods((Integer) seniorityInfo.get("bonusPeriods"));
+            employee.setTraditionalSeniorityBonus((Double) seniorityInfo.get("traditionalSeniorityBonus"));
+            employee.setNineDinarsBonus((Double) seniorityInfo.get("nineDinarsBonus"));
+            employee.setSeniorityBonus((Double) seniorityInfo.get("seniorityBonus"));
+            System.out.println(" Ancienneté calculée: " + employee.getYearsOfService() + " ans, " +
+                    employee.getMonthsOfService() + " mois");
+        } catch (Exception e) {
+            System.err.println(" Erreur calcul ancienneté: " + e.getMessage());
+            // Valeurs par défaut
+            employee.setYearsOfService(0);
+            employee.setMonthsOfService(0);
+            employee.setSeniorityBonus(0.0);
         }
 
-
-        Map<String, Object> seniorityInfo = salaryCalculationService.calculateSeniorityBonus(employee);
-        employee.setYearsOfService((Integer) seniorityInfo.get("yearsOfService"));
-        employee.setMonthsOfService((Integer) seniorityInfo.get("monthsOfService"));
-        employee.setBonusPeriods((Integer) seniorityInfo.get("bonusPeriods"));
-        employee.setTraditionalSeniorityBonus((Double) seniorityInfo.get("traditionalSeniorityBonus"));
-        employee.setNineDinarsBonus((Double) seniorityInfo.get("nineDinarsBonus"));
-        employee.setSeniorityBonus((Double) seniorityInfo.get("seniorityBonus"));
-
+        // Attribution des rôles depuis le DTO
         Set<Role> roles = new HashSet<>();
-        Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
-                .orElseThrow(() -> new RuntimeException("Error: Role not found."));
-        roles.add(employeeRole);
+
+        if (employeeDTO.getRoleNames() != null && !employeeDTO.getRoleNames().isEmpty()) {
+            System.out.println(" Attribution des rôles depuis DTO: " + employeeDTO.getRoleNames());
+
+            for (String roleName : employeeDTO.getRoleNames()) {
+                try {
+                    String cleanedRoleName = roleName.trim().toUpperCase();
+
+                    if (!cleanedRoleName.startsWith("ROLE_")) {
+                        cleanedRoleName = "ROLE_" + cleanedRoleName;
+                    }
+
+                    System.out.println("   Recherche rôle: " + cleanedRoleName);
+
+                    // Convertir en ERole
+                    ERole eRole = ERole.valueOf(cleanedRoleName);
+
+                    // Chercher le rôle dans la base
+                    Optional<Role> roleOpt = roleRepository.findByName(eRole);
+
+                    if (roleOpt.isPresent()) {
+                        Role role = roleOpt.get();
+                        roles.add(role);
+                        System.out.println("   Rôle ajouté: " + role.getName());
+                    } else {
+                        System.err.println("   Rôle non trouvé: " + cleanedRoleName);
+                        System.err.println("   Rôles disponibles en base:");
+                        roleRepository.findAll().forEach(r -> System.err.println("    - " + r.getName()));
+                        return ResponseEntity.badRequest()
+                                .body("Role not found: " + cleanedRoleName + ". Available roles: ROLE_EMPLOYEE, ROLE_HR, ROLE_HRMANAGER");
+                    }
+
+                } catch (IllegalArgumentException e) {
+                    System.err.println("   Nom de rôle invalide: " + roleName);
+                    System.err.println("   Rôles valides: ROLE_EMPLOYEE, ROLE_HR, ROLE_HRMANAGER");
+                    return ResponseEntity.badRequest()
+                            .body("Invalid role name: " + roleName + ". Valid roles are: ROLE_EMPLOYEE, ROLE_HR, ROLE_HRMANAGER");
+                } catch (Exception e) {
+                    System.err.println("   Erreur traitement rôle " + roleName + ": " + e.getMessage());
+                    e.printStackTrace();
+                    return ResponseEntity.badRequest()
+                            .body("Error processing role: " + roleName);
+                }
+            }
+        } else {
+            System.out.println(" Aucun rôle spécifié, attribution ROLE_EMPLOYEE par défaut");
+            Role employeeRole = roleRepository.findByName(ERole.ROLE_EMPLOYEE)
+                    .orElseThrow(() -> {
+                        System.err.println(" ROLE_EMPLOYEE non trouvé en base!");
+                        return new RuntimeException("ROLE_EMPLOYEE not found in database");
+                    });
+            roles.add(employeeRole);
+            System.out.println("   Rôle par défaut ajouté: ROLE_EMPLOYEE");
+        }
+
+        // Vérification qu'au moins un rôle a été attribué
+        if (roles.isEmpty()) {
+            System.err.println(" Aucun rôle attribué à l'employé!");
+            return ResponseEntity.badRequest().body("At least one role must be assigned to the employee");
+        }
+
         employee.setRoles(roles);
 
-        Employee savedEmployee = employeeRepository.save(employee);
+        System.out.println(" Rôles attribués: " +
+                roles.stream().map(r -> r.getName().name()).collect(Collectors.joining(", ")));
 
         try {
-            emailService.sendEmployeeCredentials(
-                    savedEmployee.getEmail(),
-                    savedEmployee.getUsername(),
-                    employeeDTO.getPassword()
-            );
-        } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
-        }
-        Map<String, Object> successResponse = new HashMap<>();
-        successResponse.put("message", "Employee created successfully");
-        successResponse.put("employeeId", savedEmployee.getId());
-        successResponse.put("username", savedEmployee.getUsername());
-        successResponse.put("email", savedEmployee.getEmail());
+            // Sauvegarde de l'employé
+            Employee savedEmployee = employeeRepository.save(employee);
 
-        return ResponseEntity.ok("Employee registered successfully!");
+            System.out.println(" Employé créé avec succès!");
+            System.out.println("  ID: " + savedEmployee.getId());
+            System.out.println("  Username: " + savedEmployee.getUsername());
+            System.out.println("  Email: " + savedEmployee.getEmail());
+            System.out.println("  Rôles: " + savedEmployee.getRoles().stream()
+                    .map(r -> r.getName().name())
+                    .collect(Collectors.joining(", ")));
+
+            // Envoi des informations de connexion par email
+            try {
+                emailService.sendEmployeeCredentials(
+                        savedEmployee.getEmail(),
+                        savedEmployee.getUsername(),
+                        employeeDTO.getPassword()
+                );
+                System.out.println(" Email d'informations envoyé à: " + savedEmployee.getEmail());
+            } catch (Exception e) {
+                System.err.println(" Échec envoi email: " + e.getMessage());
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Employee registered successfully!");
+            response.put("employeeId", savedEmployee.getId());
+            response.put("username", savedEmployee.getUsername());
+            response.put("email", savedEmployee.getEmail());
+            response.put("roles", savedEmployee.getRoles().stream()
+                    .map(role -> role.getName().name())
+                    .collect(Collectors.toList()));
+            response.put("createdAt", new Date());
+            response.put("createdBy", getCurrentUsername());
+
+            System.out.println("=== FIN CRÉATION EMPLOYÉ ===");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println(" Erreur sauvegarde employé: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error registering employee: " + e.getMessage());
+        }
     }
 
     private String getCellValue(Cell cell) {
@@ -362,8 +475,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void ImportFromExcel(MultipartFile file) throws IOException {
-        // SEULS LES RH PEUVENT IMPORTER
-        checkHRPermission();
+        // SEULS LES RH MANAGERS PEUVENT IMPORTER
+        checkCreateEmployeePermission();
 
         Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
@@ -382,8 +495,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
-        // SEULS LES RH PEUVENT EXPORTER
-        checkHRPermission();
+        // RH ET RH MANAGERS PEUVENT EXPORTER
+        checkManageEmployeePermission();
 
         List<Employee> employees = employeeRepository.findAll();
         Workbook workbook = new XSSFWorkbook();
@@ -431,8 +544,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String storeEmployeePhoto(String id, MultipartFile file) {
-        // SEULS LES RH PEUVENT UPLOADER DES PHOTOS
-        checkHRPermission();
+        // RH ET RH MANAGERS PEUVENT UPLOADER DES PHOTOS
+        checkManageEmployeePermission();
 
         try {
             Optional<Employee> employeeOpt = employeeRepository.findById(id);
@@ -464,7 +577,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public byte[] generatePaySlipPDF(String employeeId) throws IOException {
         try {
-            checkPayslipGenerationPermission(employeeId);
+            // Vérifier les permissions pour générer des fiches de paie
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (!permissionService.canManageEmployees(authentication)) {
+                // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+                if (!isViewingOwnProfile(employeeId)) {
+                    throw new AccessDeniedException("Access denied: You can only generate your own payslips");
+                }
+            }
 
             Employee emp = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
@@ -484,7 +605,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public byte[] generatePaySlipPDF(String employeeId, Integer month, Integer year) throws IOException {
-        checkPayslipGenerationPermission(employeeId);
+        // Vérifier les permissions pour générer des fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only generate your own payslips");
+            }
+        }
 
         try {
             Employee emp = employeeRepository.findById(employeeId)
@@ -579,6 +707,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         try {
             System.out.println("Recherche dernière fiche pour employé: " + employeeId);
 
+            // Vérifier les permissions pour voir les fiches de paie
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (!permissionService.canManageEmployees(authentication)) {
+                // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+                if (!isViewingOwnProfile(employeeId)) {
+                    throw new AccessDeniedException("Access denied: You can only view your own payslips");
+                }
+            }
+
             if (year != null && month != null) {
                 System.out.println("Recherche fiche spécifique: " + month + "/" + year);
                 Optional<Payslip> payslip = payslipRepository.findByEmployeeIdAndYearAndMonth(employeeId, year, month);
@@ -611,7 +749,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Integer> getAvailableYears(String employeeId) {
-        checkEmployeeProfileAccess(employeeId);
+        // Vérifier les permissions pour voir les fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only view your own payslips");
+            }
+        }
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) return Collections.emptyList();
@@ -697,7 +843,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Payslip> getEmployeePayslipsByYear(String employeeId, int year) {
-        checkEmployeeProfileAccess(employeeId);
+        // Vérifier les permissions pour voir les fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only view your own payslips");
+            }
+        }
 
         try {
             if (!employeeRepository.existsById(employeeId)) {
@@ -733,7 +887,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Payslip> getEmployeePayslips(String employeeId) {
-        checkEmployeeProfileAccess(employeeId);
+        // Vérifier les permissions pour voir les fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only view your own payslips");
+            }
+        }
 
         try {
             if (!employeeRepository.existsById(employeeId)) {
@@ -792,7 +954,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Map<String, Object> generatePayslipsForYear(String employeeId, int year) {
-        checkPayslipGenerationPermission(employeeId);
+        // Vérifier les permissions pour générer des fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only generate your own payslips");
+            }
+        }
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
@@ -860,7 +1030,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Map<String, Object> generateTestPayslips(String employeeId) {
-        checkPayslipGenerationPermission(employeeId);
+        // Vérifier les permissions pour générer des fiches de paie
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!permissionService.canManageEmployees(authentication)) {
+            // Si ce n'est pas un RH/Manager, vérifier si c'est son propre profil
+            if (!isViewingOwnProfile(employeeId)) {
+                throw new AccessDeniedException("Access denied: You can only generate your own payslips");
+            }
+        }
 
         Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
         if (employeeOpt.isEmpty()) {
@@ -923,163 +1101,4 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return result;
     }
-    @Override
-    public List<LeaveBalanceDTO> getEmployeeLeaveBalances(String employeeId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + employeeId));
-
-        List<LeaveBalanceDTO> result = new ArrayList<>();
-
-        // BASIC LEAVE TYPES (Available to all employees)
-        Map<String, Double> totalDays = new HashMap<>();
-        totalDays.put("ANNUAL", 22.0);          // 22 standard annual days
-        totalDays.put("SICK", 18.0);            // 18 sick days
-        totalDays.put("UNPAID", 15.0);          // 15 max unpaid days
-        totalDays.put("MARRIAGE", 7.0);         // Employee marriage
-        totalDays.put("CHILD_MARRIAGE", 2.0);   // Child marriage
-        totalDays.put("BIRTH", 1.0);            // Child birth
-        totalDays.put("DEATH_SPOUSE", 7.0);     // Spouse death
-        totalDays.put("DEATH_PARENT", 7.0);     // Parent death
-        totalDays.put("TRAINING", 10.0);        // Professional training
-
-        Map<String, String> labels = new HashMap<>();
-        labels.put("ANNUAL", "Annual Leave");
-        labels.put("SICK", "Sick Leave");
-        labels.put("UNPAID", "Unpaid Leave");
-        labels.put("MARRIAGE", "Employee Marriage");
-        labels.put("CHILD_MARRIAGE", "Child's Marriage");
-        labels.put("BIRTH", "Child Birth");
-        labels.put("DEATH_SPOUSE", "Spouse Death");
-        labels.put("DEATH_PARENT", "Parent Death");
-        labels.put("TRAINING", "Training Leave");
-
-        // GENDER-SPECIFIC LEAVES
-        String gender = employee.getGender(); // Assuming you have gender field
-
-        if ("FEMALE".equalsIgnoreCase(gender)) {
-            totalDays.put("MATERNITY", 30.0);       // Only for female employees
-            labels.put("MATERNITY", "Maternity Leave");
-        }
-
-        if ("MALE".equalsIgnoreCase(gender)) {
-            totalDays.put("PATERNITY", 3.0);        // Only for male employees
-            labels.put("PATERNITY", "Paternity Leave");
-        }
-
-        // Calculate for each leave type
-        for (Map.Entry<String, Double> entry : totalDays.entrySet()) {
-            String leaveType = entry.getKey();
-            Double total = entry.getValue();
-            Double usedDays = calculateUsedLeaveDays(employeeId, leaveType);
-            Double remainingDays = total - usedDays;
-
-            result.add(new LeaveBalanceDTO(
-                    leaveType,
-                    labels.get(leaveType),
-                    total,
-                    usedDays,
-                    Math.max(0, remainingDays)
-            ));
-        }
-
-        return result;
-    }
-
-    @Override
-    public LeaveBalanceDTO getEmployeeLeaveBalanceByType(String employeeId, String leaveType) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + employeeId));
-
-        // Check gender restrictions
-        if ("MATERNITY".equalsIgnoreCase(leaveType) && !"FEMALE".equalsIgnoreCase(employee.getGender())) {
-            throw new RuntimeException("Maternity leave is only available for female employees");
-        }
-
-        if ("PATERNITY".equalsIgnoreCase(leaveType) && !"MALE".equalsIgnoreCase(employee.getGender())) {
-            throw new RuntimeException("Paternity leave is only available for male employees");
-        }
-
-        Map<String, Double> totalDays = new HashMap<>();
-        Map<String, String> labels = new HashMap<>();
-
-        // Common leaves
-        totalDays.put("ANNUAL", 22.0);
-        totalDays.put("SICK", 18.0);
-        totalDays.put("UNPAID", 15.0);
-
-
-        // Gender-specific leaves
-        if ("FEMALE".equalsIgnoreCase(employee.getGender())) {
-            totalDays.put("MATERNITY", 30.0);
-        }
-        if ("MALE".equalsIgnoreCase(employee.getGender())) {
-            totalDays.put("PATERNITY", 3.0);
-        }
-
-        // Labels mapping
-        labels.put("ANNUAL", "Annual Leave");
-        labels.put("SICK", "Sick Leave");
-        labels.put("UNPAID", "Unpaid Leave");
-        labels.put("MATERNITY", "Maternity Leave");
-        labels.put("PATERNITY", "Paternity Leave");
-
-        String leaveTypeUpper = leaveType.toUpperCase();
-        Double total = totalDays.getOrDefault(leaveTypeUpper, 0.0);
-        Double usedDays = calculateUsedLeaveDays(employeeId, leaveTypeUpper);
-        Double remainingDays = total - usedDays;
-        String label = labels.getOrDefault(leaveTypeUpper, leaveType);
-
-        return new LeaveBalanceDTO(leaveTypeUpper, label, total, usedDays, Math.max(0, remainingDays));
-    }
-    @Override
-    public double calculateUsedLeaveDays(String employeeId, String leaveType) {
-        try {
-            // Utilisation correcte du repository injecté
-            List<Conge> conges = congeRepository.findByEmployeeIdAndTypeAndStatus(
-                    employeeId,
-                    leaveType.toUpperCase(),
-                    "APPROVED" // ou "APPROUVE" selon votre système
-            );
-
-            if (conges == null || conges.isEmpty()) {
-                return 0.0;
-            }
-
-            return conges.stream()
-                    .mapToDouble(this::calculateLeaveDays)
-                    .sum();
-
-        } catch (Exception e) {
-            System.err.println("Error calculating used leave days: " + e.getMessage());
-            return 0.0;
-        }
-    }
-
-    @Override
-    public double calculateRemainingLeaveDays(String employeeId, String leaveType) {
-        Map<String, Double> totalDays = new HashMap<>();
-        totalDays.put("ANNUAL", 22.0);
-        totalDays.put("SICK", 18.0);
-        totalDays.put("MATERNITY", 30.0);
-        totalDays.put("PATERNITY", 3.0);
-        totalDays.put("UNPAID", 0.0);
-
-        Double total = totalDays.getOrDefault(leaveType.toUpperCase(), 0.0);
-        Double usedDays = calculateUsedLeaveDays(employeeId, leaveType);
-
-        return Math.max(0, total - usedDays);
-    }
-
-    private double calculateLeaveDays(Conge conge) {
-        if (conge.getStartDate() != null && conge.getEndDate() != null) {
-            long diffInMillies = Math.abs(conge.getEndDate().getTime() - conge.getStartDate().getTime());
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-            return diff + 1;
-        }
-        return 0.0;
-    }
-        private boolean isValidGender(String gender) {
-            return gender != null &&
-                    (gender.equals("MALE") || gender.equals("FEMALE"));
-        }
-    }
+}

@@ -16,7 +16,7 @@ export interface JobOffer {
   benefits: string;
   status: string;
   publishedBy: string;
-  publishedDate: string; 
+  publishedDate: string;
   closingDate: string;
   createdAt: string;
   updatedAt: string;
@@ -54,7 +54,6 @@ export class JobOfferService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
 
-  // ✅ CORRECTION : Méthode getAuthHeaders unique
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
     if (token) {
@@ -69,7 +68,6 @@ export class JobOfferService {
     }
   }
 
-  // ✅ CORRECTION : Méthode getAllJobOffers manquante
   getAllJobOffers(): Observable<JobOffer[]> {
     const headers = this.getAuthHeaders();
     return this.http.get<JobOffer[]>(this.apiUrl, { headers })
@@ -127,7 +125,7 @@ export class JobOfferService {
     const headers = this.getAuthHeaders();
     return this.http.get(this.apiUrl, { headers })
       .pipe(
-        tap(() => console.log('✅ Backend connection test successful')),
+        tap(() => console.log(' Backend connection test successful')),
         catchError(this.handleError)
       );
   }
@@ -137,7 +135,7 @@ updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
   const headers = this.getAuthHeaders();
   return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request, { headers })
     .pipe(
-      tap((updatedJob) => console.log('✅ Offre mise à jour:', updatedJob.title)),
+      tap((updatedJob) => console.log(' Offre mise à jour:', updatedJob.title)),
       catchError(this.handleError)
     );
 }
@@ -147,21 +145,20 @@ getJobOfferById(id: string): Observable<JobOffer> {
   const headers = this.getAuthHeaders();
   return this.http.get<JobOffer>(`${this.apiUrl}/${id}`, { headers })
     .pipe(
-      tap((job) => console.log('✅ Offre récupérée:', job.title)),
+      tap((job) => console.log(' Offre récupérée:', job.title)),
       catchError(this.handleError)
     );
 }
-  // ✅ CORRECTION : Une seule méthode handleError
   private handleError(error: HttpErrorResponse) {
-    console.error('❌ JobOfferService Error:', {
+    console.error(' JobOfferService Error:', {
       status: error.status,
       statusText: error.statusText,
       url: error.url,
       message: error.message
     });
-    
+
     let errorMessage = 'Une erreur est survenue';
-    
+
     if (error.status === 401) {
       errorMessage = 'Non autorisé - Le token JWT est manquant ou invalide';
     } else if (error.status === 403) {
@@ -171,7 +168,8 @@ getJobOfferById(id: string): Observable<JobOffer> {
     } else if (error.status === 0) {
       errorMessage = 'Impossible de se connecter au serveur';
     }
-    
+
     return throwError(() => new Error(errorMessage));
   }
+
 }

@@ -3,7 +3,7 @@ package com.mycompany.backend.controllers;
 import com.mycompany.backend.dto.EmployeeDTO;
 import com.mycompany.backend.dto.EmployeeDetailDTO;
 import com.mycompany.backend.dto.FormationDTO;
-import com.mycompany.backend.dto.LeaveBalanceDTO;
+import com.mycompany.backend.dto.PasswordChangeRequest;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Formation;
@@ -30,7 +30,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -59,33 +59,33 @@ public class EmployeeController {
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> getEmployeeById(@PathVariable String id) {
         System.out.println("=== GET EMPLOYEE BY ID CONTROLLER ===");
-        System.out.println("🔍 Employee ID requested: " + id);
-        
+        System.out.println(" Employee ID requested: " + id);
+
         try {
             // Vérifier l'authentification
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null) {
-                System.out.println("👤 Authenticated user: " + auth.getName());
-                System.out.println("🎯 Authorities: " + auth.getAuthorities());
-                System.out.println("✅ Is authenticated: " + auth.isAuthenticated());
+                System.out.println(" Authenticated user: " + auth.getName());
+                System.out.println(" Authorities: " + auth.getAuthorities());
+                System.out.println(" Is authenticated: " + auth.isAuthenticated());
             } else {
-                System.out.println("❌ No authentication found in controller!");
+                System.out.println(" No authentication found in controller!");
             }
-            
+
             Optional<Employee> employeeOpt = employeeService.getEmployeeById(id);
             if (employeeOpt.isPresent()) {
-                System.out.println("✅ Employee found: " + employeeOpt.get().getUsername());
+                System.out.println(" Employee found: " + employeeOpt.get().getUsername());
                 EmployeeDetailDTO response = convertToDetailDTO(employeeOpt.get());
                 return ResponseEntity.ok(response);
             } else {
-                System.out.println("❌ Employee not found with ID: " + id);
+                System.out.println(" Employee not found with ID: " + id);
                 return ResponseEntity.notFound().build();
             }
         } catch (AccessDeniedException e) {
-            System.err.println("❌ ACCESS DENIED in controller: " + e.getMessage());
+            System.err.println(" ACCESS DENIED in controller: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
-            System.err.println("❌ Error getting employee in controller: " + e.getMessage());
+            System.err.println(" Error getting employee in controller: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -99,7 +99,7 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDetailDTO> updateEmployee(@PathVariable String id,
-                                                           @RequestBody Employee employeeDetails) {
+                                                            @RequestBody Employee employeeDetails) {
         Optional<Employee> optionalEmployee = employeeService.getEmployeeById(id);
         if (optionalEmployee.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -135,11 +135,24 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employé supprimé avec succès");
     }
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable String id, // CHANGÉ DE Long À String
+            @RequestBody @Valid PasswordChangeRequest request,
+            @RequestHeader("Authorization") String token) {
 
+        System.out.println(" Change password request for employee ID: " + id);
+        System.out.println(" Request details:");
+        System.out.println("   - Current password provided: " + (request.getCurrentPassword() != null ? "YES" : "NO"));
+        System.out.println("   - New password length: " + (request.getNewPassword() != null ? request.getNewPassword().length() : 0));
+        System.out.println("   - Token present: " + (token != null ? "YES" : "NO"));
+
+        return employeeService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
+    }
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
-                                                        @RequestParam("file") MultipartFile file) {
+                                                         @RequestParam("file") MultipartFile file) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
         try {
@@ -227,7 +240,7 @@ public class EmployeeController {
         }
 
         Formation savedFormation = formationRepository.save(f);
-        
+
         // Initialiser la collection si elle est null
         if (emp.getFormations() == null) {
             emp.setFormations(new HashSet<>());
@@ -550,15 +563,4 @@ public class EmployeeController {
 
         return dto;
     }
-    @GetMapping("/{id}/leave-balance")
-    public ResponseEntity<List<LeaveBalanceDTO>> getLeaveBalance(@PathVariable String id) {
-        try {
-            List<LeaveBalanceDTO> balances = employeeService.getEmployeeLeaveBalances(id);
-            return ResponseEntity.ok(balances);
-        } catch (Exception e) {
-            System.err.println("Erreur récupération congés: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
 }
