@@ -14,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/api/password")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class PasswordResetController {
 
     @Autowired
@@ -28,7 +28,7 @@ public class PasswordResetController {
             // Get application URL (frontend URL)
             String applicationUrl = request.getApplicationUrl() != null
                     ? request.getApplicationUrl()
-                    : "http://localhost:3000"; // Default frontend URL
+                    : "http://localhost:4200"; // Default frontend URL
 
             passwordResetService.createPasswordResetToken(
                     request.getEmail(),
