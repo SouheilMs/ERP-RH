@@ -51,7 +51,6 @@ public class WebSecurityConfig {
         return authProvider;
     }
 
-    // -------------------- Authentication Manager --------------------
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
@@ -72,6 +71,7 @@ public class WebSecurityConfig {
                 "Authorization", "Content-Disposition", "Content-Type", "Content-Length",
                 "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"
         ));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -96,7 +96,6 @@ public class WebSecurityConfig {
                         // Routes sécurisées
                         .requestMatchers("/api/job-offers/**").authenticated()
                         .requestMatchers("/api/formations/**").authenticated()
-                        .requestMatchers("/th/employees**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
