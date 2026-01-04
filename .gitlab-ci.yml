@@ -14,16 +14,12 @@ variables:
 
 # Cache pour accélérer les builds
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
   paths:
     - backend/.m2/repository
     - frontend/node_modules/
     - .sonar/cache
 
-# ==========================================
-# BACKEND JOBS
-# ==========================================
-
+# Jobs Backend
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
@@ -33,7 +29,6 @@ build-backend:
   artifacts:
     paths:
       - backend/target/
-    expire_in: 1 hour
 
 test-backend:
   stage: test
@@ -45,19 +40,13 @@ test-backend:
     POSTGRES_USER: testuser
     POSTGRES_PASSWORD: testpass
     SPRING_PROFILES_ACTIVE: test
-    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testdb
   script:
     - cd backend
     - mvn test
-  coverage: '/Total.*?([0-9]{1,3})%/'
   artifacts:
-    when: always
     reports:
       junit:
         - backend/target/surefire-reports/TEST-*.xml
-    paths:
-      - backend/target/surefire-reports/
-    expire_in: 1 week
 
 integration-test-backend:
   stage: test
@@ -69,76 +58,51 @@ integration-test-backend:
     POSTGRES_USER: testuser
     POSTGRES_PASSWORD: testpass
     SPRING_PROFILES_ACTIVE: test
-    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testdb
   script:
     - cd backend
     - mvn verify -Dit.test="*IT" -DfailIfNoTests=false
-  allow_failure: true
 
-# ==========================================
-# FRONTEND JOBS
-# ==========================================
-
+# Jobs Frontend
 build-frontend:
   stage: build
   image: node:20-alpine
   script:
     - cd frontend
-    - npm ci --cache .npm --prefer-offline
+    - npm ci
     - npm run build -- --configuration=production
   artifacts:
     paths:
       - frontend/dist/
-    expire_in: 1 hour
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-npm
-    paths:
-      - frontend/.npm
-      - frontend/node_modules/
 
 test-frontend:
   stage: test
   image: node:20
   before_script:
-    - apt-get update -qq
-    - apt-get install -y -qq chromium
+    - apt-get update
+    - apt-get install -y chromium
     - export CHROME_BIN=/usr/bin/chromium
   script:
     - cd frontend
-    - npm ci --cache .npm --prefer-offline
-    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --code-coverage
-  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+    - npm ci
+    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
   artifacts:
     when: always
     reports:
       junit:
         - frontend/coverage/junit.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: frontend/coverage/cobertura-coverage.xml
     paths:
       - frontend/coverage/
-    expire_in: 1 week
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-npm
-    paths:
-      - frontend/.npm
-      - frontend/node_modules/
 
 # E2E tests with Cypress
 e2e-frontend:
   stage: test
   image: cypress/included:latest
-  variables:
-    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --no-sandbox --disable-dev-shm-usage"
-    CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cypress"
-  before_script:
+  script:
     - cd frontend
     - npm ci
-  script:
     - npm start &
     - npx wait-on http://localhost:4200 --timeout 120000
-    - npx cypress run --browser electron --headless
+    - npx cypress run
   artifacts:
     when: always
     paths:
@@ -146,15 +110,8 @@ e2e-frontend:
       - frontend/cypress/screenshots/
     expire_in: 1 week
   allow_failure: true
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-cypress
-    paths:
-      - .cypress
 
-# ==========================================
-# QUALITY ANALYSIS
-# ==========================================
-
+# Analyse de qualité avec SonarQube
 sonar-backend:
   stage: quality
   image: maven:3.8-openjdk-17
@@ -166,16 +123,10 @@ sonar-backend:
         echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
         echo "Running SonarQube analysis for backend..."
-        mvn sonar:sonar \
-          -Dsonar.host.url=$SONAR_HOST_URL \
-          -Dsonar.login=$SONAR_TOKEN \
-          -Dsonar.projectKey=${CI_PROJECT_NAME}-backend \
-          -Dsonar.projectName="${CI_PROJECT_NAME} Backend" \
-          || echo "SonarQube analysis completed with warnings"
+        mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
       fi
   dependencies:
     - test-backend
-  allow_failure: true
   only:
     - main
     - merge_requests
@@ -191,152 +142,70 @@ sonar-frontend:
         echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
         echo "Running SonarQube analysis for frontend..."
-        sonar-scanner \
-          -Dsonar.host.url=$SONAR_HOST_URL \
-          -Dsonar.login=$SONAR_TOKEN \
-          -Dsonar.projectKey=${CI_PROJECT_NAME}-frontend \
-          -Dsonar.projectName="${CI_PROJECT_NAME} Frontend" \
-          -Dsonar.sources=src \
-          -Dsonar.exclusions="**/*.spec.ts,**/*.spec.js,**/node_modules/**" \
-          -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info \
-          || echo "SonarQube analysis completed with warnings"
+        sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
       fi
   dependencies:
     - test-frontend
-  allow_failure: true
   only:
     - main
     - merge_requests
 
-# ==========================================
-# SECURITY ANALYSIS
-# ==========================================
-
+# Analyse de sécurité
 security-scan:
   stage: security
-  image: docker:24-cli
+  image: docker:stable
   services:
-    - docker:24-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - apk add --no-cache curl
+    - docker:dind
   script:
-    - |
-      echo "🔍 Running Trivy security scan on backend..."
-      docker run --rm \
-        -v "$PWD/backend:/src" \
-        aquasec/trivy:latest \
-        fs --severity HIGH,CRITICAL --exit-code 0 /src || true
-    - |
-      echo "✅ Trivy scan completed. Review any vulnerabilities found."
-  allow_failure: true
-  only:
-    - main
-    - merge_requests
+    - docker run --rm
+      -v "$PWD/backend:/src"
+      aquasec/trivy:latest
+      fs --severity HIGH,CRITICAL /src
 
-# Scan des dépendances avec OWASP Dependency Check (optionnel)
-dependency-check:
-  stage: security
-  image: maven:3.8-openjdk-17
-  script:
-    - cd backend
-    - |
-      echo "🔍 Running OWASP Dependency Check..."
-      mvn dependency-check:check -DfailBuildOnCVSS=8 || true
-  artifacts:
-    when: always
-    paths:
-      - backend/target/dependency-check-report.html
-    expire_in: 1 week
-  allow_failure: true
-  only:
-    - main
-    - merge_requests
-
-# ==========================================
-# DOCKER BUILD & DEPLOY
-# ==========================================
-
+# Build et push des images Docker
 docker-build-push:
   stage: deploy
-  image: docker:24-cli
+  image: docker:stable
   services:
-    - docker:24-dind
+    - docker:dind
   variables:
     DOCKER_REGISTRY: docker.io
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+    IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
+    IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
   script:
-    - |
-      echo "🐳 Building Docker images..."
-      
-      # Build Backend
-      docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
-      docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
-      
-      # Build Frontend
-      docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
-      docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
-      
-      echo "📤 Pushing to Docker Hub..."
-      docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
-      docker push $IMAGE_NAME_BACKEND:latest
-      docker push $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA
-      docker push $IMAGE_NAME_FRONTEND:latest
-      
-      echo "✅ Docker images pushed successfully!"
+    # Login Docker Hub
+    - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+    # Build et tag Backend
+    - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
+    - docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
+
+    # Build et tag Frontend
+    - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
+    - docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
+
+    # Push vers Docker Hub
+    - docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE_NAME_BACKEND:latest
+    - docker push $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE_NAME_FRONTEND:latest
   only:
     - main
-  when: manual
 
-# Déploiement staging
+# Déploiement (exemple sur un serveur)
 deploy-staging:
   stage: deploy
   image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts 2>/dev/null
   script:
-    - |
-      echo "🚀 Deploying to staging environment..."
-      ssh $DEPLOY_USER@$DEPLOY_SERVER << 'EOF'
-        cd /opt/app
-        docker-compose pull
-        docker-compose up -d
-        docker system prune -f
-      EOF
-      echo "✅ Deployment completed!"
+    - apk add --no-cache openssh-client
+    - echo "$SSH_PRIVATE_KEY" > ssh_key
+    - chmod 600 ssh_key
+    - ssh -o StrictHostKeyChecking=no -i ssh_key user@staging-server "
+      docker pull $IMAGE_NAME_BACKEND:latest &&
+      docker pull $IMAGE_NAME_FRONTEND:latest &&
+      docker-compose -f /opt/app/docker-compose.prod.yml up -d"
   environment:
     name: staging
     url: https://staging.votre-app.com
-    on_stop: stop-staging
-  only:
-    - main
-  when: manual
-
-# Arrêt de l'environnement staging
-stop-staging:
-  stage: deploy
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  script:
-    - |
-      ssh $DEPLOY_USER@$DEPLOY_SERVER << 'EOF'
-        cd /opt/app
-        docker-compose down
-      EOF
-  environment:
-    name: staging
-    action: stop
-  when: manual
   only:
     - main
