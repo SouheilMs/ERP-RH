@@ -13,7 +13,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
     public Map<String, Object> calculateCompleteSalary(Employee employee, Map<String, Object> seniorityInfo) {
         Map<String, Object> result = new HashMap<>();
 
-        // Si seniorityInfo n'est pas fourni, le calculer
+
         if (seniorityInfo == null) {
             seniorityInfo = calculateSeniorityBonus(employee);
         }
@@ -24,7 +24,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
 
         Double proportionalSalary = baseSalary * actualDays / workingDays;
 
-        // CORRECTION : Gérer les valeurs nulles pour totalSeniorityBonus
+        //  Gérer les valeurs nulles pour totalSeniorityBonus
         Double totalSeniorityBonus = 0.0;
         if (seniorityInfo.get("seniorityBonus") != null) {
             totalSeniorityBonus = (Double) seniorityInfo.get("seniorityBonus");
@@ -71,17 +71,15 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         return result;
     }
 
-    // ---------------------------------------------------------
+
     // CALCUL DE LA PRIME D'ANCIENNETÉ (SEULEMENT PRIME 9 DINARS)
-    // ---------------------------------------------------------
+
     @Override
     public Map<String, Object> calculateSeniorityBonus(Employee employee) {
         return calculateSeniorityBonusForPeriod(employee, new Date());
     }
 
-    /**
-     *  CALCUL UNIQUEMENT DE LA PRIME 9 DINARS
-     */
+   // Calcule la prime d'ancienneté pour une période donnée
     public Map<String, Object> calculateSeniorityBonusForPeriod(Employee employee, Date periodDate) {
         Map<String, Object> result = new HashMap<>();
 
@@ -108,28 +106,28 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         int bonusPeriods = 0;
         double nineDinarsBonus = 0.0;
 
-        // 🔥 CALCUL PRIME 9 DINARS SEULEMENT
+        //  CALCUL PRIME 9 DINARS SEULEMENT
         if (totalMonthsOfService > 18) {
             // On retire les 18 premiers mois qui ne donnent pas de prime
             int monthsAfterInitialPeriod = totalMonthsOfService - 18;
 
-            // CORRECTION : Chaque période de 18 mois COMPLÈTE donne 9 dinars
+            //  Chaque période de 18 mois COMPLÈTE donne 9 dinars
             bonusPeriods = monthsAfterInitialPeriod / 18;
             nineDinarsBonus = bonusPeriods * 9.0;
 
-            System.out.println("✅ Prime 9 dinars calculée pour " + periodEnd.getTime() + ": " + nineDinarsBonus + " TND");
-            System.out.println("📅 Mois de service: " + totalMonthsOfService +
+            System.out.println(" Prime 9 dinars calculée pour " + periodEnd.getTime() + ": " + nineDinarsBonus + " TND");
+            System.out.println("Mois de service: " + totalMonthsOfService +
                     ", Mois après période initiale: " + monthsAfterInitialPeriod +
                     ", Périodes: " + bonusPeriods);
         } else {
-            System.out.println("⏳ Pas encore éligible à la prime 9 dinars: " +
+            System.out.println(" Pas encore éligible à la prime 9 dinars: " +
                     totalMonthsOfService + " mois (besoin de > 18 mois)");
         }
 
-        // 🔥 SUPPRIMER LA PRIME TRADITIONNELLE - TOUJOURS 0
+
         double traditionalSeniorityBonus = 0.0;
 
-        // 🔥 TOTAL = SEULEMENT LA PRIME 9 DINARS
+        //  TOTAL = SEULEMENT LA PRIME 9 DINARS
         double totalSeniorityBonus = nineDinarsBonus;
 
         result.put("yearsOfService", totalMonthsOfService / 12);
@@ -149,9 +147,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         return result;
     }
 
-    /**
-     *  Calcul précis des mois de service
-     */
+    // Méthode utilitaire pour calculer les mois exacts de service
     private int calculateExactMonthsOfService(Calendar hireDate, Calendar currentDate) {
         int years = currentDate.get(Calendar.YEAR) - hireDate.get(Calendar.YEAR);
         int months = currentDate.get(Calendar.MONTH) - hireDate.get(Calendar.MONTH);

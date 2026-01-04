@@ -1,3 +1,4 @@
+<!-- login.component.html - VERSION FINALE SANS TESTS -->
 <div class="auth-container">
   <div class="auth-card">
     <div class="auth-header">
@@ -7,6 +8,11 @@
       </div>
       <h1 class="auth-title">Login</h1>
       <p class="auth-subtitle">Access your personal space</p>
+    </div>
+
+    <!-- Message d'erreur -->
+    <div *ngIf="errorMessage" class="error-message global-error">
+      {{ errorMessage }}
     </div>
 
     <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
@@ -58,11 +64,11 @@
         }
       </button>
 
-<div class="auth-footer">
-  <p>Forgot your password?
-    <a routerLink="/forgot-password" class="auth-link">Reset password</a>
-  </p>
-</div>
+      <div class="auth-footer">
+        <p>Forgot your password?
+          <a routerLink="/forgot-password" class="auth-link">Reset password</a>
+        </p>
+      </div>
     </form>
   </div>
 </div>

@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 
+import { Component } from '@angular/core';
 @Component({
   selector: 'app-first-time-setup',
   imports: [],
@@ -8,5 +8,4 @@ import { Component } from '@angular/core';
   standalone: true
 })
 export class FirstTimeSetup {
-
 }

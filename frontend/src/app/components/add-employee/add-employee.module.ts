@@ -3,6 +3,7 @@ export interface Employee {
   username: string;
   email: string;
   phone?: string;
-  status: 'Active' | 'Inactive';
+  status: String;
+  roleNames?: string[];
 }
 

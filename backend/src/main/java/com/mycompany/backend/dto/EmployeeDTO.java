@@ -2,6 +2,7 @@ package com.mycompany.backend.dto;
 
 import lombok.Data;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class EmployeeDTO {
@@ -12,7 +13,10 @@ public class EmployeeDTO {
     private Date hireDate;
     private Double salary;
     private String status;
-
+    private String department;
+    private Integer age;
+    private String performance;
+    private Integer satisfaction;
     // Champs fiche de paie
     private String cin;
     private String cnssNumber;
@@ -33,6 +37,40 @@ public class EmployeeDTO {
     private Integer yearsOfService = 0;
     private Integer totalMonthsOfService = 0;
     private Integer seniorityBlocks = 0;
+
+    private List<String> roleNames;
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(String performance) {
+        this.performance = performance;
+    }
+
+    public Integer getSatisfaction() {
+        return satisfaction;
+    }
+
+    public void setSatisfaction(Integer satisfaction) {
+        this.satisfaction = satisfaction;
+    }
 
     public String getUsername() {
         return username;
@@ -216,6 +254,14 @@ public class EmployeeDTO {
 
     public void setTotalMonthsOfService(Integer totalMonthsOfService) {
         this.totalMonthsOfService = totalMonthsOfService;
+    }
+
+    public List<String> getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(List<String> roleNames) {
+        this.roleNames = roleNames;
     }
 
     public Integer getSeniorityBlocks() {

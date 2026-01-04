@@ -1,4 +1,4 @@
-package com.application.security.controller;
+package com.mycompany.backend.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 

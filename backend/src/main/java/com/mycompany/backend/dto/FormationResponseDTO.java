@@ -1,11 +1,12 @@
 package com.mycompany.backend.dto;
 
 import com.mycompany.backend.entities.Formation;
-import com.mycompany.backend.entities.Employee; // AJOUT IMPORT
+import com.mycompany.backend.entities.Employee;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,16 +51,20 @@ public class FormationResponseDTO {
         this.cost = formation.getCost();
         this.category = formation.getCategory();
         this.skills = formation.getSkills();
-        this.currentParticipants = formation.getParticipants() != null ? formation.getParticipants().size() : 0;
-
-        if (formation.getCreatedBy() != null) {
-            this.createdBy = formation.getCreatedBy().getId();
-        }
-
         if (formation.getParticipants() != null) {
             this.participants = formation.getParticipants().stream()
-                    .map(Employee::getId) // MAINTENANT Employee EST IMPORTÉ
+                    .filter(participant -> participant != null && participant.getId() != null) // Filtrer les nulls
+                    .map(Employee::getId)
                     .collect(Collectors.toSet());
+            this.currentParticipants = this.participants.size();
+        } else {
+            this.participants = new HashSet<>();
+            this.currentParticipants = 0;
+        }
+        if (formation.getCreatedBy() != null) {
+            this.createdBy = formation.getCreatedBy().getId();
+        } else {
+            this.createdBy = null;
         }
     }
 }

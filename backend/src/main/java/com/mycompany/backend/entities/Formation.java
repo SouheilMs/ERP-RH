@@ -38,7 +38,6 @@ public class Formation {
 
     @Field("certificate_id")
     private String certificateId;
-
     private FormationStatus status = FormationStatus.PLANIFIED;
 
     @Field("created_at")
@@ -46,10 +45,8 @@ public class Formation {
 
     @Field("updated_at")
     private LocalDateTime updatedAt;
-
     @DBRef
     private Employee createdBy;
-
     @DBRef
     private Set<Employee> participants = new HashSet<>();
 

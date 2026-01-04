@@ -1,11 +1,20 @@
 <div class="payslip-history-container">
   <!-- Header -->
   <div class="header">
-    <button class="back-btn" (click)="viewEmployeeDetails()">
+    <button *ngIf="canViewAllEmployees || isViewingOwnProfile"
+            class="back-btn"
+            (click)="handleBackNavigation()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
         <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
       </svg>
-      Back to profile
+
+      <!-- Texte différent selon le rôle et le contexte -->
+      <span *ngIf="canViewAllEmployees && !isViewingOwnProfile">
+        Back to employee profile
+      </span>
+      <span *ngIf="canViewAllEmployees && isViewingOwnProfile">
+        Back to my profile
+      </span>
     </button>
     <h2>Payslip History - {{ employeeName }}</h2>
     <p class="employee-info">
@@ -13,6 +22,11 @@
       <span>Hire Date: {{ currentEmployee.hireDate ? (currentEmployee.hireDate | date:'dd/MM/yyyy') : 'Not defined' }}</span>
       <span>Seniority: {{ calculateSeniorityYears() }}</span>
     </p>
+    <!-- Indicateur de permissions -->
+
+    <div class="permission-indicator" *ngIf="isViewingOwnProfile">
+      <span class="badge badge-success">Your own profile</span>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -56,8 +70,9 @@
     </p>
   </div>
 
-  <!-- Quick Generation Section -->
-  <div *ngIf="!loading && !errorMessage && payslipHistory.length === 0" class="quick-generate-section">
+  <!-- Quick Generation Section - SEULEMENT POUR RH/MANAGER RH -->
+  <!-- Quick Generation Section - VISIBLE POUR RH/MANAGER RH ET EMPLOYÉS SUR LEUR PROPRE PROFIL -->
+  <div *ngIf="!loading && !errorMessage && payslipHistory.length === 0 && (canUserGeneratePayslips() || isViewingOwnProfile)" class="quick-generate-section">
     <div class="alert alert-info">
       <h4>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
@@ -69,74 +84,81 @@
       <p><small>Employee was hired in {{ employeeHireYear }}</small></p>
 
       <div class="generation-options">
-        <button class="btn btn-warning" (click)="generateTestPayslips()" [disabled]="generatingPayslip">
-    <span *ngIf="generatingPayslip" class="btn-content">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" class="hourglass-loader">
-        <path d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5z"
-              fill="currentColor" opacity="0.3"/>
-        <path d="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"
-              fill="currentColor">
-          <animate attributeName="d"
-                   dur="2s"
-                   repeatCount="indefinite"
-                   values="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-1.5 2.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.337A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-1 2.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.837A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-0.5 1.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2.337A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"/>
-        </path>
-      </svg>
-      <span class="btn-text">Generating...</span>
-    </span>
+        <!-- Premier bouton - Générer une fiche de test -->
+        <button class="btn btn-warning"
+                (click)="generateTestPayslips()"
+                [disabled]="generatingPayslip || !canGenerateForSelectedYear()">
+        <span *ngIf="generatingPayslip" class="btn-content">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" class="hourglass-loader">
+            <path d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5z"
+                  fill="currentColor" opacity="0.3"/>
+            <path d="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"
+                  fill="currentColor">
+              <animate attributeName="d"
+                       dur="2s"
+                       repeatCount="indefinite"
+                       values="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-1.5 2.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.337A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-1 2.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.837A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-0.5 1.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2.337A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"/>
+            </path>
+          </svg>
+          <span class="btn-text">Generating...</span>
+        </span>
           <span *ngIf="!generatingPayslip" class="btn-content">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
-        <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
-      </svg>
-      <span class="btn-text">
-        <span *ngIf="selectedYear < currentYear">Generate December {{ selectedYear }}</span>
-        <span *ngIf="selectedYear === currentYear">Generate {{ getCurrentMonthName() }} {{ selectedYear }}</span>
-      </span>
-    </span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+            <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+          <span class="btn-text">
+            <span *ngIf="selectedYear < currentYear">Generate December {{ selectedYear }}</span>
+            <span *ngIf="selectedYear === currentYear">Generate {{ getCurrentMonthName() }} {{ selectedYear }}</span>
+          </span>
+        </span>
         </button>
 
-        <button *ngIf="selectedYear !== currentYear"
+        <!-- Deuxième bouton - Générer toute l'année (seulement pour les années passées) -->
+        <button *ngIf="selectedYear !== currentYear && canUserGeneratePayslips()"
                 class="btn btn-secondary"
                 (click)="generatePayslipsForYear(selectedYear)"
                 [disabled]="generatingPayslip">
-    <span *ngIf="generatingPayslip" class="btn-content">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" class="hourglass-loader">
-        <path d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5z"
-              fill="currentColor" opacity="0.3"/>
-        <path d="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"
-              fill="currentColor">
-          <animate attributeName="d"
-                   dur="2s"
-                   repeatCount="indefinite"
-                   values="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-1.5 2.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.337A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-1 2.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.837A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-0.5 1.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2.337A3.5 3.5 0 0 1 4 3V2z;
-                           M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"/>
-        </path>
-      </svg>
-      <span class="btn-text">Generating...</span>
-    </span>
+        <span *ngIf="generatingPayslip" class="btn-content">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" class="hourglass-loader">
+            <path d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5z"
+                  fill="currentColor" opacity="0.3"/>
+            <path d="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"
+                  fill="currentColor">
+              <animate attributeName="d"
+                       dur="2s"
+                       repeatCount="indefinite"
+                       values="M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-1.5 2.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.337A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-1 2.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1.837A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-0.5 1.663V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2.337A3.5 3.5 0 0 1 4 3V2z;
+                               M4 2h8v1a3.5 3.5 0 0 1-2 3.163V7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.837A3.5 3.5 0 0 1 4 3V2z"/>
+            </path>
+          </svg>
+          <span class="btn-text">Generating...</span>
+        </span>
           <span *ngIf="!generatingPayslip" class="btn-content">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-      </svg>
-      <span class="btn-text">Generate entire {{ selectedYear }} year</span>
-    </span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          <span class="btn-text">Generate entire {{ selectedYear }} year</span>
+        </span>
         </button>
       </div>
+
       <small class="text-muted">
-        <span *ngIf="selectedYear < currentYear"> payslip will be generated for December {{ selectedYear }}</span>
-        <span *ngIf="selectedYear === currentYear">payslip will be generated for  {{ getCurrentMonthName() }} {{ selectedYear }}</span>
+        <span *ngIf="selectedYear < currentYear">Payslip will be generated for December {{ selectedYear }}</span>
+        <span *ngIf="selectedYear === currentYear">Payslip will be generated for {{ getCurrentMonthName() }} {{ selectedYear }}</span>
+        <span *ngIf="!canUserGeneratePayslips() && isViewingOwnProfile" class="employee-note">
+        - You can generate your own payslips for available months
+      </span>
       </small>
     </div>
   </div>
-
   <!-- Year Selection -->
   <div *ngIf="!loading && !errorMessage" class="year-selection">
     <label for="yearSelect">
@@ -171,7 +193,8 @@
       <p class="generate-info">
         Employee was hired in {{ employeeHireYear }}.
         <span *ngIf="selectedYear < employeeHireYear">Cannot generate payslips before hire date.</span>
-        <span *ngIf="selectedYear >= employeeHireYear">Use generation buttons to create payslips.</span>
+        <span *ngIf="selectedYear >= employeeHireYear && canUserGeneratePayslips()">Use generation buttons to create payslips.</span>
+        <span *ngIf="selectedYear >= employeeHireYear && !canUserGeneratePayslips()">Contact HR to generate payslips.</span>
       </p>
     </div>
 
@@ -188,7 +211,7 @@
             </div>
 
             <div class="month-content">
-              <!-- Display existing payslips -->
+              <!-- Display existing payslips - TOUS LES UTILISATEURS PEUVENT VOIR -->
               <div *ngIf="hasPayslipForMonth(month)" class="existing-payslip">
                 <div *ngFor="let payslip of getPayslipsForMonth(month)" class="payslip-item">
                   <div class="payslip-info">
@@ -202,6 +225,7 @@
                       </svg>
                       View
                     </button>
+
                   </div>
                   <div class="generation-date">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
@@ -213,7 +237,7 @@
                 </div>
               </div>
 
-              <!-- Display Generate button ONLY if no payslip AND month is available -->
+              <!-- Display Generate button ONLY si RH/MANAGER RH et conditions remplies -->
               <div *ngIf="canGenerateForMonth(month)" class="generate-section">
                 <button
                   class="generate-btn"
@@ -278,6 +302,8 @@
               <div *ngIf="!hasPayslipForMonth(month) && !canGenerateForMonth(month) && !isMonthInFuture(selectedYear, month) && selectedYear > employeeHireYear"
                    class="no-payslip-message">
                 <p>No payslip for this month</p>
+                <p *ngIf="canUserGeneratePayslips()" class="generate-hint">You can generate this payslip</p>
+                <p *ngIf="!canUserGeneratePayslips()" class="generate-hint">Contact HR to generate this payslip</p>
               </div>
             </div>
           </div>

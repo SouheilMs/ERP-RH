@@ -17,7 +17,7 @@ public class GridFsService {
 
     @Autowired
     private GridFsTemplate gridFsTemplate;
-
+// Enregistrer un fichier dans GridFS
     @Autowired
     private GridFsOperations operations;
 
@@ -36,7 +36,7 @@ public class GridFsService {
         if(file == null) throw new RuntimeException("File not found in GridFS");
         return operations.getResource(file);
     }
-    // Ici on ajoute la méthode pour supprimer un fichier
+    // Supprimer un fichier de GridFS par son ID
     public void deleteFile(String fileId) {
         gridFsTemplate.delete(Query.query(Criteria.where("_id").is(fileId)));
     }

@@ -10,7 +10,7 @@ describe('FirstTimeSetup', () => {
     await TestBed.configureTestingModule({
       imports: [FirstTimeSetup]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(FirstTimeSetup);
     component = fixture.componentInstance;

@@ -1,35 +1,77 @@
 package com.mycompany.backend.controllers;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+import java.util.HashMap;
+import java.util.Map;
+
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "http://localhost:5174"})
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
-	@GetMapping("/all")
-	public String allAccess() {
-		return "Public Content.";
-	}
-	
-	@GetMapping("/employee")
-	@PreAuthorize("hasRole('EMPLOYEE') or hasRole('HR') or hasRole('HRMANAGER')")
-	public String userAccess() {
-		return "Employee Content.";
-	}
 
-	@GetMapping("/hr")
-	@PreAuthorize("hasRole('HR')")
-	public String moderatorAccess() {
-		return "Hr Board.";
-	}
+    @GetMapping("/authenticated")
+    public Map<String, Object> authenticatedEndpoint() {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Vérifier l'authentification
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            response.put("status", "success");
+            response.put("message", "Authentifié");
+            response.put("user", auth.getName());
+            response.put("authorities", auth.getAuthorities().toString());
+            response.put("timestamp", java.time.LocalDateTime.now().toString());
+        } else {
+            response.put("status", "error");
+            response.put("message", "Non authentifié");
+            response.put("timestamp", java.time.LocalDateTime.now().toString());
+        }
+        
+        return response;
+    }
 
-	@GetMapping("/hrManager")
-	@PreAuthorize("hasRole('HRMANAGER')")
-	public String adminAccess() {
-		return "HrManager Board.";
-	}
+
+
+    @GetMapping("/employee")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public Map<String, String> employeeEndpoint() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Ceci est un endpoint employé");
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+        return response;
+    }
+
+    @GetMapping("/hr")
+    @PreAuthorize("hasRole('HR') or hasRole('HRMANAGER')")
+    public Map<String, String> hrEndpoint() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Ceci est un endpoint HR");
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+        return response;
+    }
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "OK");
+        response.put("message", "Backend Spring Boot is running on port 8081");
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+        response.put("corsEnabled", true);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<Map<String, Object>> publicEndpoint() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "This is a public endpoint - CORS should work");
+        response.put("accessible", true);
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+
+        // Log pour débogage
+        System.out.println(" Public endpoint accessed successfully");
+
+        return ResponseEntity.ok(response);
+    }
 }

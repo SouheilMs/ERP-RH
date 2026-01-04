@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CongeService, Conge } from '../../services/conge.service';
-import { AuthService, CurrentUser } from '../../services/auth.service';
+import { AuthService, User } from '../../services/auth.service';
 
 @Component({
   selector: 'app-manage-requests',
@@ -30,7 +30,7 @@ export class ManageRequestsComponent implements OnInit {
   showReasonError = false;
   isProcessing = false;
 
-  currentUser: CurrentUser | null = null;
+  currentUser: User | null = null;
   isRHUser = false;
   isManagerUser = false;
 
@@ -52,7 +52,7 @@ export class ManageRequestsComponent implements OnInit {
 
     // Check user role
     this.isRHUser = this.authService.isHR();
-    this.isManagerUser = this.authService.isAdmin() && !this.isRHUser;
+    this.isManagerUser = this.authService.isHRManager() && !this.isRHUser;
 
     // Verify permissions
     if (!this.isRHUser && !this.isManagerUser) {

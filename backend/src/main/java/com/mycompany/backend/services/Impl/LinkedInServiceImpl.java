@@ -186,11 +186,11 @@ public class LinkedInServiceImpl implements LinkedInService {
     public String formatLinkedInContent(JobOffer jobOffer) {
         StringBuilder content = new StringBuilder();
 
-        content.append("🎯 Nous recrutons : ").append(jobOffer.getTitle()).append("\n\n");
+        content.append(" Nous recrutons : ").append(jobOffer.getTitle()).append("\n\n");
 
-        content.append("📍 Localisation : ").append(jobOffer.getLocation()).append("\n");
-        content.append("📝 Type de contrat : ").append(jobOffer.getContractType()).append("\n");
-        content.append("🏢 Département : ").append(jobOffer.getDepartment()).append("\n\n");
+        content.append(" Localisation : ").append(jobOffer.getLocation()).append("\n");
+        content.append(" Type de contrat : ").append(jobOffer.getContractType()).append("\n");
+        content.append(" Département : ").append(jobOffer.getDepartment()).append("\n\n");
 
         // Description
         String description = jobOffer.getDescription();
@@ -203,26 +203,26 @@ public class LinkedInServiceImpl implements LinkedInService {
         // Responsabilités
         String responsibilities = jobOffer.getResponsibilities();
         if (responsibilities.length() > 150) {
-            content.append("📋 ").append(responsibilities.substring(0, 150)).append("...\n\n");
+            content.append(" ").append(responsibilities.substring(0, 150)).append("...\n\n");
         } else if (!responsibilities.isEmpty()) {
-            content.append("📋 ").append(responsibilities).append("\n\n");
+            content.append(" ").append(responsibilities).append("\n\n");
         }
 
         // Exigences
         String requirements = jobOffer.getRequirements();
         if (requirements.length() > 150) {
-            content.append("🎯 ").append(requirements.substring(0, 150)).append("...\n\n");
+            content.append(" ").append(requirements.substring(0, 150)).append("...\n\n");
         } else if (!requirements.isEmpty()) {
-            content.append("🎯 ").append(requirements).append("\n\n");
+            content.append(" ").append(requirements).append("\n\n");
         }
 
         // Date de clôture
         if (jobOffer.getClosingDate() != null) {
-            content.append("📅 Date de clôture : ")
+            content.append(" Date de clôture : ")
                     .append(jobOffer.getClosingDate().toString()).append("\n\n");
         }
 
-        content.append("👉 Postulez maintenant !\n\n");
+        content.append(" Postulez maintenant !\n\n");
 
         // Hashtags
         content.append(generateHashtags(jobOffer));

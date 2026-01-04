@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 export interface JobOffer {
   id: string;
@@ -15,7 +16,7 @@ export interface JobOffer {
   benefits: string;
   status: string;
   publishedBy: string;
-  publishedDate: string; 
+  publishedDate: string;
   closingDate: string;
   createdAt: string;
   updatedAt: string;
@@ -50,90 +51,125 @@ export interface JobOfferRequest {
 })
 export class JobOfferService {
   private apiUrl = 'http://localhost:8081/api/job-offers';
+  private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
-  constructor(private http: HttpClient) { }
-
-  private handleError(error: HttpErrorResponse) {
-    console.error('🔴 API Error:', error);
-    let errorMessage = 'Une erreur est survenue';
-    
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Erreur: ${error.error.message}`;
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    if (token) {
+      return new HttpHeaders({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      });
     } else {
-      errorMessage = `Erreur ${error.status}: ${error.message}`;
-      if (error.error && error.error.message) {
-        errorMessage += ` - ${error.error.message}`;
-      }
+      return new HttpHeaders({
+        'Content-Type': 'application/json'
+      });
     }
-    
-    return throwError(() => new Error(errorMessage));
-  }
-
-  createJobOffer(request: JobOfferRequest, publisherId: string): Observable<JobOffer> {
-    const params = new HttpParams().set('publisherId', publisherId);
-    
-    console.log('🟡 Creating job offer:', request);
-    
-    return this.http.post<JobOffer>(this.apiUrl, request, { params })
-      .pipe(
-        tap(response => console.log('🟢 Create successful:', response)),
-        catchError(this.handleError)
-      );
-  }
-
-  getJobOfferById(id: string): Observable<JobOffer> {
-    return this.http.get<JobOffer>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(this.handleError));
   }
 
   getAllJobOffers(): Observable<JobOffer[]> {
-    return this.http.get<JobOffer[]>(this.apiUrl)
+    const headers = this.getAuthHeaders();
+    return this.http.get<JobOffer[]>(this.apiUrl, { headers })
       .pipe(catchError(this.handleError));
   }
 
-  updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
-    console.log('🟡 Updating job offer:', { id, request });
-    
-    return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request)
-      .pipe(
-        tap(response => console.log('🟢 Update successful:', response)),
-        catchError(this.handleError)
-      );
+
+
+  createJobOffer(request: JobOfferRequest, publisherId: string): Observable<JobOffer> {
+    const headers = this.getAuthHeaders();
+    const params = new HttpParams().set('publisherId', publisherId);
+    return this.http.post<JobOffer>(this.apiUrl, request, { headers, params })
+      .pipe(catchError(this.handleError));
   }
 
+
   deleteJobOffer(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+    const headers = this.getAuthHeaders();
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers })
       .pipe(catchError(this.handleError));
   }
 
   publishJobOffer(id: string): Observable<JobOffer> {
-    return this.http.post<JobOffer>(`${this.apiUrl}/${id}/publish`, {})
+    const headers = this.getAuthHeaders();
+    return this.http.post<JobOffer>(`${this.apiUrl}/${id}/publish`, {}, { headers })
       .pipe(catchError(this.handleError));
   }
 
   closeJobOffer(id: string): Observable<JobOffer> {
-    return this.http.post<JobOffer>(`${this.apiUrl}/${id}/close`, {})
+    const headers = this.getAuthHeaders();
+    return this.http.post<JobOffer>(`${this.apiUrl}/${id}/close`, {}, { headers })
       .pipe(catchError(this.handleError));
   }
 
   searchJobOffers(keyword: string): Observable<JobOffer[]> {
+    const headers = this.getAuthHeaders();
     const params = new HttpParams().set('keyword', keyword);
-    return this.http.get<JobOffer[]>(`${this.apiUrl}/search`, { params })
+    return this.http.get<JobOffer[]>(`${this.apiUrl}/search`, { headers, params })
       .pipe(catchError(this.handleError));
   }
 
   getJobOffersByStatus(status: string): Observable<JobOffer[]> {
-    return this.http.get<JobOffer[]>(`${this.apiUrl}/status/${status}`)
+    const headers = this.getAuthHeaders();
+    return this.http.get<JobOffer[]>(`${this.apiUrl}/status/${status}`, { headers })
       .pipe(catchError(this.handleError));
   }
 
   getActiveJobOffers(): Observable<JobOffer[]> {
-    return this.http.get<JobOffer[]>(`${this.apiUrl}/active`)
+    const headers = this.getAuthHeaders();
+    return this.http.get<JobOffer[]>(`${this.apiUrl}/active`, { headers })
       .pipe(catchError(this.handleError));
   }
 
   testBackendConnection(): Observable<any> {
-    return this.http.get(this.apiUrl)
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl, { headers })
+      .pipe(
+        tap(() => console.log(' Backend connection test successful')),
+        catchError(this.handleError)
+      );
   }
+// Dans job-offer.service.ts - AJOUTER CES MÉTHODES
+
+updateJobOffer(id: string, request: JobOfferRequest): Observable<JobOffer> {
+  const headers = this.getAuthHeaders();
+  return this.http.put<JobOffer>(`${this.apiUrl}/${id}`, request, { headers })
+    .pipe(
+      tap((updatedJob) => console.log(' Offre mise à jour:', updatedJob.title)),
+      catchError(this.handleError)
+    );
+}
+
+// Méthode pour récupérer une offre spécifique
+getJobOfferById(id: string): Observable<JobOffer> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<JobOffer>(`${this.apiUrl}/${id}`, { headers })
+    .pipe(
+      tap((job) => console.log(' Offre récupérée:', job.title)),
+      catchError(this.handleError)
+    );
+}
+  private handleError(error: HttpErrorResponse) {
+    console.error(' JobOfferService Error:', {
+      status: error.status,
+      statusText: error.statusText,
+      url: error.url,
+      message: error.message
+    });
+
+    let errorMessage = 'Une erreur est survenue';
+
+    if (error.status === 401) {
+      errorMessage = 'Non autorisé - Le token JWT est manquant ou invalide';
+    } else if (error.status === 403) {
+      errorMessage = 'Accès refusé';
+    } else if (error.status === 404) {
+      errorMessage = 'Ressource non trouvée';
+    } else if (error.status === 0) {
+      errorMessage = 'Impossible de se connecter au serveur';
+    }
+
+    return throwError(() => new Error(errorMessage));
+  }
+
 }

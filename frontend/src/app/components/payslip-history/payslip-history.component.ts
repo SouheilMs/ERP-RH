@@ -7,6 +7,7 @@ import { EmployeeServices, Payslip, Employee } from '../../services/employee.ser
 import { CalculationsService } from '../../services/calculations.service';
 import { PdfGenerationService } from '../../services/pdf-generation.service';
 import { TranslationService } from '../../services/translation.service';
+import { AuthService } from '../../services/auth.service'; // Service d'authentification
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -76,6 +77,14 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   currentLanguage: 'fr' | 'en' = 'fr';
   debugMode: boolean = false;
 
+  // Permissions
+  currentUserId: string = '';
+  userRole: string = '';
+  canViewAllEmployees: boolean = false;
+  canGeneratePayslips: boolean = false;
+  canPerformAllActions: boolean = false;
+  isViewingOwnProfile: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -84,11 +93,15 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     private pdfGenerationService: PdfGenerationService,
     private sanitizer: DomSanitizer,
     private translationService: TranslationService,
+    private authService: AuthService, // Service d'authentification
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     console.log(' === INIT PAYSLIP HISTORY COMPONENT ===');
+
+    // Initialiser les permissions utilisateur
+    this.initializeUserPermissions();
 
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -99,6 +112,68 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     this.handleRouteChange();
   }
 
+  private initializeUserPermissions() {
+    // Utiliser les méthodes existantes de AuthService
+    const currentUser = this.authService.getUser();
+
+    if (currentUser) {
+      this.currentUserId = currentUser.id;
+
+      // Utiliser les méthodes de vérification de rôle existantes
+      this.canViewAllEmployees = this.authService.isHR() || this.authService.isHRManager();
+      this.canGeneratePayslips = this.authService.isHR() || this.authService.isHRManager();
+      this.canPerformAllActions = this.authService.isHR() || this.authService.isHRManager();
+
+      // Déterminer le rôle principal pour l'affichage
+      if (this.authService.isHRManager()) {
+        this.userRole = 'ROLE_HRMANAGER';
+      } else if (this.authService.isHR()) {
+        this.userRole = 'ROLE_HR';
+      } else {
+        this.userRole = 'ROLE_EMPLOYEE';
+      }
+
+      console.log('Permissions utilisateur:', {
+        userId: this.currentUserId,
+        role: this.userRole,
+        isHR: this.authService.isHR(),
+        isHRManager: this.authService.isHRManager(),
+        isEmployee: this.authService.isEmployee(),
+        canViewAllEmployees: this.canViewAllEmployees,
+        canGeneratePayslips: this.canGeneratePayslips,
+        canPerformAllActions: this.canPerformAllActions
+      });
+    } else {
+      console.warn('No logged-in users found');
+      this.setDefaultPermissions();
+    }
+  }
+  private checkAccessPermissions() {
+    this.isViewingOwnProfile = this.employeeId === this.currentUserId;
+
+    // Si l'utilisateur n'est pas RH/Manager RH et essaie d'accéder à un autre employé
+    if (!this.isViewingOwnProfile && !this.canViewAllEmployees) {
+      this.errorMessage = 'You do not have permission to access this page';
+      this.loading = false;
+      this.router.navigate(['/unauthorized']);
+      return;
+    }
+
+    console.log('Access permissions:', {
+      isViewingOwnProfile: this.isViewingOwnProfile,
+      canViewAllEmployees: this.canViewAllEmployees,
+      employeeId: this.employeeId,
+      currentUserId: this.currentUserId,
+      userRole: this.userRole
+    });
+  }
+  private setDefaultPermissions() {
+    this.currentUserId = '';
+    this.userRole = 'ROLE_EMPLOYEE';
+    this.canViewAllEmployees = false;
+    this.canGeneratePayslips = false;
+    this.canPerformAllActions = false;
+  }
   private handleRouteChange() {
     const newEmployeeId = this.route.snapshot.paramMap.get('id');
     console.log(' ID employé depuis la route:', newEmployeeId);
@@ -110,12 +185,42 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     }
 
     this.employeeId = newEmployeeId;
+
+    // Vérifier si l'utilisateur a le droit de voir cet employé
+    this.checkAccessPermissions();
+
     this.resetComponent();
     this.loadEmployeeInfo();
   }
+  handleBackNavigation() {
+    if (this.canViewAllEmployees) {
+      // RH/Manager RH - Retour au profil de l'employé
+      this.viewEmployeeDetails();
+    } else if (this.isViewingOwnProfile) {
+      // Employé normal - Retour au dashboard
+      this.backToDashboard();
+    }
+  }
+
+  viewEmployeeDetails() {
+    this.router.navigate(['/employees', this.employeeId]);
+  }
+
+  backToDashboard() {
+    // Rediriger vers le dashboard approprié selon le rôle
+    if (this.authService.isHR() || this.authService.isHRManager()) {
+      this.router.navigate(['/hr-dashboard']);
+    } else {
+      this.router.navigate(['/employee-dashboard']);
+    }
+  }
+
+  backToEmployeeList() {
+    this.router.navigate(['/employees']);
+  }
 
   private resetComponent() {
-    console.log('🔄 Réinitialisation du composant pour le nouvel employé');
+    console.log(' Réinitialisation du composant pour le nouvel employé');
 
     this.payslipHistory = [];
     this.availableYears = [];
@@ -187,14 +292,14 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
         console.log(' Employé chargé avec succès:', employee);
 
         if (!employee) {
-          this.errorMessage = ' Employé non trouvé';
+          this.errorMessage = ' Employee not found';
           this.loading = false;
           this.cdr.detectChanges();
           return;
         }
 
         this.currentEmployee = employee;
-        this.employeeName = employee.username || 'Nom inconnu';
+        this.employeeName = employee.username || 'Name unknown';
         this.employeeMatricule = employee.matricule || employee.id || 'N/A';
 
         console.log(' Informations employé:');
@@ -208,7 +313,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
           this.employeeHireYear = hireDate.getFullYear();
           this.employeeHireMonth = hireDate.getMonth() + 1;
           this.employeeHireDay = hireDate.getDate();
-          console.log('   - Date d\'embauche:', `${this.employeeHireDay}/${this.employeeHireMonth}/${this.employeeHireYear}`);
+          console.log('   - HireDate:', `${this.employeeHireDay}/${this.employeeHireMonth}/${this.employeeHireYear}`);
         } else {
           this.employeeHireYear = new Date().getFullYear();
           this.employeeHireMonth = 1;
@@ -221,7 +326,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         console.error(' Erreur chargement employé:', error);
-        this.errorMessage = ` Erreur lors du chargement des informations employé: ${error.message}`;
+        this.errorMessage = ` Error loading employee information: ${error.message}`;
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -229,7 +334,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadAvailableYears() {
-    console.log(' Chargement des années disponibles pour:', this.employeeId);
+    console.log(' Loading available years for:', this.employeeId);
 
     this.employeeService.getAvailableYears(this.employeeId).subscribe({
       next: (years: number[]) => {
@@ -346,7 +451,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
         this.payslipHistory = [];
         this.hasData = false;
         this.loading = false;
-        this.errorMessage = `Aucune fiche de paie trouvée pour ${year}`;
+        this.errorMessage = `No payslips found for ${year}`;
         this.cdr.detectChanges();
       }
     });
@@ -371,8 +476,16 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     console.log('=== FIN DIAGNOSTIC ===');
   }
 
+
+
   generateTestPayslips() {
-    console.log(' Génération de fiche de test pour:', this.employeeName);
+    // Vérifier les permissions
+    if (!this.canUserGeneratePayslips()) {
+      this.errorMessage = ' You do not have permission to access this page';
+      return;
+    }
+
+    console.log(' Generating test results for:', this.employeeName);
 
     const targetYear = this.selectedYear;
     console.log(' Année cible pour la fiche de test:', targetYear);
@@ -396,7 +509,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
 
     this.generatingPayslip = true;
     this.errorMessage = '';
-    this.successMessage = ` Génération de la fiche de test pour ${this.getMonthName(monthToGenerate)} ${targetYear} en cours...`;
+    this.successMessage = ` Generating payslips for ${this.getMonthName(monthToGenerate)} ${targetYear} in progress...`;
 
     // VÉRIFICATIONS IDENTIQUES À LA GÉNÉRATION ANNUELLE
     if (!this.isMonthAvailableForGeneration(targetYear, monthToGenerate)) {
@@ -629,8 +742,8 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   getMonthName(month: number): string {
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
     return monthNames[month - 1] || '';
   }
 
@@ -696,6 +809,11 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   canGenerateForMonth(month: number): boolean {
+    // Vérifier les permissions d'abord
+    if (!this.canUserGeneratePayslips()) {
+      return false;
+    }
+
     console.log(` Vérification génération pour ${month}/${this.selectedYear}`);
 
     if (this.isMonthInFuture(this.selectedYear, month)) {
@@ -715,6 +833,12 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
   }
 
   generatePayslipForMonth(month: number) {
+    // Vérifier les permissions
+    if (!this.canUserGeneratePayslips()) {
+      this.errorMessage = ' Vous n\'avez pas les permissions pour générer des fiches de paie';
+      return;
+    }
+
     if (this.isMonthInFuture(this.selectedYear, month)) {
       return;
     }
@@ -733,7 +857,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       next: (newPayslip: Payslip) => {
         this.generatingPayslip = false;
         console.log(' Fiche générée avec succès:', newPayslip);
-        this.successMessage = ` Fiche de paie pour ${this.getMonthName(month)} ${this.selectedYear} créée avec succès!`;
+        this.successMessage = ` Payslip for ${this.getMonthName(month)} ${this.selectedYear} created successfully!`;
 
         setTimeout(() => {
           this.loadPayslipsForYear(this.selectedYear);
@@ -747,7 +871,7 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 🔥 MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
+  // MÉTHODE UNIQUE POUR DÉTERMINER LE MOIS CIBLE
   getTargetMonth(): number {
     if (this.selectedYear < this.currentYear) {
       return 12;
@@ -758,22 +882,15 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  //  MÉTHODE UNIQUE POUR DÉSACTIVER LE BOUTON
-  canGenerateForSelectedYear(): boolean {
-    if (this.selectedYear > this.currentYear) {
-      return false;
-    }
-
-    if (this.selectedYear === this.currentYear) {
-      const currentMonth = new Date().getMonth() + 1;
-      return !this.isMonthInFuture(this.selectedYear, currentMonth);
-    }
-
-    return true;
-  }
 
   //  MÉTHODE UNIQUE POUR LA GÉNÉRATION ANNUELLE
   generatePayslipsForYear(year: number) {
+    // Vérifier les permissions
+    if (!this.canUserGeneratePayslips()) {
+      this.errorMessage = 'You do not have permission to generate payslips';
+      return;
+    }
+
     if (!year) {
       return;
     }
@@ -784,17 +901,17 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
 
     this.generatingPayslip = true;
     this.errorMessage = '';
-    this.successMessage = ` Génération des fiches pour ${year} en cours...`;
+    this.successMessage = ` Generating payslips for ${year} in progress...`;
 
-    console.log(` Génération annuelle pour ${year} - Employé: ${this.employeeName}`);
+    console.log(` Annual generation for  ${year} - Employee: ${this.employeeName}`);
 
     this.employeeService.generatePayslipsForYear(this.employeeId, year).subscribe({
       next: (result: any) => {
         this.generatingPayslip = false;
-        console.log(' Génération annuelle terminée:', result);
+        console.log(' Annual generation complete:', result);
 
         const successCount = result.generatedCount || result.successCount || 0;
-        this.successMessage = ` ${successCount} fiches générées avec succès pour ${year}!`;
+        this.successMessage = ` ${successCount} generated successfully for ${year}!`;
 
         setTimeout(() => {
           this.loadPayslipsForYear(this.selectedYear);
@@ -802,14 +919,14 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         this.generatingPayslip = false;
-        console.error(' Erreur génération annuelle:', error);
+        console.error(' Error generating payslip:', error);
         this.cdr.detectChanges();
       }
     });
   }
 
   onYearChange() {
-    console.log(` Changement d'année: ${this.selectedYear}`);
+    console.log(` Change the year: ${this.selectedYear}`);
     this.loadPayslipsForYear(this.selectedYear);
     this.errorMessage = '';
     this.successMessage = '';
@@ -819,10 +936,29 @@ export class PayslipHistoryComponent implements OnInit, OnDestroy {
     console.log('PDF de fiche de paie chargé avec succès');
   }
 
-  viewEmployeeDetails() {
-    this.router.navigate(['/employees', this.employeeId]);
+  canGenerateForSelectedYear(): boolean {
+    // Permettre aux RH de générer, et aux employés de générer leurs propres fiches
+    if (this.canUserGeneratePayslips() || this.isViewingOwnProfile) {
+      if (this.selectedYear > this.currentYear) {
+        return false;
+      }
+
+      if (this.selectedYear === this.currentYear) {
+        const currentMonth = new Date().getMonth() + 1;
+        return !this.isMonthInFuture(this.selectedYear, currentMonth);
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
+// S'assurer que cette méthode permet aux employés de générer leurs propres fiches
+  canUserGeneratePayslips(): boolean {
+    // RH peuvent générer toutes les fiches, employés peuvent générer leurs propres fiches
+    return this.canGeneratePayslips || this.isViewingOwnProfile;
+  }
   checkNineDinarsEligibility(): void {
     if (!this.currentEmployee?.hireDate) return;
 

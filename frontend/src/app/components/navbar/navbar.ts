@@ -2,7 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NotificationComponent } from '../notification/notification';
-import { AuthService, CurrentUser } from '../../services/auth.service';
+import { AuthService, User } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -12,7 +12,7 @@ import { AuthService, CurrentUser } from '../../services/auth.service';
   styleUrls: ['./navbar.css']
 })
 export class NavbarComponent implements OnInit {
-  currentUser: CurrentUser | null = null;
+  currentUser: User | null = null;
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
   isManager = false;
@@ -33,8 +33,8 @@ export class NavbarComponent implements OnInit {
   }
 
   checkUserRole(): void {
-    this.isAdmin = this.authService.isAdmin();
-    this.isManager = this.authService.isManager();
+    this.isAdmin = this.authService.isHRorManager()
+    this.isManager = this.authService.isHRManager()
     this.isEmployee = this.authService.isEmployee();
   }
 
