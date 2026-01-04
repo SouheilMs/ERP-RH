@@ -78,7 +78,7 @@ test-frontend:
     - apk add --no-cache chromium
     - export CHROME_BIN=/usr/bin/chromium-browser
     - npm ci
-    - npm test -- --watch=false --browsers=ChromeHeadless
+    - npm test -- --watch=false
 
 # Analyse de qualité avec SonarQube
 sonar-backend:
