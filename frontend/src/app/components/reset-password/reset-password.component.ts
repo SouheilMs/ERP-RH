@@ -5,6 +5,7 @@ import { PasswordResetService } from '../../services/password-reset.service';
 
 @Component({
   selector: 'app-reset-password',
+  standalone : true,
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.css'],
   imports : [ReactiveFormsModule]

@@ -1,6 +1,7 @@
 package com.mycompany.backend.services.Impl;
 
 import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.EmployeeGetDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 import com.mycompany.backend.entities.Role;
@@ -253,6 +254,26 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Optional<Employee> getEmployeeByUsername(String username) {
         return employeeRepository.findByUsername(username);
+    }
+
+    @Override
+    public EmployeeGetDTO getSingleRhManager() {
+        Employee rhManager = employeeRepository.findAll().stream()
+                .filter(emp -> emp.getRoles().stream()
+                        .anyMatch(role -> role.getName() == ERole.ROLE_HRMANAGER))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("HR Manager not found"));
+        return EmployeeGetDTO.EmployeeToEmployeeDto(rhManager);
+    }
+
+    @Override
+    public EmployeeGetDTO getSingleRh() {
+        Employee rh = employeeRepository.findAll().stream()
+                .filter(emp -> emp.getRoles().stream()
+                        .anyMatch(role -> role.getName().equals(ERole.ROLE_HR)))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("HR not found"));
+        return EmployeeGetDTO.EmployeeToEmployeeDto(rh);
     }
 
     @Override

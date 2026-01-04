@@ -1,13 +1,7 @@
 package com.mycompany.backend.controllers;
 
-import com.mycompany.backend.dto.EmployeeDTO;
-import com.mycompany.backend.dto.EmployeeDetailDTO;
-import com.mycompany.backend.dto.FormationDTO;
-import com.mycompany.backend.dto.PasswordChangeRequest;
-import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.entities.Payslip;
-import com.mycompany.backend.entities.Formation;
-import com.mycompany.backend.entities.Role;
+import com.mycompany.backend.dto.*;
+import com.mycompany.backend.entities.*;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.FormationRepository;
 import com.mycompany.backend.repositories.PayslipRepository;
@@ -135,6 +129,7 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employé supprimé avec succès");
     }
+
     @PutMapping("/{id}/change-password")
     public ResponseEntity<?> changePassword(
             @PathVariable String id, // CHANGÉ DE Long À String
@@ -149,6 +144,7 @@ public class EmployeeController {
 
         return employeeService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
     }
+
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
@@ -177,7 +173,7 @@ public class EmployeeController {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
-        if(emp.getPhotoId() == null) {
+        if (emp.getPhotoId() == null) {
             return ResponseEntity.notFound().build();
         }
 
@@ -231,7 +227,7 @@ public class EmployeeController {
         f.getParticipants().add(emp);
 
         if (certificate != null && !certificate.isEmpty()) {
-            if(f.getCertificateId() != null) {
+            if (f.getCertificateId() != null) {
                 gridFsService.deleteFile(f.getCertificateId());
             }
 
@@ -563,5 +559,9 @@ public class EmployeeController {
 
         return dto;
     }
-}
 
+    @GetMapping("/rh")
+    public EmployeeGetDTO getSingleRh() {
+        return employeeService.getSingleRh();
+    }
+}

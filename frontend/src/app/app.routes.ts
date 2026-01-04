@@ -2,7 +2,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
 import { SignupComponent } from './components/signup/signup.component';
-import { ResetPasswordComponent } from './components/ResetPassword/reset-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
 import { EmployeeDetailComponent } from './components/employee-detail/employee-detail.component';
@@ -20,6 +20,9 @@ import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
 import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
+import { ManageRequestsComponent } from './components/manage-requests/manage-requests';
+import { SubmitCongeComponent} from './components/submit-conge/submit-conge';
+import { RequestsListComponent} from './components/requests-list/requests-list';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -78,6 +81,18 @@ export const routes: Routes = [
         path: 'ai-assistant',
         component: AiAssistantComponent,
         canActivate: [jobGuard] // Mêmes permissions que jobs
+      },
+      {
+        path: 'conges/manage',
+        component: ManageRequestsComponent
+      },
+      {
+        path: 'conges/submit',
+        component: SubmitCongeComponent
+      },
+      {
+        path: 'conges/my-requests',
+        component: RequestsListComponent
       },
 
       {

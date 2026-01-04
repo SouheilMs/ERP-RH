@@ -17,6 +17,10 @@ export const authInterceptor: HttpInterceptorFn = (
     console.log(' Skipping auth for authentication URL');
     return next(req);
   }
+  if (req.url.includes('/api/password/')) {
+    console.log(' Skipping auth for password management URL');
+    return next(req);
+  }
 
   const token = localStorage.getItem('authToken');
   console.log(' Token from localStorage:', token ? `PRESENT (${token.substring(0, 20)}...)` : 'NULL');

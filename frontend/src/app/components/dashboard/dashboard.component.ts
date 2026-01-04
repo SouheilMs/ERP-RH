@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Navbar } from '../navbar/navbar';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 import {ChatbotComponent} from '../chatbot/chatbot';
@@ -14,7 +13,6 @@ import {ChatbotComponent} from '../chatbot/chatbot';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    Navbar,
     ChatbotComponent
   ],
   templateUrl: './dashboard.component.html',
@@ -28,6 +26,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
   canViewConges: boolean = false;
+  canManageConges: boolean = false;
+  canSubmitConges: boolean = false;
   canViewRoles: boolean = false;
   isHRManager: boolean = false;
   userRole: string = '';
@@ -59,6 +59,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewJobs = this.authService.isHR() || this.authService.isHRManager();
     this.canViewFormations = this.authService.isHR() || this.authService.isHRManager();
     this.canViewConges = this.canViewCongesPermission(); // <-- AJOUTÉ
+    this.canManageConges = this.authService.canManageConges();
+    this.canSubmitConges = this.authService.isEmployee();
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
     this.canViewRoles = this.authService.canViewRoles();
