@@ -1,3 +1,4 @@
+// app.routes.ts
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
 import { SignupComponent } from './components/signup/signup.component';
@@ -12,7 +13,9 @@ import { JobListComponent } from './components/job-list.component/job-list.compo
 import { JobFormComponent } from './components/job-form.component/job-form.component';
 import { FormationListComponent } from './components/formation-list.component/formation-list.component';
 import { FormationFormComponent } from './components/formation-form.component/formation-form.component';
+import { ChatbotComponent } from './components/chatbot/chatbot';
 
+import { AiAssistantComponent } from './components/ai-assistant.component/ai-assistant.component';
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
@@ -22,10 +25,22 @@ export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
   // Routes publiques
-  { path: 'login', component: LoginComponent },
-  { path: 'signup', component: SignupComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
+  {
+    path: 'signup',
+    component: SignupComponent
+  },
+  {
+    path: 'reset-password',
+    component: ResetPasswordComponent
+  },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent
+  },
 
   // Routes protégées
   {
@@ -37,6 +52,7 @@ export const routes: Routes = [
       { path: 'employees/:id', component: EmployeeDetailComponent },
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
+      { path: 'chatbot', component: ChatbotComponent },
       // Vérifiez comment est définie votre route
       {path: 'my-leave ',
         component: LeaveBalanceComponent},
@@ -57,7 +73,18 @@ export const routes: Routes = [
         canActivate: [jobGuard]
       },
 
-      { path: 'my-profile', component: EmployeeDetailComponent, data: { isMyProfile: true } },
+      // NOUVELLE ROUTE AI ASSISTANT
+      {
+        path: 'ai-assistant',
+        component: AiAssistantComponent,
+        canActivate: [jobGuard] // Mêmes permissions que jobs
+      },
+
+      {
+        path: 'my-profile',
+        component: EmployeeDetailComponent,
+        data: { isMyProfile: true }
+      },
 
       // Routes Formations
       {

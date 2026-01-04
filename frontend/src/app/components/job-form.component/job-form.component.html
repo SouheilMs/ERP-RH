@@ -35,8 +35,8 @@
     <!-- Form -->
     @if (!loading) {
       <form [formGroup]="jobForm" (ngSubmit)="onSubmit()" class="job-form">
-        
-        <!-- Row 1: Title and Department -->
+
+        <!-- Row 1: Title avec suggestions AI - CORRIGÉ -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label required" for="title">Job Title</label>
@@ -180,9 +180,25 @@
           }
         </div>
 
-        <!-- Description -->
+        <!-- Description avec boutons AI -->
         <div class="form-group full-width">
-          <label class="form-label required" for="description">Job Description</label>
+          <div class="field-header">
+            <label class="form-label required" for="description">Job Description</label>
+            <div class="ai-buttons">
+              <button type="button" class="ai-button"
+                      (click)="generateDescriptionAI()"
+                      [disabled]="aiGenerating || !jobForm.get('title')?.value || !jobForm.get('department')?.value || !jobForm.get('location')?.value">
+                <i class="fas fa-robot"></i>
+                Generate with AI
+              </button>
+              <button type="button" class="ai-button"
+                      (click)="improveFieldAI('description')"
+                      [disabled]="aiGenerating || !jobForm.get('description')?.value">
+                <i class="fas fa-magic"></i>
+                Improve with AI
+              </button>
+            </div>
+          </div>
           <textarea
             id="description"
             formControlName="description"
@@ -199,9 +215,17 @@
           }
         </div>
 
-        <!-- Responsibilities -->
+        <!-- Responsibilities avec bouton AI -->
         <div class="form-group full-width">
-          <label class="form-label required" for="responsibilities">Responsibilities</label>
+          <div class="field-header">
+            <label class="form-label required" for="responsibilities">Responsibilities</label>
+            <button type="button" class="ai-button"
+                    (click)="improveFieldAI('responsibilities')"
+                    [disabled]="aiGenerating || !jobForm.get('responsibilities')?.value">
+              <i class="fas fa-magic"></i>
+              Improve with AI
+            </button>
+          </div>
           <textarea
             id="responsibilities"
             formControlName="responsibilities"
@@ -218,9 +242,17 @@
           }
         </div>
 
-        <!-- Requirements -->
+        <!-- Requirements avec bouton AI -->
         <div class="form-group full-width">
-          <label class="form-label required" for="requirements">Requirements and Skills</label>
+          <div class="field-header">
+            <label class="form-label required" for="requirements">Requirements and Skills</label>
+            <button type="button" class="ai-button"
+                    (click)="generateRequirementsAI()"
+                    [disabled]="aiGenerating || !jobForm.get('responsibilities')?.value">
+              <i class="fas fa-cogs"></i>
+              Generate from responsibilities
+            </button>
+          </div>
           <textarea
             id="requirements"
             formControlName="requirements"
@@ -237,9 +269,17 @@
           }
         </div>
 
-        <!-- Benefits -->
+        <!-- Benefits avec bouton AI -->
         <div class="form-group full-width">
-          <label class="form-label required" for="benefits">Benefits</label>
+          <div class="field-header">
+            <label class="form-label required" for="benefits">Benefits</label>
+            <button type="button" class="ai-button"
+                    (click)="improveFieldAI('benefits')"
+                    [disabled]="aiGenerating || !jobForm.get('benefits')?.value">
+              <i class="fas fa-magic"></i>
+              Improve with AI
+            </button>
+          </div>
           <textarea
             id="benefits"
             formControlName="benefits"
@@ -287,8 +327,8 @@
             <i class="fas fa-times me-2"></i>
             Cancel
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             class="submit-button"
             [disabled]="submitting || !jobForm.valid"
           >
@@ -302,6 +342,16 @@
           </button>
         </div>
       </form>
+
+      <!-- Loading AI Overlay -->
+      @if (aiGenerating) {
+        <div class="ai-loading-overlay">
+          <div class="ai-loading-content">
+            <i class="fas fa-robot fa-spin fa-2x"></i>
+            <p>AI is generating content...</p>
+          </div>
+        </div>
+      }
     }
   </div>
 </div>
