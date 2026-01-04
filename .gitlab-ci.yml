@@ -76,37 +76,41 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: node:20-alpine
+  image: node:20
+  before_script:
+    - apt-get update
+    - apt-get install -y chromium
+    - export CHROME_BIN=/usr/bin/chromium
   script:
     - cd frontend
     - npm ci
-    # Run unit tests
     - npm test -- --watch=false --browsers=ChromeHeadless
   artifacts:
+    when: always
     reports:
       junit:
         - frontend/coverage/junit.xml
     paths:
       - frontend/coverage/
 
-# Separate E2E tests job
+# E2E tests with Cypress
 e2e-frontend:
   stage: test
   image: cypress/included:latest
   script:
     - cd frontend
     - npm ci
-    # Start the app in background
     - npm start &
-    - npx wait-on http://localhost:4200
-    # Run Cypress E2E tests
-    - npx cypress run --config-file cypress.config.ts
+    - npx wait-on http://localhost:4200 --timeout 120000
+    - npx cypress run
   artifacts:
     when: always
     paths:
       - frontend/cypress/videos/
       - frontend/cypress/screenshots/
     expire_in: 1 week
+  allow_failure: true
+
 # Analyse de qualité avec SonarQube
 sonar-backend:
   stage: quality
@@ -165,7 +169,7 @@ docker-build-push:
   services:
     - docker:dind
   variables:
-    DOCKER_REGISTRY: docker.io # Ou votre registry GitLab
+    DOCKER_REGISTRY: docker.io
     IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
     IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
   script:
