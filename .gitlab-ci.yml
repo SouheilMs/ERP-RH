@@ -34,11 +34,9 @@ test-backend:
   stage: test
   image: maven:3.8-openjdk-17
   services:
-    - postgres:15
+    - mongo:latest
   variables:
-    POSTGRES_DB: testdb
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
+    MONGO_URI: mongodb://mongo:27017/testdb
     SPRING_PROFILES_ACTIVE: test
   script:
     - cd backend
@@ -52,11 +50,9 @@ integration-test-backend:
   stage: test
   image: maven:3.8-openjdk-17
   services:
-    - postgres:15
+    - mongo:latest
   variables:
-    POSTGRES_DB: testdb
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
+    MONGO_URI: mongodb://mongo:27017/testdb
     SPRING_PROFILES_ACTIVE: test
   script:
     - cd backend
@@ -76,7 +72,7 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: cypress/browsers:node-18.16.1-chrome-110-ff-109
+  image: cypress/browsers:node-18.16.1-chrome-110.0.5481.77-ff-109.0.1-edge-110.0.1587.41
   script:
     - cd frontend
     - npm ci
