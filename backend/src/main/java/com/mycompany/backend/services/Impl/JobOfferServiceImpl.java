@@ -4,11 +4,14 @@ import com.mycompany.backend.config.LinkedInConfig;
 import com.mycompany.backend.dto.JobOfferDTO;
 import com.mycompany.backend.dto.JobOfferRequest;
 import com.mycompany.backend.dto.LinkedInPostResponse;
+import com.mycompany.backend.dto.ai.AiSuggestionRequest;
+import com.mycompany.backend.dto.ai.AiSuggestionResponse;
 import com.mycompany.backend.entities.JobOffer;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.repositories.JobOfferRepository;
-import com.mycompany.backend.services.JobOfferService;
+import com.mycompany.backend.services.AiService;
 import com.mycompany.backend.services.EmployeeService;
+import com.mycompany.backend.services.JobOfferService;
 import com.mycompany.backend.services.LinkedInIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,9 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +34,9 @@ public class JobOfferServiceImpl implements JobOfferService {
 
     @Autowired
     private JobOfferRepository jobOfferRepository;
+
+    @Autowired
+    private AiService aiService;
 
     @Autowired
     private EmployeeService employeeService;
@@ -348,8 +356,81 @@ public class JobOfferServiceImpl implements JobOfferService {
         return response;
     }
 
+    // ========== MÉTHODES AI ==========
 
-    // Private helper methods
+    public AiSuggestionResponse generateJobDescriptionAI(String jobTitle, String department, String location) {
+        try {
+            AiSuggestionRequest request = new AiSuggestionRequest();
+            request.setJobTitle(jobTitle);
+            request.setType(AiSuggestionRequest.AiSuggestionType.JOB_DESCRIPTION);
+            request.setContext(String.format("Department: %s, Location: %s", department, location));
+
+            return aiService.generateSuggestion(request);
+        } catch (Exception e) {
+            log.error("Error generating job description with AI: {}", e.getMessage());
+            return AiSuggestionResponse.error("Failed to generate job description: " + e.getMessage());
+        }
+    }
+
+    public AiSuggestionResponse improveJobOfferAI(JobOfferRequest jobOfferRequest) {
+        try {
+            StringBuilder context = new StringBuilder();
+            context.append("Job Title: ").append(jobOfferRequest.getTitle()).append("\n");
+            context.append("Department: ").append(jobOfferRequest.getDepartment()).append("\n");
+            context.append("Location: ").append(jobOfferRequest.getLocation()).append("\n");
+
+            AiSuggestionResponse improvedDescription = aiService.improveText(
+                    jobOfferRequest.getDescription(),
+                    context.toString()
+            );
+
+            return improvedDescription;
+        } catch (Exception e) {
+            log.error("Error improving job offer with AI: {}", e.getMessage());
+            return AiSuggestionResponse.error("Failed to improve job offer: " + e.getMessage());
+        }
+    }
+
+    public List<String> suggestJobTitlesAI(String description) {
+        try {
+            AiSuggestionResponse response = aiService.generateMultipleTitles(description);
+            if (response.getSuggestion() != null) {
+                String[] titles = response.getSuggestion().split("\n");
+                return Arrays.stream(titles)
+                        .map(String::trim)
+                        .filter(title -> !title.isEmpty())
+                        .collect(Collectors.toList());
+            }
+            return new ArrayList<>();
+        } catch (Exception e) {
+            log.error("Error suggesting job titles with AI: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public AiSuggestionResponse generateCompleteJobOfferAI(JobOfferRequest basicInfo) {
+        try {
+            AiSuggestionRequest request = new AiSuggestionRequest();
+            request.setJobTitle(basicInfo.getTitle());
+            request.setType(AiSuggestionRequest.AiSuggestionType.JOB_DESCRIPTION);
+            request.setContext(String.format(
+                    "Department: %s, Location: %s, Contract: %s, Experience: %s, Education: %s",
+                    basicInfo.getDepartment(),
+                    basicInfo.getLocation(),
+                    basicInfo.getContractType(),
+                    basicInfo.getExperienceLevel(),
+                    basicInfo.getEducationRequired()
+            ));
+
+            return aiService.generateSuggestion(request);
+        } catch (Exception e) {
+            log.error("Error generating complete job offer with AI: {}", e.getMessage());
+            return AiSuggestionResponse.error("Failed to generate job offer: " + e.getMessage());
+        }
+    }
+
+    // ========== MÉTHODES PRIVÉES ==========
+
     private JobOfferDTO convertToDTO(JobOffer jobOffer) {
         JobOfferDTO dto = new JobOfferDTO();
         dto.setId(jobOffer.getId());
