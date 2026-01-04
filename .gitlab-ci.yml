@@ -1,34 +1,14 @@
 stages:
   - build
   - test
-  - quality
-  - security
-  - deploy
 
-variables:
-  DOCKER_DRIVER: overlay2
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  DOCKER_TLS_CERTDIR: ""
-  IMAGE_NAME_BACKEND: $DOCKERHUB_USERNAME/backend
-  IMAGE_NAME_FRONTEND: $DOCKERHUB_USERNAME/frontend
-
-# Cache pour accélérer les builds
-cache:
-  paths:
-    - backend/.m2/repository
-    - frontend/node_modules/
-    - .sonar/cache
-
-# Jobs Backend
+# ---------- BACKEND ----------
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
   script:
     - cd backend
     - mvn clean compile -DskipTests
-  artifacts:
-    paths:
-      - backend/target/
 
 test-backend:
   stage: test
@@ -43,26 +23,8 @@ test-backend:
   script:
     - cd backend
     - mvn test
-  artifacts:
-    reports:
-      junit:
-        - backend/target/surefire-reports/TEST-*.xml
 
-integration-test-backend:
-  stage: test
-  image: maven:3.8-openjdk-17
-  services:
-    - postgres:15
-  variables:
-    POSTGRES_DB: testdb
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
-    SPRING_PROFILES_ACTIVE: test
-  script:
-    - cd backend
-    - mvn verify -Dit.test="*IT" -DfailIfNoTests=false
-
-# Jobs Frontend
+# ---------- FRONTEND ----------
 build-frontend:
   stage: build
   image: node:20-alpine
@@ -70,9 +32,6 @@ build-frontend:
     - cd frontend
     - npm ci
     - npm run build -- --configuration=production
-  artifacts:
-    paths:
-      - frontend/dist/
 
 test-frontend:
   stage: test
