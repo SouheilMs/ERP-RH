@@ -76,11 +76,9 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: node:20-alpine
+  image: cypress/browsers:node-20.17.0-chrome-131.0.6778.85-ff-132.0-edge-131.0.2903.70-1
   script:
     - cd frontend
-    - apk add --no-cache chromium
-    - export CHROME_BIN=/usr/bin/chromium-browser
     - npm ci
     - npm test -- --watch=false --browsers=ChromeHeadless
     - npm run e2e -- --configuration=ci
