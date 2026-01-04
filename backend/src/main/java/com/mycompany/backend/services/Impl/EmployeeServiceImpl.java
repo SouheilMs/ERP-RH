@@ -82,7 +82,21 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccessDeniedException("Access denied: HR role required");
         }
     }
+    // Vérification des permissions d'import
+    private void checkImportEmployeePermission() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!permissionService.canImportEmployees(authentication)) {
+            throw new AccessDeniedException("Access denied: Only HR Managers can import employees");
+        }
+    }
 
+    // Vérification des permissions d'export
+    private void checkExportEmployeePermission() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!permissionService.canExportEmployees(authentication)) {
+            throw new AccessDeniedException("Access denied: Only HR Managers can export employees");
+        }
+    }
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -495,9 +509,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void ImportFromExcel(MultipartFile file) throws IOException {
+    public void importFromExcel(MultipartFile file) throws IOException {
         // SEULS LES RH MANAGERS PEUVENT IMPORTER
-        checkCreateEmployeePermission();
+        checkImportEmployeePermission();
 
         Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
@@ -517,7 +531,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public ByteArrayOutputStream exportToExcel() throws IOException {
         // RH ET RH MANAGERS PEUVENT EXPORTER
-        checkManageEmployeePermission();
+        checkExportEmployeePermission();
 
         List<Employee> employees = employeeRepository.findAll();
         Workbook workbook = new XSSFWorkbook();

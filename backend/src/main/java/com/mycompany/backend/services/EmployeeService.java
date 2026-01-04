@@ -28,7 +28,7 @@ public interface EmployeeService {
     EmployeeGetDTO getSingleRh();
     void deleteEmployee(String id);
     ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
-    void ImportFromExcel(MultipartFile file) throws IOException;
+    void importFromExcel(MultipartFile file) throws IOException;
     ByteArrayOutputStream exportToExcel() throws IOException;
 
     // Gestion des fichiers

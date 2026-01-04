@@ -129,6 +129,7 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employé supprimé avec succès");
     }
+
     @PutMapping("/{id}/change-password")
     public ResponseEntity<?> changePassword(
             @PathVariable String id, // CHANGÉ DE Long À String
@@ -143,6 +144,7 @@ public class EmployeeController {
 
         return employeeService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
     }
+
     // -------------------- PHOTO --------------------
     @PostMapping("/{id}/upload-photo")
     public ResponseEntity<EmployeeDetailDTO> uploadPhoto(@PathVariable String id,
@@ -171,7 +173,7 @@ public class EmployeeController {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé non trouvé"));
 
-        if(emp.getPhotoId() == null) {
+        if (emp.getPhotoId() == null) {
             return ResponseEntity.notFound().build();
         }
 
@@ -195,7 +197,7 @@ public class EmployeeController {
     @PostMapping("/import")
     public ResponseEntity<String> importEmployees(@RequestParam("file") MultipartFile file) {
         try {
-            employeeService.ImportFromExcel(file);
+            employeeService.importFromExcel(file);
             return ResponseEntity.ok("Fichier importé avec succès");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -225,7 +227,7 @@ public class EmployeeController {
         f.getParticipants().add(emp);
 
         if (certificate != null && !certificate.isEmpty()) {
-            if(f.getCertificateId() != null) {
+            if (f.getCertificateId() != null) {
                 gridFsService.deleteFile(f.getCertificateId());
             }
 
@@ -561,21 +563,5 @@ public class EmployeeController {
     @GetMapping("/rh")
     public EmployeeGetDTO getSingleRh() {
         return employeeService.getSingleRh();
-    }
-
-    //get all rh
-    @GetMapping("/all-rh")
-    public List<EmployeeGetDTO> getAllRh() {
-        List<Employee> rhs = employeeRepository.findAll().stream()
-                .filter(employee -> employee.getRoles().stream()
-                        .anyMatch(role -> role.getName() == (ERole.ROLE_HR))).toList();
-        return rhs.stream()
-                .map(EmployeeGetDTO::EmployeeToEmployeeDto)
-                .toList();
-    }
-
-    @GetMapping("/hr-managers")
-    public EmployeeGetDTO getSingleHrManager() {
-        return employeeService.getSingleRhManager();
     }
 }

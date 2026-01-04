@@ -2,6 +2,7 @@ package com.mycompany.backend.services;
 
 import com.mycompany.backend.dto.JobOfferDTO;
 import com.mycompany.backend.dto.JobOfferRequest;
+import com.mycompany.backend.dto.LinkedInPostResponse;
 import com.mycompany.backend.entities.JobOffer;
 
 import java.util.List;
@@ -45,8 +46,9 @@ public interface JobOfferService {
     void expireOldOffers();
     boolean isExpired(String id);
 
-    JobOfferDTO publishToLinkedIn(String jobOfferId);
+    // Méthodes LinkedIn - CORRIGÉES
+    LinkedInPostResponse publishToLinkedIn(String jobOfferId);
     JobOfferDTO publishToIndeed(String jobOfferId);
     JobOfferDTO unpublishFromLinkedIn(String jobOfferId);
-    JobOfferDTO updateLinkedInPost(String jobOfferId);
+    LinkedInPostResponse updateLinkedInPost(String jobOfferId);
 }

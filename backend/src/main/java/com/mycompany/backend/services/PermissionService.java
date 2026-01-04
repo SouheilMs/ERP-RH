@@ -14,6 +14,21 @@ public class PermissionService {
         }
         return hasRole(auth, "ROLE_HRMANAGER");
     }
+    // Seul le RH Manager peut importer des employés
+    public boolean canImportEmployees(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        return hasRole(auth, "ROLE_HRMANAGER");
+    }
+
+    // Seul le RH Manager peut exporter des employés
+    public boolean canExportEmployees(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        return hasRole(auth, "ROLE_HRMANAGER");
+    }
 
     // RH et RH Managers peuvent gérer des employés
     public boolean canManageEmployees(Authentication auth) {
