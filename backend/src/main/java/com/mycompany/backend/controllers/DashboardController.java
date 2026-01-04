@@ -12,13 +12,15 @@ public class DashboardController {
 
     @GetMapping
     public String dashboard(Authentication authentication, Model model) {
-        // Add user info to model
-        if (authentication != null && authentication.getPrincipal() instanceof com.mycompany.backend.services.EmployeeDetailsImpl principal) {
+        // VERSION JAVA 8 CORRECTE
+        if (authentication != null && authentication.getPrincipal() instanceof com.mycompany.backend.services.EmployeeDetailsImpl) {
+            com.mycompany.backend.services.EmployeeDetailsImpl principal = 
+                (com.mycompany.backend.services.EmployeeDetailsImpl) authentication.getPrincipal();
             model.addAttribute("username", principal.getUsername());
             model.addAttribute("userId", principal.getId());
             model.addAttribute("authorities", principal.getAuthorities());
         }
-        // Set the content fragment to employees/list.html
+        
         model.addAttribute("content", "employees/list :: content");
         return "layout/dashboard";
     }
@@ -43,3 +45,4 @@ public class DashboardController {
         return "fragments/formations :: formations-content";
     }
 }
+
