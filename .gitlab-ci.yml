@@ -72,11 +72,11 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: cypress/browsers:node-18.16.1-chrome-110.0.5481.77-ff-109.0.1-edge-110.0.1587.41
+  image: cypress/included:10.0.3
   script:
     - cd frontend
     - npm ci
-    - CHROME_BIN=/usr/bin/google-chrome CHROME_FLAGS="--no-sandbox --disable-gpu --disable-dev-shm-usage --disable-software-rasterizer --remote-debugging-port=9222" npm test -- --watch=false --browsers=ChromeHeadless
+    - npm test -- --watch=false --browsers=ChromeHeadless
     - npm run e2e -- --configuration=ci
 
 # Analyse de qualité avec SonarQube
