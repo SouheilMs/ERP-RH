@@ -1,6 +1,7 @@
 package com.mycompany.backend.services;
 
 import com.mycompany.backend.dto.EmployeeDTO;
+import com.mycompany.backend.dto.EmployeeGetDTO;
 import com.mycompany.backend.entities.Employee;
 import com.mycompany.backend.entities.Payslip;
 
@@ -23,6 +24,8 @@ public interface EmployeeService {
     Employee saveEmployee(Employee employee);
     Employee createEmployee(Employee employee);
     Optional<Employee> getEmployeeByEmail(String email);
+    EmployeeGetDTO getSingleRhManager();
+    EmployeeGetDTO getSingleRh();
     void deleteEmployee(String id);
     ResponseEntity<?> registerNewEmployee(EmployeeDTO employeeDTO, final HttpServletRequest request);
     void importFromExcel(MultipartFile file) throws IOException;

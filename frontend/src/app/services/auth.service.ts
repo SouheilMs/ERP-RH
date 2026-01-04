@@ -1,4 +1,4 @@
-;import { Injectable, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
@@ -22,6 +22,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+}
+
 export interface JwtResponse {
   token: string;
   type: string;
@@ -41,6 +48,9 @@ export class AuthService {
 
   private isLoggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
   private userRolesSubject = new BehaviorSubject<string[]>(this.getStoredUserRoles());
+  private currentUserSubject = new BehaviorSubject<User | null>(this.getUser());
+  currentUser$ = this.currentUserSubject.asObservable();
+
 
   constructor() {
     console.log(' AuthService initialisé');
@@ -537,7 +547,7 @@ export class AuthService {
   // Dans auth.service.ts
   canViewConges(): boolean {
     // Exemple : Tous les utilisateurs connectés peuvent voir leurs congés
-    return this.isLoggedIn();
+    return this.isEmployee();
   }
 
   canManageConges(): boolean {
