@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Navbar } from '../navbar/navbar';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
+import {ChatbotComponent} from '../chatbot/chatbot';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,12 +14,15 @@ import { Subscription } from 'rxjs';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    Navbar
+    Navbar,
+    ChatbotComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  showChatbot = false;
+  hasNewMessages = false;
   canViewEmployees: boolean = false;
   canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
@@ -103,6 +107,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getMyProfileLink(): string {
     return this.currentUserId ? `/employees/${this.currentUserId}` : '/login';
+  }
+
+  toggleChatbot(): void {
+    this.showChatbot = !this.showChatbot;
+    if (this.showChatbot) {
+      this.hasNewMessages = false;
+    }
   }
 
   logout(): void {
