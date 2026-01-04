@@ -76,9 +76,7 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: cypress/browsers:node-20.17.0-chrome-131.0.6778.85-ff-132.0-edge-131.0.2903.70-1
-  variables:
-    CHROME_BIN: /usr/bin/google-chrome
+  image: cypress/included:latest
   script:
     - cd frontend
     - npm ci
