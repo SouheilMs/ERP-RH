@@ -90,6 +90,7 @@ public class WebSecurityConfig {
                         // Routes publiques
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws-endpoint/**").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/forgot-password").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
