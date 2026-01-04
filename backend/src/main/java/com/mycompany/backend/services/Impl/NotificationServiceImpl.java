@@ -3,7 +3,6 @@ package com.mycompany.backend.services.Impl;
 import com.mycompany.backend.dto.EmployeeGetDTO;
 import com.mycompany.backend.entities.Conge;
 import com.mycompany.backend.entities.Employee;
-import com.mycompany.backend.entities.InternalRequest;
 import com.mycompany.backend.entities.Notification;
 import com.mycompany.backend.repositories.EmployeeRepository;
 import com.mycompany.backend.repositories.NotificationRepository;
@@ -143,61 +142,6 @@ public class NotificationServiceImpl implements NotificationService {
 
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" + conge.getEmployeeId(),
-                savedNotification
-        );
-    }
-
-    public void notifyHrAboutNewInternalRequest (InternalRequest request){
-        EmployeeGetDTO hr = employeeService.getSingleRh();
-        if (hr == null) {
-            throw new RuntimeException("HR not found");
-        }
-
-        Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        Notification notification = new Notification(
-                hr.getId(),
-                request.getEmployeeId(),
-                employee.getUsername(),
-                "INTERNAL_REQUEST",
-                "New Internal Request",
-                String.format("%s has submitted a %s internal request titled '%s'",
-                        employee.getUsername(), request.getType(), request.getTitle()),
-                request.getId()
-        );
-
-        Notification savedNotification = notificationRepository.save(notification);
-
-        // Send real-time notification via WebSocket
-        messagingTemplate.convertAndSend(
-                "/topic/notifications/" + hr.getId(),
-                savedNotification
-        );
-    }
-
-    public void notifyEmployeeAboutInternalRequestResponse(InternalRequest request, String responderId, String responderName) {
-        String action = switch (request.getFinalStatus()) {
-            case "APPROVED" -> "approved";
-            case "REJECTED" -> "rejected";
-            default -> "updated";
-        };
-
-        Notification notification = new Notification(
-                request.getEmployeeId(),
-                responderId,
-                responderName,
-                "INTERNAL_REQUEST_RESPONSE",
-                "Internal Request " + action.substring(0, 1).toUpperCase() + action.substring(1),
-                String.format("Your internal request titled '%s' has been %s by %s.",
-                        request.getTitle(), action, responderName),
-                request.getId()
-        );
-
-        Notification savedNotification = notificationRepository.save(notification);
-
-        messagingTemplate.convertAndSend(
-                "/topic/notifications/" + request.getEmployeeId(),
                 savedNotification
         );
     }

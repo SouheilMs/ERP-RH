@@ -1,7 +1,6 @@
 package com.mycompany.backend.services;
 
 import com.mycompany.backend.entities.Conge;
-import com.mycompany.backend.entities.InternalRequest;
 import com.mycompany.backend.entities.Notification;
 import java.util.List;
 
@@ -16,10 +15,6 @@ public interface NotificationService {
     void notifyEmployeeAboutHrApproval(Conge conge, String hrId, String hrName);
 
     void notifyEmployeeAboutHrRejection(Conge conge, String hrId, String hrName);
-
-    void notifyHrAboutNewInternalRequest (InternalRequest request);
-
-    void notifyEmployeeAboutInternalRequestResponse(InternalRequest request, String responderId, String responderName);
 
     List<Notification> getUserNotifications(String userId);
 
