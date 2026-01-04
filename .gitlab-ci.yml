@@ -97,12 +97,14 @@ test-frontend:
 e2e-frontend:
   stage: test
   image: cypress/included:latest
+  variables:
+    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --no-sandbox --disable-dev-shm-usage"
   script:
     - cd frontend
     - npm ci
     - npm start &
     - npx wait-on http://localhost:4200 --timeout 120000
-    - npx cypress run
+    - npx cypress run --browser electron --headless
   artifacts:
     when: always
     paths:
