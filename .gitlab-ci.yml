@@ -84,7 +84,7 @@ test-frontend:
   script:
     - cd frontend
     - npm ci
-    - npm test -- --watch=false --browsers=ChromeHeadless
+    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
   artifacts:
     when: always
     reports:
