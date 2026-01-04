@@ -97,12 +97,14 @@ test-frontend:
 e2e-frontend:
   stage: test
   image: cypress/included:latest
+  variables:
+    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --no-sandbox --disable-dev-shm-usage"
   script:
     - cd frontend
     - npm ci
     - npm start &
     - npx wait-on http://localhost:4200 --timeout 120000
-    - npx cypress run
+    - npx cypress run --browser electron --headless
   artifacts:
     when: always
     paths:
@@ -175,15 +177,15 @@ docker-build-push:
   script:
     # Login Docker Hub
     - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-    
+
     # Build et tag Backend
     - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
     - docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
-    
+
     # Build et tag Frontend
     - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
     - docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
-    
+
     # Push vers Docker Hub
     - docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_NAME_BACKEND:latest
@@ -209,3 +211,4 @@ deploy-staging:
     url: https://staging.votre-app.com
   only:
     - main
+    - sirine
