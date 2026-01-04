@@ -1,5 +1,9 @@
-- [x] Update EmployeeRepository to add findByEmail method
-- [x] Update EmployeeDetailsServiceImpl to use findByEmail instead of findByUsername
-- [x] Update DatabaseSeeder to set password for existing employee and add a new employee with email "hela@gmail.com" and password "123456"
-- [ ] Restart the backend to apply changes
-- [ ] Test the signin endpoint
+# Fix Failed Pipeline - test-frontend Job
+
+## Tasks
+- [x] Add Cypress as dev dependency in frontend/package.json
+- [x] Add "e2e" script to frontend/package.json
+- [x] Create frontend/cypress.config.ts for Cypress configuration
+- [x] Create frontend/cypress/e2e/app.cy.ts for basic e2e test
+- [x] Run npm install to install dependencies
+- [x] Test the pipeline after changes

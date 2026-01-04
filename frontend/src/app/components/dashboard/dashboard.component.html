@@ -39,7 +39,13 @@
       <li>
         <a routerLink="/my-profile" routerLinkActive="active">
           <i class="fas fa-user me-2"></i>
-          Mon Profil
+          My Profile
+        </a>
+      </li>
+      <li>
+        <a routerLink="/my-leave" routerLinkActive="active">
+          <i class="fas fa-calendar-alt me-2"></i>
+          My Leave
         </a>
       </li>
 
@@ -47,7 +53,7 @@
       <li>
         <a (click)="logout()" class="logout-link">
           <i class="fas fa-sign-out-alt me-2"></i>
-          Déconnexion
+          Logout
         </a>
       </li>
     </ul>
@@ -58,11 +64,11 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<!-- Chatbot popup (sans overlay) -->
 @if (showChatbot) {
-    <div class="chatbot-overlay" (click)="toggleChatbot()">
-        <div class="chatbot-popup-container" (click)="$event.stopPropagation()">
-            <app-chatbot (close)="toggleChatbot()"></app-chatbot>
-        </div>
+    <div class="chatbot-popup-wrapper">
+        <app-chatbot (close)="toggleChatbot()"></app-chatbot>
     </div>
 }
 

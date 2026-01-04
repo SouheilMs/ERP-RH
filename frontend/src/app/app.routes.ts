@@ -17,6 +17,7 @@ import { ChatbotComponent } from './components/chatbot/chatbot';
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
+import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -38,6 +39,10 @@ export const routes: Routes = [
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
       { path: 'chatbot', component: ChatbotComponent },
+      // Vérifiez comment est définie votre route
+      {path: 'my-leave ',
+        component: LeaveBalanceComponent},
+
       {
         path: 'jobs/new',
         component: JobFormComponent,

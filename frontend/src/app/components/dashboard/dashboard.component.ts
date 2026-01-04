@@ -27,6 +27,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canCreateEmployees: boolean = false;
   canViewJobs: boolean = false;
   canViewFormations: boolean = false;
+  canViewConges: boolean = false;
   canViewRoles: boolean = false;
   isHRManager: boolean = false;
   userRole: string = '';
@@ -57,6 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.canViewEmployees = this.authService.canViewEmployeeList();
     this.canViewJobs = this.authService.isHR() || this.authService.isHRManager();
     this.canViewFormations = this.authService.isHR() || this.authService.isHRManager();
+    this.canViewConges = this.canViewCongesPermission(); // <-- AJOUTÉ
     this.userRole = this.authService.getUserRole();
     this.currentUserId = this.authService.getCurrentUserId();
     this.canViewRoles = this.authService.canViewRoles();
@@ -68,8 +70,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('   - canViewEmployees:', this.canViewEmployees);
     console.log('   - canViewJobs:', this.canViewJobs);
     console.log('   - canViewFormations:', this.canViewFormations);
+    console.log('   - canViewConges:', this.canViewConges); // <-- AJOUTÉ
     console.log('   - userRole:', this.userRole);
     console.log('   - currentUserId:', this.currentUserId);
+  }
+  private canViewCongesPermission(): boolean {
+    return this.authService.canViewConges();
   }
 
   private redirectIfNeeded() {
@@ -79,18 +85,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.router.navigate(['/employees', this.currentUserId]);
     }
 
-    //   Redirection si employé essaie d'accéder aux offres d'emploi
+    // Redirection si employé essaie d'accéder aux offres d'emploi
     if (this.router.url === '/jobs' && !this.canViewJobs && this.currentUserId) {
       console.log(' Redirecting employee from jobs to their profile');
       this.router.navigate(['/employees', this.currentUserId]);
     }
 
-    //  Redirection si employé essaie d'accéder aux formations
+    // Redirection si employé essaie d'accéder aux formations
     if (this.router.url === '/formations' && !this.canViewFormations && this.currentUserId) {
       console.log(' Redirecting employee from formations to their profile');
       this.router.navigate(['/employees', this.currentUserId]);
     }
+
+    // Redirection si utilisateur essaie d'accéder aux congés sans permission
+    if (this.router.url === '/mes-conges' && !this.canViewConges && this.currentUserId) {
+      console.log(' Redirecting user from congés to their profile');
+      this.router.navigate(['/employees', this.currentUserId]);
+    }
   }
+
 
   getMyProfileLink(): string {
     return this.currentUserId ? `/employees/${this.currentUserId}` : '/login';
@@ -111,5 +124,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.rolesSubscription) {
       this.rolesSubscription.unsubscribe();
     }
+
   }
+
 }

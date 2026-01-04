@@ -50,4 +50,19 @@ public class EmployeeDetailDTO {
 
     // Formations
     private List<FormationDTO> formations = new ArrayList<>();
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public String getPhotoId() {
+        return photoId;
+    }
+
+    public void setPhotoId(String photoId) {
+        this.photoId = photoId;
+    }
 }

@@ -46,6 +46,7 @@ public class Formation {
     @Field("updated_at")
     private LocalDateTime updatedAt;
     @DBRef
+
     private Employee createdBy;
     @DBRef
     private Set<Employee> participants = new HashSet<>();
