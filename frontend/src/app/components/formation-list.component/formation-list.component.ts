@@ -10,8 +10,8 @@ import { FormationCardComponent } from '../formation-card.component/formation-ca
   selector: 'app-formation-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterModule, 
+    CommonModule,
+    RouterModule,
     FormsModule,
     StatisticsCardComponent,
     FormationCardComponent
@@ -22,7 +22,7 @@ import { FormationCardComponent } from '../formation-card.component/formation-ca
 export class FormationListComponent implements OnInit {
   formations: Formation[] = [];
   filteredFormations: Formation[] = [];
-  
+
   // Statistics
   plannedCount = 0;
   inProgressCount = 0;
@@ -155,7 +155,7 @@ export class FormationListComponent implements OnInit {
     // Appliquer la recherche si elle existe
     if (this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(f => 
+      filtered = filtered.filter(f =>
         f.title.toLowerCase().includes(searchLower) ||
         f.description.toLowerCase().includes(searchLower) ||
         (f.skills && f.skills.toLowerCase().includes(searchLower)) ||
@@ -172,65 +172,65 @@ export class FormationListComponent implements OnInit {
   // Méthode de tri
   applySorting(): void {
     const formationsToSort = [...this.filteredFormations];
-    
+
     switch (this.selectedSort) {
       case 'RECENT':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           new Date(b.createdAt || b.startDate).getTime() - new Date(a.createdAt || a.startDate).getTime()
         );
         break;
-      
+
       case 'TITLE_ASC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           a.title.localeCompare(b.title)
         );
         break;
-      
+
       case 'TITLE_DESC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           b.title.localeCompare(a.title)
         );
         break;
-      
+
       case 'PARTICIPANTS_DESC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           (b.currentParticipants || 0) - (a.currentParticipants || 0)
         );
         break;
-      
+
       case 'PARTICIPANTS_ASC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           (a.currentParticipants || 0) - (b.currentParticipants || 0)
         );
         break;
-      
+
       case 'START_DATE_ASC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
         );
         break;
-      
+
       case 'START_DATE_DESC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
         );
         break;
-      
+
       case 'COST_DESC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           (b.cost || 0) - (a.cost || 0)
         );
         break;
-      
+
       case 'COST_ASC':
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           (a.cost || 0) - (b.cost || 0)
         );
         break;
-      
+
       default:
         // Tri par défaut (récent)
-        this.filteredFormations = formationsToSort.sort((a, b) => 
+        this.filteredFormations = formationsToSort.sort((a, b) =>
           new Date(b.createdAt || b.startDate).getTime() - new Date(a.createdAt || a.startDate).getTime()
         );
     }
