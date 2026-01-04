@@ -89,7 +89,12 @@ sonar-backend:
   image: maven:3.8-openjdk-17
   script:
     - cd backend
-    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - |
+      if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
+        echo "ERROR: SONAR_HOST_URL is not properly configured. Please set it in GitLab CI variables."
+        exit 1
+      fi
+      mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   dependencies:
     - test-backend
   only:
@@ -101,7 +106,12 @@ sonar-frontend:
   image: sonarsource/sonar-scanner-cli:latest
   script:
     - cd frontend
-    - sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - |
+      if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
+        echo "ERROR: SONAR_HOST_URL is not properly configured. Please set it in GitLab CI variables."
+        exit 1
+      fi
+      sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   dependencies:
     - test-frontend
   only:
