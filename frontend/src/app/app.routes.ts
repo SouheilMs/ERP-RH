@@ -17,6 +17,7 @@ import { AiAssistantComponent } from './components/ai-assistant.component/ai-ass
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
 import { jobGuard } from './guards/job.guard';
+import {LeaveBalanceComponent} from './components/leave-balance/leave-balance.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -45,22 +46,13 @@ export const routes: Routes = [
     component: DashboardComponent,
     canActivate: [authGuard],
     children: [
-      {
-        path: 'employees',
-        component: EmployeeListComponent
-      },
-      {
-        path: 'employees/:id',
-        component: EmployeeDetailComponent
-      },
-      {
-        path: 'employees/:id/payslips',
-        component: PayslipHistoryComponent
-      },
-      {
-        path: 'roles',
-        component: RoleListComponent
-      },
+      { path: 'employees', component: EmployeeListComponent },
+      { path: 'employees/:id', component: EmployeeDetailComponent },
+      { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
+      { path: 'roles', component: RoleListComponent },
+      // Vérifiez comment est définie votre route
+      {path: 'my-leave ',
+        component: LeaveBalanceComponent},
 
       {
         path: 'jobs/new',

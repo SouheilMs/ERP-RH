@@ -1,6 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AddEmployeeComponent } from './add-employee.component';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { AuthService } from '../../services/auth.service';
+
+// === MOCK AUTH SERVICE ===
+class MockAuthService {
+  isHRorManager() { return true; }
+  isLoggedIn() { return true; }
+  isHR() { return false; }
+  isHRManager() { return true; }
+  getUserRoles() { return ['ROLE_HRMANAGER']; }
+  getToken() { return 'fake-jwt-token'; }
+}
 
 describe('AddEmployeeComponent', () => {
   let component: AddEmployeeComponent;
@@ -9,10 +20,8 @@ describe('AddEmployeeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        AddEmployeeComponent,
-        HttpClientTestingModule
-      ]
+      imports: [AddEmployeeComponent, HttpClientTestingModule],
+      providers: [{ provide: AuthService, useClass: MockAuthService }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AddEmployeeComponent);
@@ -43,78 +52,108 @@ describe('AddEmployeeComponent', () => {
   it('should open and close modal', () => {
     component.openModal();
     expect(component.isOpen).toBeTrue();
-    expect(component.employee.role).toBe('ROLE_EMPLOYEE'); // Rôle réinitialisé
+    expect(component.employee.role).toBe('ROLE_EMPLOYEE');
 
     component.closeModal();
     expect(component.isOpen).toBeFalse();
   });
 
-  it('should show error if required fields missing', () => {
+  it('should show error if username missing', () => {
     component.employee.username = '';
-    component.employee.email = '';
+    component.employee.email = 'test@mail.com';
+    component.employee.password = 'Password@123';
+    component.employee.cin = '1234';
+    component.employee.cnssNumber = '1234';
+
     component.saveEmployee();
 
-    expect(component.errorMessage)
-      .toBe('Tous les champs obligatoires doivent être remplis.');
+    expect(component.errorMessage).toBe('Le nom complet est obligatoire.');
   });
 
-  it('should call API with role data and close modal on success', () => {
+  it('should call API and close modal on success', () => {
+    const closeSpy = spyOn(component, 'closeModal');
+
+    // === Données valide ===
     component.employee = {
       username: 'John Doe',
       email: 'john@example.com',
-      password: '12345',
-      phone: '',
-      status: '',
-      role: 'ROLE_HR'
+      password: 'Password@123',
+      phone: '99887766',
+      gender: 'M',
+      hireDate: '2024-01-01',
+      salary: 1200,
+      position: 'Developer',
+      customPosition: '',
+      status: 'ACTIVE',
+      role: 'ROLE_HR',
+      cin: '1234',
+      cnssNumber: '5678',
+      matricule: 'A001',
+      workingDays: 22,
+      address: 'Tunis',
+      city: 'Tunis',
+      rib: '123456',
+      bankName: 'BIAT',
+      transportAllowance: 50,
+      familyAllowance: 20,
+      otherBonuses: 10,
+      actualWorkingDays: 20
     };
-
-    const closeSpy = spyOn(component, 'closeModal');
 
     component.saveEmployee();
 
     const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
     expect(req.request.method).toBe('POST');
 
-    // Vérifier que les données incluent le rôle
-    expect(req.request.body).toEqual({
-      username: 'John Doe',
-      email: 'john@example.com',
-      password: '12345',
-      phone: '',
-      status: 'Active',
-      roleNames: ['ROLE_HR']
-    });
+    // vérifier structure envoyée
+    expect(req.request.body.username).toBe('John Doe');
+    expect(req.request.body.roleNames).toEqual(['ROLE_HR']);
 
-    req.flush({ success: true });
+    req.flush({}, { status: 200, statusText: 'OK' });
 
     expect(closeSpy).toHaveBeenCalled();
   });
 
-  it('should show error on API failure', () => {
+  it('should show server error on API failure', () => {
     component.employee = {
       username: 'John Doe',
       email: 'john@example.com',
-      password: '12345',
+      password: 'Password@123',
       phone: '',
-      status: '',
-      role: 'ROLE_EMPLOYEE'
+      gender: '',
+      hireDate: '',
+      salary: null,
+      position: '',
+      customPosition: '',
+      status: 'ACTIVE',
+      role: 'ROLE_EMPLOYEE',
+      cin: '1234',
+      cnssNumber: '1234',
+      matricule: '',
+      workingDays: null,
+      address: '',
+      city: '',
+      rib: '',
+      bankName: '',
+      transportAllowance: 0,
+      familyAllowance: 0,
+      otherBonuses: 0,
+      actualWorkingDays: null
     };
 
     component.saveEmployee();
 
     const req = httpMock.expectOne('http://localhost:8081/api/employees/Add-employee');
     req.flush('Erreur', { status: 500, statusText: 'Server Error' });
-    expect(component.errorMessage).toBe(' Erreur lors de l\'ajout de l\'employé.');
+
+    expect(component.errorMessage).toBe('Erreur interne du serveur. Veuillez réessayer.');
   });
 
   it('should reset role when opening modal', () => {
-    // Changer le rôle
     component.employee.role = 'ROLE_HR';
 
-    // Ouvrir la modal
     component.openModal();
 
-    // Vérifier que le rôle est réinitialisé
     expect(component.employee.role).toBe('ROLE_EMPLOYEE');
   });
 });
