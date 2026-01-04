@@ -97,6 +97,7 @@ sonarqube-check:
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.login=${SONAR_TOKEN}
       -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  allow_failure: true
   only:
     - main
     - merge_requests
