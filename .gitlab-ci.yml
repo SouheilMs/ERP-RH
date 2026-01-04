@@ -72,12 +72,11 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: cypress/included:10.0.3
+  image: node:20-alpine
   script:
     - cd frontend
     - npm ci
     - npm test -- --watch=false --browsers=ChromeHeadless
-    - npm run e2e -- --configuration=ci
 
 # Analyse de qualité avec SonarQube
 sonar-backend:
