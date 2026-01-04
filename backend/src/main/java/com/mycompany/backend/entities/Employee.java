@@ -51,6 +51,7 @@ public class Employee {
     private Double traditionalSeniorityBonus;
     private Double nineDinarsBonus;
     private Integer seniorityBlocks; // Pour compatibilité
+    private String gender;
 
     @DBRef
     @JsonIgnore
@@ -197,4 +198,12 @@ public class Employee {
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 }

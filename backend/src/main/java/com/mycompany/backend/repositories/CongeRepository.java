@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import java.util.List;
+
 @Repository
 public interface CongeRepository extends MongoRepository<Conge, String> {
 
@@ -23,5 +25,7 @@ public interface CongeRepository extends MongoRepository<Conge, String> {
 
     List<Conge> findByStartDateBetween(LocalDate startDate, LocalDate endDate);
 
+    List<Conge> findByEmployeeIdAndType(String employeeId, String type);
+    List<Conge> findByEmployeeIdAndTypeAndStatus(String employeeId, String type, String status);
     List<Conge> findByStatusOrderBySubmissionDateDesc(String status);
 }

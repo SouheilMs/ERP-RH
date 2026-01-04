@@ -13,39 +13,6 @@
       <span class="hamburger-icon">☰</span>
     </button>
 
-    <!-- Navigation Menu -->
-    <div class="navbar-menu" [class.mobile-open]="isMobileMenuOpen">
-      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">
-        <span class="nav-icon">📊</span>
-        Dashboard
-      </a>
-      @if (isEmployee) {
-        <a routerLink="/conges/my-requests" routerLinkActive="active" (click)="closeMobileMenu()">
-          <span class="nav-icon">📋</span>
-          My Requests
-        </a>
-        <a routerLink="/conges/submit" routerLinkActive="active" (click)="closeMobileMenu()">
-          <span class="nav-icon">➕</span>
-          New Request
-        </a>
-      }
-
-      <!-- Manager/Admin Only Links -->
-      @if (isManager) {
-        <a routerLink="/conges/manage" routerLinkActive="active" (click)="closeMobileMenu()">
-          <span class="nav-icon">✅</span>
-          Manage Requests
-        </a>
-      }
-
-      @if (isAdmin) {
-        <a routerLink="/employees" routerLinkActive="active" (click)="closeMobileMenu()">
-          <span class="nav-icon">👥</span>
-          Employees
-        </a>
-      }
-    </div>
-
     <!-- Right Side Actions -->
     <div class="navbar-actions">
       <!-- Notification Bell -->

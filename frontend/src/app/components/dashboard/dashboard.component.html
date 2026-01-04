@@ -37,7 +37,35 @@
       <li>
         <a routerLink="/my-profile" routerLinkActive="active">
           <i class="fas fa-user me-2"></i>
-          Mon Profil
+          My Profile
+        </a>
+      </li>
+      <li>
+        <a routerLink="/my-leave " routerLinkActive="active">
+          <i class="fas fa-user me-2"></i>
+          My Leave
+
+        </a>
+      </li>
+      <!-- Lien "My requests" pour les employées -->
+      <li *ngIf="canViewConges">
+        <a routerLink="/conges/my-requests" routerLinkActive="active">
+          <i class="fas fa-user me-2"></i>
+          My requests
+        </a>
+      </li>
+
+      <li *ngIf="canSubmitConges">
+        <a routerLink="/conges/submit" routerLinkActive="active">
+          <i class="fas fa-user me-2"></i>
+          New request
+        </a>
+      </li>
+
+      <li *ngIf="canManageConges">
+        <a routerLink="/conges/manage" routerLinkActive="active">
+          <i class="fas fa-user me-2"></i>
+          Manage requests
         </a>
       </li>
 
@@ -45,7 +73,7 @@
       <li>
         <a (click)="logout()" class="logout-link">
           <i class="fas fa-sign-out-alt me-2"></i>
-          Déconnexion
+          Logout
         </a>
       </li>
     </ul>

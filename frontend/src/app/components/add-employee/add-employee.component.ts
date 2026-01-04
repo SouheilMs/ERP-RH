@@ -21,78 +21,103 @@ export class AddEmployeeComponent implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
 
+  // UI state
   isOpen = true;
   errorMessage = '';
-  isLoading = false;
+  isLoading = false;        // utilisé pour spinner global
+  isSubmitting = false;     // utilisé pour l'état du bouton submit
   passwordStrength = '';
   showSuccessAlert = false;
   successMessage = '';
 
-  //  VARIABLE POUR VÉRIFIER LES PERMISSIONS
+  // permissions
   canAddEmployee = false;
 
-  // Liste des rôles disponibles - CORRIGÉ SELON VOTRE ENUM
+  // listes disponibles
   availableRoles = [
     { value: 'ROLE_EMPLOYEE', label: 'Employé' },
     { value: 'ROLE_HR', label: 'RH' },
     { value: 'ROLE_HRMANAGER', label: 'Manager RH' }
   ];
 
-  // Liste des statuts disponibles
   availableStatuses = [
     { value: 'ACTIVE', label: 'Actif' },
     { value: 'INACTIVE', label: 'Inactif' },
     { value: 'ON_LEAVE', label: 'En congé' }
   ];
 
-  employee = {
+  // modèle employé (étendu) - NEW: champs additionnels
+  employee: any = {
     username: '',
     email: '',
     password: '',
     phone: '',
+    gender: '',
+    hireDate: '',
+    salary: null,
+    position: '',
+    customPosition: '',
     status: 'ACTIVE',
-    role: 'ROLE_EMPLOYEE'
+    role: 'ROLE_EMPLOYEE',
+    cin: '',
+    cnssNumber: '',
+    matricule: '',
+    workingDays: null,
+    address: '',
+    city: '',
+    rib: '',
+    bankName: '',
+    transportAllowance: 0,
+    familyAllowance: 0,
+    otherBonuses: 0,
+    actualWorkingDays: null
   };
 
-  // Pattern de validation du mot de passe
+  // Patterns
   private passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-  // Pattern de validation d'email
   private emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  private cinPattern = /^[0-9A-Z\-]{4,}$/;       // simplifié (adapter si besoin)
+  private cnssPattern = /^[0-9A-Za-z\-]{4,}$/;   // simplifié
+  private ribPattern = /^[0-9A-Za-z]{6,}$/;      // simplifié
 
   ngOnInit(): void {
-    //  VÉRIFIER LES PERMISSIONS AU CHARGEMENT
     this.checkPermissions();
   }
 
-  //  NOUVELLE MÉTHODE : Vérifier les permissions
+  /* ===========================
+     Permissions & Auth Helpers
+     =========================== */
+
   private checkPermissions(): void {
-    this.canAddEmployee = this.authService.isHRorManager();
+    try {
+      this.canAddEmployee = this.authService.isHRorManager();
+    } catch (e) {
+      console.error('Erreur lors de la vérification des permissions', e);
+      this.canAddEmployee = false;
+    }
 
     console.log(' AddEmployeeComponent - Permissions vérifiées:');
     console.log('   - canAddEmployee:', this.canAddEmployee);
-    console.log('   - isHR:', this.authService.isHR());
-    console.log('   - isHRManager:', this.authService.isHRManager());
-    console.log('   - Rôles utilisateur:', this.authService.getUserRoles());
+    try {
+      console.log('   - isHR:', this.authService.isHR());
+      console.log('   - isHRManager:', this.authService.isHRManager());
+      console.log('   - Rôles utilisateur:', this.authService.getUserRoles());
+    } catch {}
 
     if (!this.canAddEmployee) {
-      this.errorMessage = ' Vous n\'avez pas les permissions pour ajouter un employé.';
-      console.warn(' Accès refusé - L\'utilisateur n\'est pas RH ou Manager RH');
+      this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
+      console.warn('Accès refusé - L\'utilisateur n\'est pas RH ou Manager RH');
     }
   }
 
-  // MÉTHODE : Obtenir les headers d'authentification
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    console.log(' Obtention des headers auth - Token:', token ? 'PRÉSENT' : 'NULL');
-
     if (token) {
       return new HttpHeaders({
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       });
     } else {
-      console.error(' Aucun token d\'authentification trouvé !');
       return new HttpHeaders({
         'Content-Type': 'application/json'
       });
@@ -100,16 +125,13 @@ export class AddEmployeeComponent implements OnInit {
   }
 
   openModal() {
-    //  RE-VÉRIFIER LES PERMISSIONS À L'OUVERTURE
     this.checkPermissions();
-
-    if (!this.canAddEmployee) {
-      return; // Ne pas ouvrir la modal si pas de permissions
-    }
+    if (!this.canAddEmployee) return;
 
     this.isOpen = true;
     this.errorMessage = '';
     this.isLoading = false;
+    this.isSubmitting = false;
     this.showSuccessAlert = false;
     this.employee.role = 'ROLE_EMPLOYEE';
     this.employee.status = 'ACTIVE';
@@ -121,54 +143,66 @@ export class AddEmployeeComponent implements OnInit {
     this.closeModalEvent.emit();
   }
 
-  // Validation du mot de passe
+  /* ===========================
+     Validations & Utils
+     =========================== */
+
   validatePassword(password: string): boolean {
     return this.passwordPattern.test(password);
   }
 
-  // Validation de l'email
   validateEmail(email: string): boolean {
     return this.emailPattern.test(email);
   }
 
-  // Calcul de la force du mot de passe
-  calculatePasswordStrength(password: string): string {
-    if (!password) return 'empty';
-
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[@$!%*?&]/.test(password)) strength++;
-
-    return strength < 3 ? 'weak' : strength < 5 ? 'medium' : 'strong';
+  validateCIN(cin: string): boolean {
+    if (!cin) return false;
+    return this.cinPattern.test(cin);
   }
 
-  onPasswordChange() {
-    this.passwordStrength = this.calculatePasswordStrength(this.employee.password);
+  validateCNSS(cnss: string): boolean {
+    if (!cnss) return false;
+    return this.cnssPattern.test(cnss);
   }
 
-  // Validation du formulaire
+  validateRIB(rib: string): boolean {
+    if (!rib) return true; // RIB optionnel ; retourne true si vide
+    return this.ribPattern.test(rib);
+  }
+
+
+  // simple formatter téléphone (trivial) — peut être amélioré selon le format attendu
+  formatPhone() {
+    if (!this.employee.phone) return;
+    // retirer espaces/tirets, puis ajouter un espace toutes les 2-3 chars si besoin — implémentation minimale:
+    const cleaned = this.employee.phone.replace(/[^\d\+]/g, '');
+    this.employee.phone = cleaned;
+  }
+
+  /* ===========================
+     Validation Formulaire
+     =========================== */
+
   validateForm(): boolean {
-    // VÉRIFIER D'ABORD LES PERMISSIONS
+    this.errorMessage = '';
+
     if (!this.canAddEmployee) {
-      this.errorMessage = ' Vous n\'avez pas les permissions pour ajouter un employé.';
+      this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
       return false;
     }
 
-    //  VÉRIFIER SI L'UTILISATEUR EST AUTHENTIFIÉ
     if (!this.authService.isLoggedIn()) {
       this.errorMessage = 'Vous n\'êtes pas connecté. Veuillez vous connecter d\'abord.';
       return false;
     }
 
-    if (!this.employee.username.trim()) {
+    // champs obligatoires
+    if (!this.employee.username || !this.employee.username.trim()) {
       this.errorMessage = 'Le nom complet est obligatoire.';
       return false;
     }
 
-    if (!this.employee.email.trim()) {
+    if (!this.employee.email || !this.employee.email.trim()) {
       this.errorMessage = 'L\'email est obligatoire.';
       return false;
     }
@@ -183,104 +217,141 @@ export class AddEmployeeComponent implements OnInit {
       return false;
     }
 
-    if (!this.validatePassword(this.employee.password)) {
-      this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&).';
+
+
+    // CIN & CNSS (si fournis ou obligatoires selon ton UI)
+    if (!this.employee.cin || !this.validateCIN(this.employee.cin)) {
+      this.errorMessage = 'CIN invalide ou manquant.';
+      return false;
+    }
+
+    if (!this.employee.cnssNumber || !this.validateCNSS(this.employee.cnssNumber)) {
+      this.errorMessage = 'Numéro CNSS invalide ou manquant.';
+      return false;
+    }
+
+    // si position = OTHER, customPosition requis
+    if (this.employee.position === 'OTHER' && (!this.employee.customPosition || !this.employee.customPosition.trim())) {
+      this.errorMessage = 'Veuillez spécifier le poste personnalisé.';
+      return false;
+    }
+
+    // RIB validation (optionnel)
+    if (!this.validateRIB(this.employee.rib)) {
+      this.errorMessage = 'RIB invalide.';
       return false;
     }
 
     return true;
   }
 
+  /* ===========================
+     Envoi API
+     =========================== */
+
   saveEmployee() {
-    //  VÉRIFIER LES PERMISSIONS AVANT TOUT
+    // protections
     if (!this.canAddEmployee) {
-      this.errorMessage = ' Vous n\'avez pas les permissions pour ajouter un employé.';
+      this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
       return;
     }
 
-    //  VÉRIFIER L'AUTHENTIFICATION
     if (!this.authService.isLoggedIn()) {
-      this.errorMessage = ' Vous n\'êtes pas connecté. Veuillez vous connecter d\'abord.';
+      this.errorMessage = 'Vous n\'êtes pas connecté. Veuillez vous connecter d\'abord.';
       return;
     }
 
-    // Validation du formulaire
+    // formatter téléphone
+    this.formatPhone();
+
     if (!this.validateForm()) {
       return;
     }
 
     this.isLoading = true;
+    this.isSubmitting = true;
     this.errorMessage = '';
 
-    // Préparer les données pour l'API - CORRECTION : status doit être 'Active' pour correspondre au backend
+    // Préparer le payload complet envoyé au backend
     const employeeData = {
       username: this.employee.username.trim(),
       email: this.employee.email.trim().toLowerCase(),
       password: this.employee.password,
       phone: this.employee.phone || '',
-      status: 'Active',
-      roleNames: [this.employee.role]
+      gender: this.employee.gender || null,
+      hireDate: this.employee.hireDate || null,
+      salary: (this.employee.salary !== null && this.employee.salary !== '') ? Number(this.employee.salary) : null,
+      position: this.employee.position === 'OTHER' ? this.employee.customPosition : this.employee.position,
+      status: this.employee.status || 'Active',
+      roleNames: [this.employee.role],
+      // Paie / Identifiants tunisiens
+      cin: this.employee.cin || '',
+      cnssNumber: this.employee.cnssNumber || '',
+      matricule: this.employee.matricule || '',
+      workingDays: this.employee.workingDays !== null ? Number(this.employee.workingDays) : null,
+      // Adresse & Banque
+      address: this.employee.address || '',
+      city: this.employee.city || '',
+      rib: this.employee.rib || '',
+      bankName: this.employee.bankName || '',
+      // Primes / indemnités
+      transportAllowance: this.employee.transportAllowance ? Number(this.employee.transportAllowance) : 0,
+      familyAllowance: this.employee.familyAllowance ? Number(this.employee.familyAllowance) : 0,
+      otherBonuses: this.employee.otherBonuses ? Number(this.employee.otherBonuses) : 0,
+      actualWorkingDays: this.employee.actualWorkingDays !== null ? Number(this.employee.actualWorkingDays) : null
     };
 
     console.log('📤 Données envoyées:', employeeData);
 
-
     const headers = this.getAuthHeaders();
-    console.log('🔐 Headers envoyés:', headers.keys());
 
-    // Appel API avec headers d'authentification
     this.http.post('http://localhost:8081/api/employees/Add-employee', employeeData, {
       headers: headers,
       observe: 'response',
       responseType: 'text' as 'json'
-    })
-      .subscribe({
-        next: (response: any) => {
-          this.isLoading = false;
-          console.log(' Réponse serveur:', response);
+    }).subscribe({
+      next: (response: any) => {
+        this.isLoading = false;
+        this.isSubmitting = false;
+        console.log('Réponse serveur:', response);
 
-          if (response.status >= 200 && response.status < 300) {
-            this.showSuccessMessage();
-            this.closeModal();
-            this.employeeAdded.emit();
-            this.resetForm();
-          } else {
-            this.errorMessage = 'Réponse inattendue du serveur.';
-          }
-        },
-        error: (error: HttpErrorResponse) => {
-          this.isLoading = false;
-          console.error(' Erreur détaillée:', error);
-          console.error(' Statut erreur:', error.status);
-          console.error(' Message erreur:', error.message);
-
-          // Gestion d'erreur améliorée
-          if (error.status === 401) {
-            this.errorMessage = 'Authentification échouée. Veuillez vous reconnecter.';
-            console.error(' Le token est peut-être expiré ou invalide');
-          } else if (error.status === 400) {
-            this.errorMessage = 'Données invalides. Vérifiez les informations.';
-          } else if (error.status === 403) {
-            this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
-          } else if (error.status === 409) {
-            this.errorMessage = 'Un employé avec cet email existe déjà.';
-          } else if (error.status === 500) {
-            this.errorMessage = 'Erreur interne du serveur. Veuillez réessayer.';
-          } else {
-            this.errorMessage = `Erreur: ${error.message}`;
-          }
+        if (response && response.status >= 200 && response.status < 300) {
+          this.showSuccessMessage();
+          this.resetForm();
+          this.employeeAdded.emit();
+          this.closeModal();
+        } else {
+          // certains backends renvoient texte seulement — gérer prudemment
+          this.errorMessage = 'Réponse inattendue du serveur.';
         }
-      });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        this.isSubmitting = false;
+        console.error('Erreur détaillée:', error);
+
+        if (error.status === 401) {
+          this.errorMessage = 'Authentification échouée. Veuillez vous reconnecter.';
+        } else if (error.status === 400) {
+          // tenter d'extraire message serveur si présent
+          this.errorMessage = error.error ? String(error.error) : 'Données invalides. Vérifiez les informations.';
+        } else if (error.status === 403) {
+          this.errorMessage = 'Vous n\'avez pas les permissions pour ajouter un employé.';
+        } else if (error.status === 409) {
+          this.errorMessage = 'Un employé avec cet email existe déjà.';
+        } else if (error.status === 500) {
+          this.errorMessage = 'Erreur interne du serveur. Veuillez réessayer.';
+        } else {
+          this.errorMessage = `Erreur: ${error.message}`;
+        }
+      }
+    });
   }
 
   private showSuccessMessage() {
-    this.successMessage = ' Employé créé avec succès';
+    this.successMessage = 'Employé créé avec succès';
     this.showSuccessAlert = true;
-
-    // Masquer l'alerte après 5 secondes
-    setTimeout(() => {
-      this.showSuccessAlert = false;
-    }, 5000);
+    setTimeout(() => this.showSuccessAlert = false, 5000);
   }
 
   private resetForm() {
@@ -289,18 +360,38 @@ export class AddEmployeeComponent implements OnInit {
       email: '',
       password: '',
       phone: '',
+      gender: '',
+      hireDate: '',
+      salary: null,
+      position: '',
+      customPosition: '',
       status: 'ACTIVE',
-      role: 'ROLE_EMPLOYEE'
+      role: 'ROLE_EMPLOYEE',
+      cin: '',
+      cnssNumber: '',
+      matricule: '',
+      workingDays: null,
+      address: '',
+      city: '',
+      rib: '',
+      bankName: '',
+      transportAllowance: 0,
+      familyAllowance: 0,
+      otherBonuses: 0,
+      actualWorkingDays: null
     };
     this.passwordStrength = '';
+    this.isLoading = false;
+    this.isSubmitting = false;
+    this.errorMessage = '';
   }
 
-  //  MÉTHODE DE TEST TEMPORAIRE
+  // Utilitaire debug
   testAuth(): void {
-    console.log(' TEST AUTHENTIFICATION:');
-    console.log('  - Connecté:', this.authService.isLoggedIn());
-    console.log('  - Token:', this.authService.getToken());
-    console.log('  - Rôles:', this.authService.getUserRoles());
-    console.log('  - Peut ajouter employés:', this.authService.isHRorManager());
+    console.log('TEST AUTHENTIFICATION:');
+    console.log(' - Connecté:', this.authService.isLoggedIn());
+    console.log(' - Token:', this.authService.getToken());
+    console.log(' - Rôles:', this.authService.getUserRoles());
+    console.log(' - Peut ajouter employés:', this.authService.isHRorManager());
   }
 }

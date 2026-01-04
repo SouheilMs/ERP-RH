@@ -544,4 +544,14 @@ export class AuthService {
       }
     });
   }
+  // Dans auth.service.ts
+  canViewConges(): boolean {
+    // Exemple : Tous les utilisateurs connectés peuvent voir leurs congés
+    return this.isEmployee();
+  }
+
+  canManageConges(): boolean {
+    // Exemple : Seuls HR et HR Manager peuvent gérer les congés des autres
+    return this.isHR() || this.isHRManager();
+  }
 }
