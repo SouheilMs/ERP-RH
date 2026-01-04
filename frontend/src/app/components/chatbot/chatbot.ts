@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
+import {Component, OnInit, ElementRef, ViewChild, AfterViewChecked, Output, EventEmitter} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -20,6 +20,7 @@ interface ChatMessage {
 export class ChatbotComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatMessages') private chatMessagesContainer!: ElementRef;
   @ViewChild('questionInput') private questionInput!: ElementRef;
+  @Output() close = new EventEmitter<void>();
 
   messages: ChatMessage[] = [];
   quickQuestions = [
@@ -206,5 +207,9 @@ Y a-t-il autre chose dont vous avez besoin ?`;
     if (question.includes('RH')) return 'Contact RH';
     if (question.includes('maladie')) return 'Maladie';
     return 'Question';
+  }
+
+  closeChatbot(): void {
+    this.close.emit();
   }
 }

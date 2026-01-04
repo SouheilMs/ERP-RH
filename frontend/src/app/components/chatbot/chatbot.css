@@ -57,6 +57,8 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
+  justify-content: space-between; /* Pour aligner le bouton à droite */
 }
 
 .logo-icon {
@@ -556,4 +558,29 @@
 .input-wrapper input.error {
   border-color: #ef4444 !important;
   animation: shake 0.5s ease-in-out;
+}
+/* Styles pour le bouton de fermeture */
+.close-btn {
+  background: none;
+  border: none;
+  color: #2d3436; /* Changé de #fff à #2d3436 */
+  font-size: 18px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-left: auto; /* Pour le pousser à droite */
+}
+
+.close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Changé pour un fond plus sombre */
+  transform: rotate(90deg);
+}
+
+.close-btn:active {
+  transform: rotate(90deg) scale(0.9);
 }

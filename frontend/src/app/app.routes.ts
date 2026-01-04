@@ -12,6 +12,7 @@ import { JobListComponent } from './components/job-list.component/job-list.compo
 import { JobFormComponent } from './components/job-form.component/job-form.component';
 import { FormationListComponent } from './components/formation-list.component/formation-list.component';
 import { FormationFormComponent } from './components/formation-form.component/formation-form.component';
+import { ChatbotComponent } from './components/chatbot/chatbot';
 
 import { authGuard } from './guards/auth.guard';
 import { formationGuard } from './guards/formation.guard';
@@ -36,7 +37,7 @@ export const routes: Routes = [
       { path: 'employees/:id', component: EmployeeDetailComponent },
       { path: 'employees/:id/payslips', component: PayslipHistoryComponent },
       { path: 'roles', component: RoleListComponent },
-
+      { path: 'chatbot', component: ChatbotComponent },
       {
         path: 'jobs/new',
         component: JobFormComponent,

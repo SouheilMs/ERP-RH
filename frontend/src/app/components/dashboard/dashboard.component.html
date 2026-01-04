@@ -58,3 +58,18 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+@if (showChatbot) {
+    <div class="chatbot-overlay" (click)="toggleChatbot()">
+        <div class="chatbot-popup-container" (click)="$event.stopPropagation()">
+            <app-chatbot (close)="toggleChatbot()"></app-chatbot>
+        </div>
+    </div>
+}
+
+<!-- Bouton bulle pour ouvrir le chatbot -->
+<button class="chatbot-bubble" (click)="toggleChatbot()">
+    <i class="fas fa-comment-dots"></i>
+    @if (hasNewMessages) {
+        <span class="chatbot-notification">●</span>
+    }
+</button>
