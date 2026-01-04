@@ -41,10 +41,9 @@
         </a>
       </li>
       <li>
-        <a routerLink="/my-leave " routerLinkActive="active">
-          <i class="fas fa-user me-2"></i>
+        <a routerLink="/my-leave" routerLinkActive="active">
+          <i class="fas fa-calendar-alt me-2"></i>
           My Leave
-
         </a>
       </li>
       <!-- Lien "My requests" pour les employées -->
@@ -84,3 +83,18 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<!-- Chatbot popup (sans overlay) -->
+@if (showChatbot) {
+    <div class="chatbot-popup-wrapper">
+        <app-chatbot (close)="toggleChatbot()"></app-chatbot>
+    </div>
+}
+
+<!-- Bouton bulle pour ouvrir le chatbot -->
+<button class="chatbot-bubble" (click)="toggleChatbot()">
+    <i class="fas fa-comment-dots"></i>
+    @if (hasNewMessages) {
+        <span class="chatbot-notification">●</span>
+    }
+</button>
