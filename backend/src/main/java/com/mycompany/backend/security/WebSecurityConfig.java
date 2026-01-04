@@ -91,7 +91,8 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**", "/api/linkedin/auth/callback",
                                 "/api/linkedin/auth/init").permitAll()
-                        .requestMatchers("/auth/login", "/auth/signup", "/auth/forgot-password").permitAll()
+                        .requestMatchers("/ws-endpoint/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/signup", "/api/password/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // Routes sécurisées
