@@ -75,6 +75,8 @@ test-frontend:
   image: node:20-alpine
   script:
     - cd frontend
+    - apk add --no-cache chromium
+    - export CHROME_BIN=/usr/bin/chromium-browser
     - npm ci
     - npm test -- --watch=false --browsers=ChromeHeadless
 
