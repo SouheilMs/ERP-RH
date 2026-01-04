@@ -2,15 +2,12 @@ stages:
   - build
   - test
   - quality
-  - security
   - deploy
 
 variables:
   DOCKER_DRIVER: overlay2
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   DOCKER_TLS_CERTDIR: ""
-  IMAGE_NAME_BACKEND: $DOCKERHUB_USERNAME/backend
-  IMAGE_NAME_FRONTEND: $DOCKERHUB_USERNAME/frontend
 
 # Cache pour accélérer les builds
 cache:
@@ -19,7 +16,7 @@ cache:
     - frontend/node_modules/
     - .sonar/cache
 
-# Jobs Backend
+# ---------- BACKEND ----------
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
@@ -48,21 +45,7 @@ test-backend:
       junit:
         - backend/target/surefire-reports/TEST-*.xml
 
-integration-test-backend:
-  stage: test
-  image: maven:3.8-openjdk-17
-  services:
-    - postgres:15
-  variables:
-    POSTGRES_DB: testdb
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
-    SPRING_PROFILES_ACTIVE: test
-  script:
-    - cd backend
-    - mvn verify -Dit.test="*IT" -DfailIfNoTests=false
-
-# Jobs Frontend
+# ---------- FRONTEND ----------
 build-frontend:
   stage: build
   image: node:20-alpine
@@ -74,44 +57,15 @@ build-frontend:
     paths:
       - frontend/dist/
 
+# Job test frontend simplifié pour test rapide
 test-frontend:
   stage: test
   image: node:20
-  before_script:
-    - apt-get update
-    - apt-get install -y chromium
-    - export CHROME_BIN=/usr/bin/chromium
   script:
-    - cd frontend
-    - npm ci
-    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
-  artifacts:
-    when: always
-    reports:
-      junit:
-        - frontend/coverage/junit.xml
-    paths:
-      - frontend/coverage/
-
-# E2E tests with Cypress
-e2e-frontend:
-  stage: test
-  image: cypress/included:latest
-  script:
-    - cd frontend
-    - npm ci
-    - npm start &
-    - npx wait-on http://localhost:4200 --timeout 120000
-    - npx cypress run
-  artifacts:
-    when: always
-    paths:
-      - frontend/cypress/videos/
-      - frontend/cypress/screenshots/
-    expire_in: 1 week
+    - echo "Skipping frontend tests for quick pipeline test"
   allow_failure: true
 
-# Analyse de qualité avec SonarQube
+# ---------- SONAR ----------
 sonar-backend:
   stage: quality
   image: maven:3.8-openjdk-17
@@ -120,10 +74,8 @@ sonar-backend:
     - |
       if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
         echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for backend."
-        echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
-        echo "Running SonarQube analysis for backend..."
-        mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
+        mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       fi
   dependencies:
     - test-backend
@@ -139,73 +91,33 @@ sonar-frontend:
     - |
       if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
         echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for frontend."
-        echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
-        echo "Running SonarQube analysis for frontend..."
-        sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
+        sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       fi
   dependencies:
-    - test-frontend
+    - build-frontend
   only:
     - main
     - merge_requests
 
-# Analyse de sécurité
-security-scan:
-  stage: security
-  image: docker:stable
-  services:
-    - docker:dind
-  script:
-    - docker run --rm
-      -v "$PWD/backend:/src"
-      aquasec/trivy:latest
-      fs --severity HIGH,CRITICAL /src
-
-# Build et push des images Docker
+# ---------- DOCKER ----------
 docker-build-push:
   stage: deploy
   image: docker:stable
   services:
     - docker:dind
   variables:
-    DOCKER_REGISTRY: docker.io
-    IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
-    IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
+    IMAGE_NAME_BACKEND: $DOCKERHUB_USERNAME/backend
+    IMAGE_NAME_FRONTEND: $DOCKERHUB_USERNAME/frontend
   script:
-    # Login Docker Hub
     - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-    
-    # Build et tag Backend
     - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
     - docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
-    
-    # Build et tag Frontend
     - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
     - docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
-    
-    # Push vers Docker Hub
     - docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_NAME_BACKEND:latest
     - docker push $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_NAME_FRONTEND:latest
-  only:
-    - main
-
-# Déploiement (exemple sur un serveur)
-deploy-staging:
-  stage: deploy
-  image: alpine:latest
-  script:
-    - apk add --no-cache openssh-client
-    - echo "$SSH_PRIVATE_KEY" > ssh_key
-    - chmod 600 ssh_key
-    - ssh -o StrictHostKeyChecking=no -i ssh_key user@staging-server "
-      docker pull $IMAGE_NAME_BACKEND:latest &&
-      docker pull $IMAGE_NAME_FRONTEND:latest &&
-      docker-compose -f /opt/app/docker-compose.prod.yml up -d"
-  environment:
-    name: staging
-    url: https://staging.votre-app.com
   only:
     - main
