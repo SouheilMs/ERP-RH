@@ -22,6 +22,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <lombok.version>1.18.32</lombok.version>
+        <!-- SonarQube properties -->
+        <sonar.projectKey>erp-backend</sonar.projectKey>
+        <sonar.projectName>ERP Backend</sonar.projectName>
+        <sonar.projectVersion>0.0.1-SNAPSHOT</sonar.projectVersion>
+        <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <sonar.java.test.binaries>target/test-classes</sonar.java.test.binaries>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>

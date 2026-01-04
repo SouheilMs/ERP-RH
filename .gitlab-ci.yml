@@ -83,21 +83,27 @@ test-frontend:
     - npm test -- --watch=false --browsers=ChromeHeadless
     - npm run e2e -- --configuration=ci
 
-# Analyse de code qualité (SonarQube - BONUS)
-sonarqube-check:
+# Analyse de qualité avec SonarQube
+sonar-backend:
   stage: quality
   image: maven:3.8-openjdk-17
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0"
   script:
     - cd backend
-    - mvn clean verify sonar:sonar
-      -Dsonar.projectKey=mon-projet-spring
-      -Dsonar.host.url=${SONAR_HOST_URL}
-      -Dsonar.login=${SONAR_TOKEN}
-      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-  allow_failure: true
+    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  dependencies:
+    - test-backend
+  only:
+    - main
+    - merge_requests
+
+sonar-frontend:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli:latest
+  script:
+    - cd frontend
+    - sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  dependencies:
+    - test-frontend
   only:
     - main
     - merge_requests
