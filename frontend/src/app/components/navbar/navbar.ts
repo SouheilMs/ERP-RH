@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NotificationComponent } from '../notification/notification';
 import { AuthService, User } from '../../services/auth.service';
@@ -7,7 +7,7 @@ import { AuthService, User } from '../../services/auth.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, NotificationComponent],
+  imports: [CommonModule, RouterLink, NotificationComponent],
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css']
 })
