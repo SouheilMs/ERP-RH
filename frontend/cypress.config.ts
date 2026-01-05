@@ -9,22 +9,40 @@ export default defineConfig({
         screenshotsFolder: 'cypress/screenshots',
         video: true,
         screenshotOnRunFailure: true,
+        videoCompression: 15,
+        retries: {
+            runMode: 2,
+            openMode: 0
+        },
 
         setupNodeEvents(on, config) {
             // implement node event listeners here
+            return config;
         },
     },
 
-    // Configuration pour CI (GitLab, GitHub Actions, etc.)
+    // Configuration pour CI
     chromeWebSecurity: false,
+    viewportWidth: 1280,
+    viewportHeight: 720,
 
-    // Augmenter les timeouts pour CI
+    // Timeouts
     defaultCommandTimeout: 10000,
     requestTimeout: 10000,
     responseTimeout: 10000,
     pageLoadTimeout: 60000,
+    execTimeout: 60000,
+    taskTimeout: 60000,
 
-    // Configuration du navigateur pour environnement CI
+    // Performance optimization
     experimentalMemoryManagement: true,
     numTestsKeptInMemory: 10,
+    experimentalModifyObstructiveThirdPartyCode: true,
+
+    // Reporter configuration
+    reporter: 'junit',
+    reporterOptions: {
+        mochaFile: 'cypress/results/test-results-[hash].xml',
+        toConsole: true
+    }
 });

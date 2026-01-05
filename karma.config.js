@@ -34,7 +34,7 @@ module.exports = function (config) {
         { type: 'junit', file: 'junit.xml' }
       ]
     },
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['progress', 'kjhtml', 'coverage'],
     browsers: ['Chrome'],
     restartOnFileChange: true,
     
