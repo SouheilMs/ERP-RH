@@ -76,13 +76,15 @@ build-frontend:
 
 test-frontend:
   stage: test
-  image: node:20-alpine
+  image: node:20
   before_script:
+    - apt-get update
+    - apt-get install -y chromium
+    - export CHROME_BIN=/usr/bin/chromium
+  script:
     - cd frontend
     - npm ci
-  script:
-    # Run tests with coverage
-    - npm run test:ci || npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
+    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
   artifacts:
     when: always
     reports:
@@ -90,47 +92,22 @@ test-frontend:
         - frontend/coverage/junit.xml
     paths:
       - frontend/coverage/
-      - frontend/coverage/lcov.info
-  cache:
-    key: "${CI_COMMIT_REF_SLUG}-frontend"
-    paths:
-      - frontend/node_modules/
 
 # E2E tests with Cypress
 e2e-frontend:
   stage: test
   image: cypress/included:latest
-  variables:
-    # Cypress specific variables
-    CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/cache/Cypress"
-    # Disable GPU for CI environments
-    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --no-sandbox --disable-dev-shm-usage"
-  cache:
-    key: "${CI_COMMIT_REF_SLUG}-cypress"
-    paths:
-      - cache/Cypress
-      - frontend/node_modules/
-  before_script:
-    - cd frontend
-    - npm ci --prefer-offline
   script:
-    # Start Angular dev server in background
+    - cd frontend
+    - npm ci
     - npm start &
-    # Wait for server to be ready
-    - npx wait-on http://localhost:4200 --timeout 60000
-    # Run Cypress tests
+    - npx wait-on http://localhost:4200 --timeout 120000
     - npx cypress run
-  after_script:
-    # Kill the Angular server
-    - pkill -f "ng serve" || true
   artifacts:
     when: always
     paths:
       - frontend/cypress/videos/
       - frontend/cypress/screenshots/
-    reports:
-      junit:
-        - frontend/cypress/results/*.xml
     expire_in: 1 week
   allow_failure: true
 
@@ -192,24 +169,28 @@ docker-build-push:
   services:
     - docker:dind
   variables:
-    IMAGE_NAME_BACKEND: "$DOCKERHUB_USERNAME/backend"
-    IMAGE_NAME_FRONTEND: "$DOCKERHUB_USERNAME/frontend"
-  before_script:
-    # Login to Docker Hub
-    - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+    DOCKER_REGISTRY: docker.io
+    IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
+    IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
   script:
-    # Build and push Backend
-    - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA -t $IMAGE_NAME_BACKEND:latest ./backend
+    # Login Docker Hub
+    - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+    
+    # Build et tag Backend
+    - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
+    - docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
+    
+    # Build et tag Frontend
+    - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
+    - docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
+    
+    # Push vers Docker Hub
     - docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_NAME_BACKEND:latest
-
-    # Build and push Frontend
-    - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA -t $IMAGE_NAME_FRONTEND:latest ./frontend
     - docker push $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_NAME_FRONTEND:latest
   only:
     - main
-  dependencies: []
 
 # Déploiement (exemple sur un serveur)
 deploy-staging:
@@ -228,4 +209,3 @@ deploy-staging:
     url: https://staging.votre-app.com
   only:
     - main
-    - sirine
