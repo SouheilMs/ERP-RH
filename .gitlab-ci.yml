@@ -19,7 +19,7 @@ cache:
     - .sonar/cache
 
 # Jobs Backend
-# ---------- BACKEND ----------
+# --------- BACKEND ----------
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
