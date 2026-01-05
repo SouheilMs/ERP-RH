@@ -1,5 +1,5 @@
 stages:
- - build
+  - build
   - test
   - quality
   - security
@@ -14,6 +14,7 @@ variables:
 
 # Cache pour accélérer les builds
 cache:
+  paths:
     - frontend/node_modules/
     - .sonar/cache
 
@@ -22,8 +23,31 @@ cache:
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
+  script:
+    - cd backend
+    - mvn clean compile -DskipTests
+  artifacts:
+    paths:
+      - backend/target/
+  cache:
+    paths:
+      - .m2/repository/
+    key: maven-cache
+
+test-backend:
+  stage: test
+  image: maven:3.8-openjdk-17
+  script:
+    - cd backend
+    - mvn test
+  artifacts:
+    reports:
       junit:
         - backend/target/surefire-reports/TEST-*.xml
+  cache:
+    paths:
+      - .m2/repository/
+    key: maven-cache
 
 integration-test-backend:
   stage: test
@@ -44,6 +68,11 @@ integration-test-backend:
 build-frontend:
   stage: build
   image: node:20-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
     paths:
       - frontend/dist/
 
@@ -83,33 +112,40 @@ e2e-frontend:
       - frontend/cypress/videos/
       - frontend/cypress/screenshots/
     expire_in: 1 week
-    - echo "Skipping frontend tests for quick pipeline test"
-  allow_failure: true
 
 # Analyse de qualité avec SonarQube
 # ---------- SONAR ----------
 sonar-backend:
   stage: quality
   image: maven:3.8-openjdk-17
+  script:
     - |
       if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
         echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for backend."
         echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
         echo "Running SonarQube analysis for backend..."
+        cd backend
         mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
-        mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       fi
   dependencies:
     - test-backend
+
+sonar-frontend:
+  stage: quality
+  image: node:20-alpine
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
     - |
       if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
         echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for frontend."
         echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
       else
         echo "Running SonarQube analysis for frontend..."
+        cd frontend
         sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
-        sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       fi
   dependencies:
     - test-frontend
@@ -125,10 +161,7 @@ security-scan:
   services:
     - docker:dind
   script:
-    - docker run --rm
-      -v "$PWD/backend:/src"
-      aquasec/trivy:latest
-      fs --severity HIGH,CRITICAL /src
+    - docker run --rm -v "$PWD/backend:/src" aquasec/trivy:latest fs --severity HIGH,CRITICAL /src
 
 # Build et push des images Docker
 # ---------- DOCKER ----------
@@ -141,25 +174,23 @@ docker-build-push:
     DOCKER_REGISTRY: docker.io
     IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
     IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
-    IMAGE_NAME_BACKEND: $DOCKERHUB_USERNAME/backend
-    IMAGE_NAME_FRONTEND: $DOCKERHUB_USERNAME/frontend
   script:
     # Login Docker Hub
     - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     
     # Build et tag Backend
-    - docker build -t $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
-    - docker tag $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_BACKEND:latest
+    - docker build -t $DOCKERHUB_USERNAME/backend:$CI_COMMIT_SHORT_SHA ./backend
+    - docker tag $DOCKERHUB_USERNAME/backend:$CI_COMMIT_SHORT_SHA $DOCKERHUB_USERNAME/backend:latest
     
     # Build et tag Frontend
-    - docker build -t $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
-    - docker tag $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA $IMAGE_NAME_FRONTEND:latest
+    - docker build -t $DOCKERHUB_USERNAME/frontend:$CI_COMMIT_SHORT_SHA ./frontend
+    - docker tag $DOCKERHUB_USERNAME/frontend:$CI_COMMIT_SHORT_SHA $DOCKERHUB_USERNAME/frontend:latest
     
     # Push vers Docker Hub
-    - docker push $IMAGE_NAME_BACKEND:$CI_COMMIT_SHORT_SHA
-    - docker push $IMAGE_NAME_BACKEND:latest
-    - docker push $IMAGE_NAME_FRONTEND:$CI_COMMIT_SHORT_SHA
-    - docker push $IMAGE_NAME_FRONTEND:latest
+    - docker push $DOCKERHUB_USERNAME/backend:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKERHUB_USERNAME/backend:latest
+    - docker push $DOCKERHUB_USERNAME/frontend:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKERHUB_USERNAME/frontend:latest
   only:
     - main
 
@@ -172,8 +203,8 @@ deploy-staging:
     - echo "$SSH_PRIVATE_KEY" > ssh_key
     - chmod 600 ssh_key
     - ssh -o StrictHostKeyChecking=no -i ssh_key user@staging-server "
-      docker pull $IMAGE_NAME_BACKEND:latest &&
-      docker pull $IMAGE_NAME_FRONTEND:latest &&
+      docker pull $DOCKERHUB_USERNAME/backend:latest &&
+      docker pull $DOCKERHUB_USERNAME/frontend:latest &&
       docker-compose -f /opt/app/docker-compose.prod.yml up -d"
   environment:
     name: staging
