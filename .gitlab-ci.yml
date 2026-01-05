@@ -70,12 +70,12 @@ build-frontend:
   image: node:20-alpine
   script:
     - cd frontend
-    - npm ci
+    # Change from npm ci to npm install temporarily
+    - npm install
     - npm run build
   artifacts:
     paths:
       - frontend/dist/
-
 # Job test frontend simplifié pour test rapide
 test-frontend:
   stage: test
