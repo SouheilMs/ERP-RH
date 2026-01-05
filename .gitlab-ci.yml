@@ -209,3 +209,4 @@ deploy-staging:
     url: https://staging.votre-app.com
   only:
     - main
+    - sirine
