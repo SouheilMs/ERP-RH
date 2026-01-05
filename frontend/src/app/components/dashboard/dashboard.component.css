@@ -12,6 +12,9 @@
   font-size: 0.8rem;
   color: #6c757d;
 }
+.user {
+    color: #495057;
+}
 
 .user-info strong {
   color: #495057;
