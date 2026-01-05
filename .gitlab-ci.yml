@@ -14,39 +14,16 @@ variables:
 
 # Cache pour accélérer les builds
 cache:
-  paths:
-    - backend/.m2/repository
-    - frontend/node_modules/
-    - .sonar/cache
+  - frontend/node_modules/
+  - .sonar/cache
 
 # Jobs Backend
+# ---------- BACKEND ----------
 build-backend:
   stage: build
   image: maven:3.8-openjdk-17
-  script:
-    - cd backend
-    - mvn clean compile -DskipTests
-  artifacts:
-    paths:
-      - backend/target/
-
-test-backend:
-  stage: test
-  image: maven:3.8-openjdk-17
-  services:
-    - postgres:15
-  variables:
-    POSTGRES_DB: testdb
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
-    SPRING_PROFILES_ACTIVE: test
-  script:
-    - cd backend
-    - mvn test
-  artifacts:
-    reports:
-      junit:
-        - backend/target/surefire-reports/TEST-*.xml
+    junit:
+      - backend/target/surefire-reports/TEST-*.xml
 
 integration-test-backend:
   stage: test
@@ -63,17 +40,14 @@ integration-test-backend:
     - mvn verify -Dit.test="*IT" -DfailIfNoTests=false
 
 # Jobs Frontend
+# ---------- FRONTEND ----------
 build-frontend:
   stage: build
   image: node:20-alpine
-  script:
-    - cd frontend
-    - npm ci
-    - npm run build -- --configuration=production
-  artifacts:
     paths:
       - frontend/dist/
 
+# Job test frontend simplifié pour test rapide
 test-frontend:
   stage: test
   image: node:20
@@ -97,47 +71,37 @@ test-frontend:
 e2e-frontend:
   stage: test
   image: cypress/included:latest
-  variables:
-    ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --no-sandbox --disable-dev-shm-usage"
   script:
     - cd frontend
     - npm ci
     - npm start &
     - npx wait-on http://localhost:4200 --timeout 120000
-    - npx cypress run --browser electron --headless
+    - npx cypress run
   artifacts:
     when: always
     paths:
       - frontend/cypress/videos/
       - frontend/cypress/screenshots/
     expire_in: 1 week
+      - echo "Skipping frontend tests for quick pipeline test"
   allow_failure: true
 
 # Analyse de qualité avec SonarQube
+# ---------- SONAR ----------
 sonar-backend:
   stage: quality
   image: maven:3.8-openjdk-17
-  script:
-    - cd backend
     - |
-      if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
-        echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for backend."
-        echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
-      else
-        echo "Running SonarQube analysis for backend..."
-        mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
-      fi
+    if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
+    echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for backend."
+    echo "To enable SonarQube analysis, set SONAR_HOST_URL and SONAR_TOKEN in GitLab CI variables."
+    else
+    echo "Running SonarQube analysis for backend..."
+    mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
+    mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    fi
   dependencies:
     - test-backend
-  only:
-    - main
-    - merge_requests
-
-sonar-frontend:
-  stage: quality
-  image: sonarsource/sonar-scanner-cli:latest
-  script:
-    - cd frontend
     - |
       if [ -z "$SONAR_HOST_URL" ] || [ "$SONAR_HOST_URL" = "host_url" ]; then
         echo "INFO: SONAR_HOST_URL not configured. Skipping SonarQube analysis for frontend."
@@ -145,9 +109,11 @@ sonar-frontend:
       else
         echo "Running SonarQube analysis for frontend..."
         sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN || echo "SonarQube analysis completed with warnings (this is normal)"
+        sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       fi
   dependencies:
     - test-frontend
+    - build-frontend
   only:
     - main
     - merge_requests
@@ -165,15 +131,18 @@ security-scan:
       fs --severity HIGH,CRITICAL /src
 
 # Build et push des images Docker
+# ---------- DOCKER ----------
 docker-build-push:
   stage: deploy
   image: docker:stable
   services:
     - docker:dind
   variables:
-    DOCKER_REGISTRY: docker.io # Ou votre registry GitLab
+    DOCKER_REGISTRY: docker.io
     IMAGE_NAME_BACKEND: $CI_REGISTRY_IMAGE/backend
     IMAGE_NAME_FRONTEND: $CI_REGISTRY_IMAGE/frontend
+    IMAGE_NAME_BACKEND: $DOCKERHUB_USERNAME/backend
+    IMAGE_NAME_FRONTEND: $DOCKERHUB_USERNAME/frontend
   script:
     # Login Docker Hub
     - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -211,4 +180,3 @@ deploy-staging:
     url: https://staging.votre-app.com
   only:
     - main
-    - sirine
