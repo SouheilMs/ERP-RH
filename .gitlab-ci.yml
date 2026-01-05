@@ -79,12 +79,10 @@ test-frontend:
   image: node:20-alpine
   before_script:
     - cd frontend
-    - apk add --no-cache chromium
-    - export CHROME_BIN=/usr/bin/chromium
     - npm ci
   script:
     # Run tests with coverage
-    - npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
+    - npm run test:ci || npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
   artifacts:
     when: always
     reports:
