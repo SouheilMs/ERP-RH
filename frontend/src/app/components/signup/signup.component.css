@@ -26,6 +26,10 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* Animation de fond */
+.auth{
+}
+
 .auth-container::after {
   content: '';
   position: absolute;
