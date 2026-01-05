@@ -9,6 +9,9 @@
   position: relative;
   overflow: auto;
 }
+.auth {
+
+}
 
 /* Animation de fond */
 .auth-container::before {
