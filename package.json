@@ -1,6 +1,12 @@
 {
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@stomp/stompjs": "^7.2.1",
     "pdfmake": "^0.2.20"
+  },
+  "devDependencies": {
+    "@angular/platform-browser-dynamic": "^21.0.6",
+    "@types/sockjs-client": "^1.5.4",
+    "karma-junit-reporter": "^2.0.1"
   }
 }
